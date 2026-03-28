@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useToast } from '@/components/ui/Toast'
+import { createClient } from '@/lib/supabase/client'
 import { PlatformPreview } from '@/components/posts/PlatformPreview'
-import { Save, Send, ChevronDown, ChevronUp, Upload, X, ArrowLeft, Clock, Pencil } from 'lucide-react'
+import { Save, Send, ChevronDown, ChevronUp, Upload, X, ArrowLeft, Clock, Pencil, Image } from 'lucide-react'
 import { PLATFORM_NAMES, FREE_PLATFORMS } from '@/types'
 import type { Platform, GenerateTone } from '@/types'
 
@@ -197,12 +198,23 @@ export default function CreatePage() {
   const [manualFile, setManualFile] = useState<File | null>(null)
   const [manualPreviewUrl, setManualPreviewUrl] = useState<string | null>(null)
   const [uploadingFile, setUploadingFile] = useState(false)
+  const [generatingImage, setGeneratingImage] = useState(false)
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null)
   const [uploadedMediaUrl, setUploadedMediaUrl] = useState<string | null>(null)
 
   // Overlay génération
   const [overlayOpen, setOverlayOpen] = useState(false)
   const [overlaySteps, setOverlaySteps] = useState<string[]>([])
   const [stepStates, setStepStates] = useState<string[]>([])
+
+  // Plan
+  const [isPro, setIsPro] = useState(false)
+
+  useEffect(() => {
+    createClient().from('users').select('plan').single().then(({ data }) => {
+      if (data?.plan && data.plan !== 'free') setIsPro(true)
+    })
+  }, [])
 
   // Modal action
   const [actionModal, setActionModal] = useState<{
@@ -290,6 +302,22 @@ export default function CreatePage() {
     setUploadedMediaUrl(null)
   }
 
+  async function handleGenerateImage() {
+    const content = activePreview ? variants[activePreview] : Object.values(variants)[0]
+    if (!content) { return }
+    setGeneratingImage(true)
+    try {
+      const res = await fetch('/api/ai/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: content.slice(0, 300) }),
+      })
+      const data = await res.json()
+      if (res.ok) setGeneratedImageUrl(data.url)
+    } catch { /* silencieux */ }
+    finally { setGeneratingImage(false) }
+  }
+
   async function handleManualSubmit() {
     if (!manualContent.trim()) { toast('Écrivez votre post avant de continuer', 'error'); return }
     if (!selectedPlatforms.length) { toast('Sélectionnez au moins une plateforme', 'error'); return }
@@ -373,15 +401,20 @@ export default function CreatePage() {
             Générer un post
           </button>
           <button
-            onClick={handleGenerateWeek}
+            onClick={isPro ? handleGenerateWeek : undefined}
+            title={isPro ? undefined : 'Réservé aux plans Premium et Business'}
             style={{
-              background: 'transparent', border: '1px solid #27272D', color: '#8E8E98',
+              background: 'transparent',
+              border: `1px solid ${isPro ? '#27272D' : '#1E1E24'}`,
+              color: isPro ? '#8E8E98' : '#52525C',
               padding: '.65rem 1.1rem', borderRadius: '8px', fontFamily: "'DM Sans', sans-serif",
-              fontSize: '.83rem', fontWeight: 500, cursor: 'pointer',
+              fontSize: '.83rem', fontWeight: 500,
+              cursor: isPro ? 'pointer' : 'not-allowed',
               display: 'flex', alignItems: 'center', gap: '.5rem', whiteSpace: 'nowrap', transition: '.15s',
+              opacity: isPro ? 1 : .55,
             }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = '#303038'; e.currentTarget.style.color = '#F4F4F6' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = '#27272D'; e.currentTarget.style.color = '#8E8E98' }}
+            onMouseEnter={e => { if (isPro) { e.currentTarget.style.borderColor = '#303038'; e.currentTarget.style.color = '#F4F4F6' } }}
+            onMouseLeave={e => { if (isPro) { e.currentTarget.style.borderColor = '#27272D'; e.currentTarget.style.color = '#8E8E98' } }}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
               <rect x="3" y="4" width="18" height="18" rx="2"/>
@@ -389,6 +422,7 @@ export default function CreatePage() {
               <line x1="3" y1="10" x2="21" y2="10"/>
             </svg>
             Posts de la semaine
+            {!isPro && <span className="v2tag" style={{ background: 'rgba(251,191,36,.12)', color: '#FBBF24', border: '1px solid rgba(251,191,36,.2)' }}>Pro</span>}
           </button>
           <button
             onClick={() => setMode(mode === 'manual' ? 'single' : 'manual')}
@@ -577,10 +611,39 @@ export default function CreatePage() {
                     />
                   </div>
                 )}
+                {/* Image générée */}
+                {generatedImageUrl && (
+                  <div className="card overflow-hidden">
+                    <img src={generatedImageUrl} alt="Image générée" style={{ width: '100%', display: 'block' }} />
+                  </div>
+                )}
+
+                {/* Bouton générer image */}
+                <button
+                  onClick={isPro ? handleGenerateImage : undefined}
+                  disabled={generatingImage || !isPro}
+                  title={!isPro ? 'Génération d\'image réservée aux plans Premium et Business' : undefined}
+                  className="btn-outline w-full flex items-center justify-center gap-2 py-2.5"
+                  style={!isPro ? { opacity: .45, cursor: 'not-allowed' } : undefined}
+                >
+                  {generatingImage ? (
+                    <>
+                      <div style={{ width: '13px', height: '13px', border: '2px solid rgba(255,255,255,.2)', borderTopColor: '#8E8E98', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
+                      Génération de l'image…
+                    </>
+                  ) : (
+                    <>
+                      <Image size={14} />
+                      {generatedImageUrl ? 'Régénérer l\'image' : 'Générer une image'}
+                      {!isPro && <span className="v2tag" style={{ background: 'rgba(251,191,36,.12)', color: '#FBBF24', border: '1px solid rgba(251,191,36,.2)', marginLeft: '.3rem' }}>Pro</span>}
+                    </>
+                  )}
+                </button>
+
                 <button
                   onClick={() => {
                     const content = activePreview ? variants[activePreview] : Object.values(variants)[0]
-                    if (content) setActionModal({ content, platforms: selectedPlatforms, aiGenerated: true })
+                    if (content) setActionModal({ content, platforms: selectedPlatforms, mediaUrls: generatedImageUrl ? [generatedImageUrl] : [], aiGenerated: true })
                   }}
                   className="btn-primary w-full flex items-center justify-center gap-2 py-2.5"
                 >

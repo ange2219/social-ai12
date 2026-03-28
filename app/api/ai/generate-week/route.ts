@@ -17,6 +17,10 @@ export async function POST(req: NextRequest) {
 
   const plan = (userProfile?.plan || 'free') as Plan
 
+  if (plan === 'free') {
+    return NextResponse.json({ error: 'Fonctionnalité réservée aux plans Premium et Business' }, { status: 403 })
+  }
+
   const body: GenerateRequest & { posts_count?: number } = await req.json()
 
   if (!body.platforms?.length || !body.tone) {

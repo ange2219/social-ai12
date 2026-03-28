@@ -102,19 +102,34 @@ export function Sidebar({ user }: { user: User }) {
             <div className="plan-bar" style={{ width: user.plan === 'free' ? '30%' : '100%' }} />
           </div>
           <div className="plan-desc">
-            {user.plan === 'free' ? '1 génération/jour · 2 plateformes' : 'Accès complet'}
+            {user.plan === 'free' ? '3 générations/jour · 2 plateformes' : 'Accès complet'}
           </div>
           {user.plan === 'free' && (
             <button className="btn-upgrade">Passer au Pro →</button>
           )}
         </div>
 
-        <div className="user-row" onClick={handleLogout} title="Se déconnecter">
-          <div className="av">{initials}</div>
-          <div>
-            <div className="u-name">{user.full_name || user.email?.split('@')[0]}</div>
-            <div className="u-role">{PLAN_LABELS[user.plan]}</div>
-          </div>
+        <div className="user-row">
+          <Link href="/settings" style={{ display: 'flex', alignItems: 'center', gap: '.6rem', flex: 1, textDecoration: 'none' }}>
+            <div className="av">{initials}</div>
+            <div>
+              <div className="u-name">{user.full_name || user.email?.split('@')[0]}</div>
+              <div className="u-role">{PLAN_LABELS[user.plan]}</div>
+            </div>
+          </Link>
+          <button
+            onClick={handleLogout}
+            title="Se déconnecter"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#52525C', padding: '4px', borderRadius: '6px', display: 'flex', alignItems: 'center' }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#F4F4F6')}
+            onMouseLeave={e => (e.currentTarget.style.color = '#52525C')}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </button>
         </div>
       </div>
     </aside>

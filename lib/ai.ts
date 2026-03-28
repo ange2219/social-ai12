@@ -183,25 +183,46 @@ Réponds UNIQUEMENT en JSON : {"hashtags": ["#tag1", "#tag2", ...]}`
   return JSON.parse(text.trim()).hashtags || []
 }
 
+// ─── Recherche d'image via Unsplash (gratuit) ─────────────────────────────────
+
+export async function generateImage(prompt: string): Promise<string | null> {
+  try {
+    const query = encodeURIComponent(prompt.slice(0, 100))
+    const res = await fetch(
+      `https://api.unsplash.com/photos/random?query=${query}&orientation=squarish`,
+      { headers: { Authorization: `Client-ID ${process.env.UNSPLASH_ACCESS_KEY}` } }
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+    return data.urls?.regular || null
+  } catch {
+    return null
+  }
+}
+
 // ─── Export principal ──────────────────────────────────────────────────────────
 
 export async function generatePosts(req: GenerateRequest, plan: Plan): Promise<GenerateResponse> {
-  if (plan === 'free') return generateWithGitHub(req)
+  if (plan === 'free' && process.env.GITHUB_TOKEN) {
+    try { return await generateWithGitHub(req) } catch { /* fallback */ }
+  }
   return generateWithClaude(req)
 }
 
 export async function generateWeekPosts(req: GenerateRequest, postsCount: number, plan: Plan): Promise<{ week: { day: number; topic: string; variants: Partial<Record<Platform, string>> }[] }> {
   const prompt = buildWeekPrompt(req, postsCount)
 
-  if (plan === 'free') {
-    const res = await githubAI.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: 3000,
-      temperature: 0.8,
-      response_format: { type: 'json_object' },
-    })
-    return JSON.parse(res.choices[0]?.message?.content || '{"week":[]}')
+  if (plan === 'free' && process.env.GITHUB_TOKEN) {
+    try {
+      const res = await githubAI.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 3000,
+        temperature: 0.8,
+        response_format: { type: 'json_object' },
+      })
+      return JSON.parse(res.choices[0]?.message?.content || '{"week":[]}')
+    } catch { /* fallback to Claude */ }
   }
 
   const msg = await anthropic.messages.create({
