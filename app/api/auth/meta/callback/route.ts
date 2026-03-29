@@ -63,9 +63,10 @@ export async function GET(req: NextRequest) {
       }, { onConflict: 'user_id,platform' })
     }
 
-    return NextResponse.redirect(new URL('/settings?success=meta_connected', req.url))
+    return NextResponse.redirect(new URL('/profile?success=meta_connected', req.url))
   } catch (err) {
     console.error('Meta OAuth error:', err)
-    return NextResponse.redirect(new URL('/settings?error=oauth_failed', req.url))
+    const msg = err instanceof Error ? err.message : 'unknown'
+    return NextResponse.redirect(new URL(`/profile?error=${encodeURIComponent(msg)}`, req.url))
   }
 }

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
 import { createClient } from '@/lib/supabase/client'
 import { PLATFORM_NAMES, PLATFORM_COLORS, FREE_PLATFORMS } from '@/types'
@@ -27,6 +28,13 @@ export default function ProfilePage() {
   const [accounts, setAccounts] = useState<SocialAccount[]>([])
   const [userPlan, setUserPlan] = useState<'free' | 'premium' | 'business'>('free')
 
+  const searchParams = useSearchParams()
+
+  const loadAccounts = useCallback(async () => {
+    const accRes = await fetch('/api/social/accounts')
+    if (accRes.ok) setAccounts(await accRes.json())
+  }, [])
+
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -47,11 +55,16 @@ export default function ProfilePage() {
         setPostsPerWeek(b.posts_per_week || 5)
       }
 
-      const accRes = await fetch('/api/social/accounts')
-      if (accRes.ok) setAccounts(await accRes.json())
+      await loadAccounts()
+
+      // Feedback après callback OAuth
+      const success = searchParams.get('success')
+      const error = searchParams.get('error')
+      if (success === 'meta_connected') toast('Facebook & Instagram connectés !', 'success')
+      else if (error) toast(`Erreur connexion : ${error}`, 'error')
     }
     load()
-  }, [])
+  }, [searchParams, loadAccounts])
 
   async function saveUserInfo() {
     setSavingUser(true)
