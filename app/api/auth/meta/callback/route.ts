@@ -58,6 +58,7 @@ export async function GET(req: NextRequest) {
     const longToken = await getLongLivedToken(tokenData.access_token)
 
     const pages = await getUserPages(longToken)
+    console.log('[Meta callback] pages trouvées:', pages.length, pages.map(p => p.name))
     const admin = createAdminClient()
 
     // Utiliser la Page si dispo, sinon le profil personnel comme fallback
@@ -94,6 +95,7 @@ export async function GET(req: NextRequest) {
     if (isPage) {
       try {
         const igAccount = await getInstagramAccount(fbId, fbToken)
+        console.log('[Meta callback] igAccount:', igAccount)
         if (igAccount) {
           const igProfile = await getInstagramProfile(igAccount.id, fbToken)
           await saveAccount(admin, {
