@@ -11,8 +11,8 @@ export function getMetaOAuthUrl(state: string): string {
     client_id: APP_ID,
     redirect_uri: REDIRECT_URI,
     scope: [
-      'instagram_basic',
-      'instagram_content_publish',
+      'instagram_business_basic',
+      'instagram_business_content_publish',
       'pages_manage_posts',
       'pages_read_engagement',
       'pages_show_list',
