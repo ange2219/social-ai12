@@ -13,12 +13,10 @@ export default function ProfilePage() {
   const { toast } = useToast()
   const supabase = createClient()
 
-  // User info
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [savingUser, setSavingUser] = useState(false)
 
-  // Brand profile
   const [brandName, setBrandName] = useState('')
   const [brandDesc, setBrandDesc] = useState('')
   const [sector, setSector] = useState('')
@@ -26,7 +24,6 @@ export default function ProfilePage() {
   const [postsPerWeek, setPostsPerWeek] = useState(5)
   const [savingBrand, setSavingBrand] = useState(false)
 
-  // Social accounts
   const [accounts, setAccounts] = useState<SocialAccount[]>([])
   const [userPlan, setUserPlan] = useState<'free' | 'premium' | 'business'>('free')
 
@@ -86,119 +83,150 @@ export default function ProfilePage() {
   const initials = (fullName || email || 'U').slice(0, 2).toUpperCase()
 
   return (
-    <div className="p-8 max-w-3xl">
-      <div className="mb-8">
-        <h1 className="font-display text-2xl font-bold text-t1">Mon Profil</h1>
-        <p className="text-t3 text-sm mt-0.5">Vos informations personnelles et le profil de votre marque</p>
+    <div style={{ padding: '2rem 2rem 3rem' }}>
+      <div style={{ marginBottom: '2rem' }}>
+        <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1.4rem', fontWeight: 700, color: '#F4F4F6', letterSpacing: '-.02em' }}>
+          Mon Profil
+        </h1>
+        <p style={{ color: '#52525C', fontSize: '.83rem', marginTop: '.2rem' }}>Informations personnelles et profil de votre marque</p>
       </div>
 
-      {/* Avatar + nom */}
-      <section className="card p-6 mb-6">
-        <div className="flex items-center gap-2 mb-5">
-          <User size={18} className="text-accent" />
-          <h2 className="font-medium text-t1">Informations personnelles</h2>
-        </div>
-        <div className="flex items-center gap-4 mb-5">
-          <div className="av" style={{ width: '52px', height: '52px', fontSize: '1.1rem', borderRadius: '50%', flexShrink: 0 }}>{initials}</div>
-          <div>
-            <div className="text-t1 font-medium">{fullName || email}</div>
-            <div className="text-t3 text-sm">{email}</div>
-          </div>
-        </div>
-        <div className="space-y-4">
-          <div>
-            <label className="label">Nom complet</label>
-            <input className="input" placeholder="Votre nom" value={fullName} onChange={e => setFullName(e.target.value)} />
-          </div>
-          <div>
-            <label className="label">Email</label>
-            <input className="input" value={email} disabled style={{ opacity: .5, cursor: 'not-allowed' }} />
-          </div>
-          <button onClick={saveUserInfo} disabled={savingUser} className="btn-primary flex items-center gap-2">
-            <Save size={15} /> {savingUser ? 'Sauvegarde...' : 'Sauvegarder'}
-          </button>
-        </div>
-      </section>
+      {/* Ligne 1 : Infos perso (gauche) + Réseaux sociaux (droite) */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
 
-      {/* Brand profile */}
-      <section className="card p-6 mb-6">
-        <div className="flex items-center gap-2 mb-5">
-          <Sparkles size={18} className="text-accent" />
-          <h2 className="font-medium text-t1">Profil de marque</h2>
-        </div>
-        <p className="text-t3 text-sm mb-4">Ces informations sont utilisées par l'IA pour générer des posts parfaitement adaptés à votre marque.</p>
-        <div className="space-y-4">
-          <div>
-            <label className="label">Nom de la marque</label>
-            <input className="input" placeholder="Ex: Pixel Agency" value={brandName} onChange={e => setBrandName(e.target.value)} />
+        {/* Infos personnelles */}
+        <section className="card p-5">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '1rem' }}>
+            <User size={16} style={{ color: '#3B7BF6' }} />
+            <span style={{ fontSize: '.9rem', fontWeight: 600, color: '#F4F4F6' }}>Informations personnelles</span>
           </div>
-          <div>
-            <label className="label">Description</label>
-            <textarea className="input resize-none" rows={3} placeholder="Ce que vous faites, vos valeurs, votre audience cible..." value={brandDesc} onChange={e => setBrandDesc(e.target.value)} />
-          </div>
-          <div>
-            <label className="label">Secteur d'activité</label>
-            <input className="input" placeholder="Ex: Marketing digital, Mode, Restauration..." value={sector} onChange={e => setSector(e.target.value)} />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', padding: '.65rem', background: '#09090B', borderRadius: '8px', border: '1px solid #1E1E24', marginBottom: '1rem' }}>
+            <div className="av" style={{ width: '40px', height: '40px', fontSize: '.9rem', borderRadius: '50%', flexShrink: 0 }}>{initials}</div>
             <div>
-              <label className="label">Ton par défaut</label>
-              <select className="input" value={defaultTone} onChange={e => setDefaultTone(e.target.value)}>
-                <option value="professionnel">Professionnel</option>
-                <option value="decontracte">Décontracté</option>
-                <option value="inspirant">Inspirant</option>
-                <option value="humoristique">Humoristique</option>
-              </select>
-            </div>
-            <div>
-              <label className="label">Posts par semaine</label>
-              <input className="input" type="number" min={1} max={21} value={postsPerWeek} onChange={e => setPostsPerWeek(Number(e.target.value))} />
+              <div style={{ fontSize: '.85rem', fontWeight: 500, color: '#E4E4E7' }}>{fullName || 'Sans nom'}</div>
+              <div style={{ fontSize: '.75rem', color: '#52525C' }}>{email}</div>
             </div>
           </div>
-          <button onClick={saveBrand} disabled={savingBrand} className="btn-primary flex items-center gap-2">
-            <Save size={15} /> {savingBrand ? 'Sauvegarde...' : 'Sauvegarder la marque'}
-          </button>
-        </div>
-      </section>
 
-      {/* Social accounts */}
-      <section className="card p-6">
-        <div className="flex items-center gap-2 mb-5">
-          <Link2 size={18} className="text-accent" />
-          <h2 className="font-medium text-t1">Réseaux sociaux connectés</h2>
-        </div>
-        <div className="space-y-3">
-          {ALL_PLATFORMS.map(p => {
-            const connected = accounts.find(a => a.platform === p)
-            const isFreePlatform = FREE_PLATFORMS.includes(p)
-            const isPaid = userPlan !== 'free'
-            const available = isFreePlatform || isPaid
-            return (
-              <div key={p} className="flex items-center justify-between p-3 bg-s2 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: available ? PLATFORM_COLORS[p] : '#3f3f46' }} />
-                  <div>
-                    <div className={`text-sm font-medium ${available ? 'text-t1' : 'text-t3'}`}>{PLATFORM_NAMES[p]}</div>
-                    {connected && <div className="text-t3 text-xs">@{connected.platform_username}</div>}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '.75rem' }}>
+            <div>
+              <label className="label">Nom complet</label>
+              <input className="input" placeholder="Votre nom" value={fullName} onChange={e => setFullName(e.target.value)} />
+            </div>
+            <div>
+              <label className="label">Email</label>
+              <input className="input" value={email} disabled style={{ opacity: .45, cursor: 'not-allowed' }} />
+            </div>
+            <button onClick={saveUserInfo} disabled={savingUser} className="btn-primary flex items-center gap-2">
+              <Save size={14} /> {savingUser ? 'Sauvegarde...' : 'Sauvegarder'}
+            </button>
+          </div>
+        </section>
+
+        {/* Réseaux sociaux */}
+        <section className="card p-5">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '1rem' }}>
+            <Link2 size={16} style={{ color: '#3B7BF6' }} />
+            <span style={{ fontSize: '.9rem', fontWeight: 600, color: '#F4F4F6' }}>Réseaux sociaux</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
+            {ALL_PLATFORMS.map(p => {
+              const connected = accounts.find(a => a.platform === p)
+              const isFreePlatform = FREE_PLATFORMS.includes(p)
+              const isPaid = userPlan !== 'free'
+              const available = isFreePlatform || isPaid
+              return (
+                <div key={p} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '.55rem .75rem', background: '#09090B', borderRadius: '8px', border: '1px solid #1E1E24',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: available ? PLATFORM_COLORS[p] : '#3f3f46', flexShrink: 0 }} />
+                    <div>
+                      <div style={{ fontSize: '.82rem', fontWeight: 500, color: available ? '#E4E4E7' : '#52525C' }}>{PLATFORM_NAMES[p]}</div>
+                      {connected && <div style={{ fontSize: '.72rem', color: '#52525C' }}>@{connected.platform_username}</div>}
+                    </div>
+                    {!available && (
+                      <span style={{ fontSize: '.68rem', fontWeight: 600, background: 'rgba(251,191,36,.1)', color: '#FBBF24', border: '1px solid rgba(251,191,36,.2)', padding: '.1rem .4rem', borderRadius: '4px' }}>Pro</span>
+                    )}
                   </div>
-                  {!available && <span className="badge badge-gray text-xs ml-2">Premium</span>}
-                </div>
-                {available ? (
-                  connected ? (
-                    <button onClick={() => disconnect(connected.id)} className="btn-ghost text-xs flex items-center gap-1.5" style={{ color: '#EF4444' }}>
-                      <Unlink size={13} /> Déconnecter
-                    </button>
+                  {available ? (
+                    connected ? (
+                      <button onClick={() => disconnect(connected.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '.3rem' }}>
+                        <Unlink size={12} /> Déconnecter
+                      </button>
+                    ) : (
+                      <button onClick={() => window.location.href = '/api/auth/meta/start'} style={{ background: 'none', border: '1px solid #27272D', cursor: 'pointer', color: '#8E8E98', fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.3rem .6rem', borderRadius: '6px' }}>
+                        <Link2 size={12} /> Connecter
+                      </button>
+                    )
                   ) : (
-                    <button onClick={() => window.location.href = '/api/auth/meta/start'} className="btn-outline text-xs flex items-center gap-1.5">
-                      <Link2 size={13} /> Connecter
-                    </button>
-                  )
-                ) : (
-                  <span className="text-t3 text-xs">Non disponible</span>
-                )}
+                    <span style={{ fontSize: '.73rem', color: '#3f3f46' }}>Non disponible</span>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      </div>
+
+      {/* Ligne 2 : Profil de marque — pleine largeur */}
+      <section className="card p-5">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '1rem' }}>
+          <Sparkles size={16} style={{ color: '#3B7BF6' }} />
+          <span style={{ fontSize: '.9rem', fontWeight: 600, color: '#F4F4F6' }}>Profil de marque</span>
+          <span style={{ marginLeft: 'auto', fontSize: '.75rem', color: '#52525C' }}>Utilisé par l'IA pour personnaliser vos posts</span>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          {/* Colonne gauche */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '.75rem' }}>
+            <div>
+              <label className="label">Nom de la marque</label>
+              <input className="input" placeholder="Ex: Pixel Agency" value={brandName} onChange={e => setBrandName(e.target.value)} />
+            </div>
+            <div>
+              <label className="label">Secteur d'activité</label>
+              <input className="input" placeholder="Ex: Marketing digital, Mode, Restauration..." value={sector} onChange={e => setSector(e.target.value)} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem' }}>
+              <div>
+                <label className="label">Ton par défaut</label>
+                <select className="input" value={defaultTone} onChange={e => setDefaultTone(e.target.value)}>
+                  <option value="professionnel">Professionnel</option>
+                  <option value="decontracte">Décontracté</option>
+                  <option value="inspirant">Inspirant</option>
+                  <option value="humoristique">Humoristique</option>
+                </select>
               </div>
-            )
-          })}
+              <div>
+                <label className="label">Posts / semaine</label>
+                <input className="input" type="number" min={1} max={21} value={postsPerWeek} onChange={e => setPostsPerWeek(Number(e.target.value))} />
+              </div>
+            </div>
+          </div>
+
+          {/* Colonne droite */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '.75rem' }}>
+            <div style={{ flex: 1 }}>
+              <label className="label">Description de la marque</label>
+              <textarea
+                className="input resize-none"
+                rows={6}
+                placeholder="Ce que vous faites, vos valeurs, votre audience cible..."
+                value={brandDesc}
+                onChange={e => setBrandDesc(e.target.value)}
+                style={{ height: '100%', minHeight: '120px' }}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: '1rem' }}>
+          <button onClick={saveBrand} disabled={savingBrand} className="btn-primary flex items-center gap-2">
+            <Save size={14} /> {savingBrand ? 'Sauvegarde...' : 'Sauvegarder le profil de marque'}
+          </button>
         </div>
       </section>
     </div>
