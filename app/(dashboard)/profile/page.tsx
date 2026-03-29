@@ -139,44 +139,72 @@ export default function ProfilePage() {
 
         {/* Réseaux sociaux */}
         <section className="card p-5">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.75rem' }}>
             <Link2 size={16} style={{ color: '#3B7BF6' }} />
             <span style={{ fontSize: '.9rem', fontWeight: 600, color: '#F4F4F6' }}>Réseaux sociaux</span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
-            {ALL_PLATFORMS.map(p => {
+
+          {/* Bloc Meta — Facebook + Instagram groupés */}
+          <div style={{ background: '#09090B', border: '1px solid #1E1E24', borderRadius: '10px', padding: '.75rem', marginBottom: '.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.5rem' }}>
+              <div style={{ fontSize: '.75rem', color: '#52525C', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                Meta (Facebook & Instagram)
+              </div>
+              {(accounts.find(a => a.platform === 'facebook') || accounts.find(a => a.platform === 'instagram')) ? (
+                <button
+                  onClick={() => {
+                    const fb = accounts.find(a => a.platform === 'facebook')
+                    const ig = accounts.find(a => a.platform === 'instagram')
+                    if (fb) disconnect(fb.id)
+                    if (ig) disconnect(ig.id)
+                  }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '.3rem' }}
+                >
+                  <Unlink size={12} /> Déconnecter
+                </button>
+              ) : (
+                <button
+                  onClick={() => window.location.href = '/api/auth/meta/start'}
+                  style={{ background: 'none', border: '1px solid #27272D', cursor: 'pointer', color: '#8E8E98', fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.3rem .6rem', borderRadius: '6px' }}
+                >
+                  <Link2 size={12} /> Connecter
+                </button>
+              )}
+            </div>
+            {(['facebook', 'instagram'] as Platform[]).map(p => {
               const connected = accounts.find(a => a.platform === p)
-              const isFreePlatform = FREE_PLATFORMS.includes(p)
+              return (
+                <div key={p} style={{ display: 'flex', alignItems: 'center', gap: '.6rem', padding: '.4rem 0' }}>
+                  <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: connected ? PLATFORM_COLORS[p] : '#3f3f46', flexShrink: 0 }} />
+                  <div style={{ fontSize: '.82rem', fontWeight: 500, color: connected ? '#E4E4E7' : '#52525C' }}>{PLATFORM_NAMES[p]}</div>
+                  {connected
+                    ? <span style={{ fontSize: '.72rem', color: '#52525C' }}>@{connected.platform_username}</span>
+                    : <span style={{ fontSize: '.72rem', color: '#3f3f46' }}>Non connecté</span>
+                  }
+                </div>
+              )
+            })}
+            <div style={{ fontSize: '.72rem', color: '#3f3f46', marginTop: '.5rem' }}>
+              Instagram se connecte automatiquement via votre Page Facebook
+            </div>
+          </div>
+
+          {/* Autres plateformes */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
+            {(['tiktok', 'twitter', 'linkedin'] as Platform[]).map(p => {
               const isPaid = userPlan !== 'free'
-              const available = isFreePlatform || isPaid
               return (
                 <div key={p} style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '.55rem .75rem', background: '#09090B', borderRadius: '8px', border: '1px solid #1E1E24',
+                  padding: '.5rem .75rem', background: '#09090B', borderRadius: '8px', border: '1px solid #1E1E24',
+                  opacity: isPaid ? 1 : .5,
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: available ? PLATFORM_COLORS[p] : '#3f3f46', flexShrink: 0 }} />
-                    <div>
-                      <div style={{ fontSize: '.82rem', fontWeight: 500, color: available ? '#E4E4E7' : '#52525C' }}>{PLATFORM_NAMES[p]}</div>
-                      {connected && <div style={{ fontSize: '.72rem', color: '#52525C' }}>@{connected.platform_username}</div>}
-                    </div>
-                    {!available && (
-                      <span style={{ fontSize: '.68rem', fontWeight: 600, background: 'rgba(251,191,36,.1)', color: '#FBBF24', border: '1px solid rgba(251,191,36,.2)', padding: '.1rem .4rem', borderRadius: '4px' }}>Pro</span>
-                    )}
+                    <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: isPaid ? PLATFORM_COLORS[p] : '#3f3f46' }} />
+                    <span style={{ fontSize: '.82rem', fontWeight: 500, color: isPaid ? '#E4E4E7' : '#52525C' }}>{PLATFORM_NAMES[p]}</span>
+                    {!isPaid && <span style={{ fontSize: '.68rem', fontWeight: 600, background: 'rgba(251,191,36,.1)', color: '#FBBF24', border: '1px solid rgba(251,191,36,.2)', padding: '.1rem .4rem', borderRadius: '4px' }}>Pro</span>}
                   </div>
-                  {available ? (
-                    connected ? (
-                      <button onClick={() => disconnect(connected.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '.3rem' }}>
-                        <Unlink size={12} /> Déconnecter
-                      </button>
-                    ) : (
-                      <button onClick={() => window.location.href = '/api/auth/meta/start'} style={{ background: 'none', border: '1px solid #27272D', cursor: 'pointer', color: '#8E8E98', fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.3rem .6rem', borderRadius: '6px' }}>
-                        <Link2 size={12} /> Connecter
-                      </button>
-                    )
-                  ) : (
-                    <span style={{ fontSize: '.73rem', color: '#3f3f46' }}>Non disponible</span>
-                  )}
+                  <span style={{ fontSize: '.73rem', color: '#3f3f46' }}>Non disponible</span>
                 </div>
               )
             })}
