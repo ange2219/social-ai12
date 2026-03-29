@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
       platform_user_id: fbId,
       platform_username: fbName,
       access_token: encryptToken(fbToken),
-      connected_via: isPage ? 'meta_page' : 'meta_personal',
+      connected_via: 'meta_direct',
     })
 
     // Instagram si disponible (seulement via Page)
