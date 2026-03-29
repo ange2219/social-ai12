@@ -100,15 +100,13 @@ function PostActionModal({ content, imageUrl, onClose }: {
           background: '#18181C', borderRadius: '8px', padding: '.75rem', marginBottom: '1.25rem',
           fontSize: '.83rem', color: '#C4C4CC', lineHeight: 1.6,
           maxHeight: '120px', overflow: 'hidden',
-          display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical',
+          overflowY: 'auto',
         }}>
           {content}
         </div>
 
         {view === 'main' ? (
           <>
-            <div className="modal-title">Que faire avec ce post ?</div>
-            <div className="modal-sub">Choisissez comment publier ou conserver ce contenu.</div>
             <div className="modal-actions">
               <button className="modal-btn modal-btn-blue" onClick={handlePublish} disabled={loading}>
                 <Send size={15} /> Publier maintenant

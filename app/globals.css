@@ -115,6 +115,17 @@ body {
 .logo-name    { font-family: 'Bricolage Grotesque', sans-serif; font-size: .95rem; font-weight: 700; letter-spacing: -.02em; color: #F4F4F6; }
 .logo-name span { color: #3B7BF6; }
 
+/* Collapsed sidebar */
+.sidebar-col   { width: 62px; }
+.sidebar-col .sb-logo { padding: .9rem .5rem; justify-content: center; }
+.sidebar-col .sb-nav  { padding: .25rem .35rem; }
+.sidebar-col .ni      { justify-content: center; padding: .7rem; }
+.sidebar-col .ns      { display: none; }
+.sidebar-col .sb-foot { padding: .75rem .35rem; }
+.sidebar-col .user-row { justify-content: center; }
+.sidebar-col .plan-box { display: none; }
+.main-exp      { transition: none; }
+
 /* ── Main shell ── */
 .main         { flex: 1; overflow-y: auto; height: 100vh; }
 .topbar       { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; border-bottom: 1px solid #27272D; background: #111113; position: sticky; top: 0; z-index: 10; }

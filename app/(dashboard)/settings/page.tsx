@@ -2,50 +2,45 @@
 
 import { useState, useEffect } from 'react'
 import { useToast } from '@/components/ui/Toast'
-import { PLATFORM_NAMES, PLATFORM_COLORS, FREE_PLATFORMS, PLAN_LIMITS } from '@/types'
-import type { Platform, SocialAccount } from '@/types'
-import { Link2, Unlink, CreditCard, User, Sparkles, ExternalLink } from 'lucide-react'
-
-const PAID_PLATFORMS: Platform[] = ['tiktok', 'twitter', 'linkedin', 'youtube', 'pinterest']
+import { createClient } from '@/lib/supabase/client'
+import { PLAN_LIMITS } from '@/types'
+import { Moon, Sun, Globe, Bell, CreditCard, Trash2, Lock, ExternalLink } from 'lucide-react'
 
 export default function SettingsPage() {
   const { toast } = useToast()
-  const [accounts, setAccounts] = useState<SocialAccount[]>([])
+  const supabase = createClient()
+
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark')
+  const [lang, setLang] = useState<'fr' | 'en'>('fr')
+  const [emailNotifs, setEmailNotifs] = useState(true)
   const [userPlan, setUserPlan] = useState<'free' | 'premium' | 'business'>('free')
-  const [brandName, setBrandName] = useState('')
-  const [brandDesc, setBrandDesc] = useState('')
-  const [savingBrand, setSavingBrand] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [savingPwd, setSavingPwd] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState('')
 
   useEffect(() => {
-    fetch('/api/social/accounts').then(r => r.json()).then(setAccounts)
-    fetch('/api/auth/me').then(r => r.json()).then((u: { plan?: 'free' | 'premium' | 'business' }) => {
+    fetch('/api/auth/me').then(r => r.json()).then(u => {
       if (u?.plan) setUserPlan(u.plan)
     })
+    const saved = localStorage.getItem('theme')
+    if (saved === 'light') setTheme('light')
   }, [])
 
-  async function connectMeta() {
-    window.location.href = '/api/auth/meta/start'
-  }
-
-  async function connectAyrshare() {
-    const res = await fetch('/api/social/connect', { method: 'POST' })
-    const data = await res.json()
-    if (!res.ok) { toast(data.error, 'error'); return }
-    window.open(data.url, '_blank')
-  }
-
-  async function disconnect(id: string) {
-    const res = await fetch(`/api/social/accounts?id=${id}`, { method: 'DELETE' })
-    if (res.ok) {
-      setAccounts(prev => prev.filter(a => a.id !== id))
-      toast('Compte déconnecté', 'success')
-    }
+  async function changePassword() {
+    if (!newPassword || newPassword.length < 8) { toast('Mot de passe trop court (8 caractères min)', 'error'); return }
+    if (newPassword !== confirmPassword) { toast('Les mots de passe ne correspondent pas', 'error'); return }
+    setSavingPwd(true)
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    setSavingPwd(false)
+    if (error) toast(error.message, 'error')
+    else { toast('Mot de passe modifié', 'success'); setNewPassword(''); setConfirmPassword('') }
   }
 
   async function handleUpgrade(plan: 'premium' | 'business') {
     const res = await fetch('/api/billing/checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ plan }),
     })
     const data = await res.json()
@@ -59,140 +54,128 @@ export default function SettingsPage() {
     else toast(data.error, 'error')
   }
 
-  async function saveBrandProfile() {
-    setSavingBrand(true)
-    const res = await fetch('/api/brand', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ brand_name: brandName, description: brandDesc }),
-    })
-    setSavingBrand(false)
-    toast(res.ok ? 'Profil de marque sauvegardé' : 'Erreur', res.ok ? 'success' : 'error')
-  }
-
-  const connectedPlatforms = new Set(accounts.map(a => a.platform))
   const limits = PLAN_LIMITS[userPlan]
 
   return (
     <div className="p-8 max-w-3xl">
       <div className="mb-8">
         <h1 className="font-display text-2xl font-bold text-t1">Paramètres</h1>
-        <p className="text-t3 text-sm mt-0.5">Gérez vos comptes et préférences</p>
+        <p className="text-t3 text-sm mt-0.5">Préférences de l'application et gestion du compte</p>
       </div>
 
-      {/* Social accounts */}
+      {/* Apparence */}
       <section className="card p-6 mb-6">
         <div className="flex items-center gap-2 mb-5">
-          <Link2 size={18} className="text-accent" />
-          <h2 className="font-medium text-t1">Réseaux sociaux connectés</h2>
+          <Moon size={18} className="text-accent" />
+          <h2 className="font-medium text-t1">Apparence</h2>
         </div>
-
-        <div className="space-y-3 mb-4">
-          {/* Free platforms */}
-          {FREE_PLATFORMS.map(p => {
-            const connected = accounts.find(a => a.platform === p)
-            return (
-              <div key={p} className="flex items-center justify-between p-3 bg-s2 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: PLATFORM_COLORS[p] }} />
-                  <div>
-                    <div className="text-t1 text-sm font-medium">{PLATFORM_NAMES[p]}</div>
-                    {connected && <div className="text-t3 text-xs">@{connected.platform_username}</div>}
-                  </div>
-                </div>
-                {connected ? (
-                  <button onClick={() => disconnect(connected.id)} className="btn-ghost text-xs flex items-center gap-1.5 text-red hover:text-red">
-                    <Unlink size={13} /> Déconnecter
-                  </button>
-                ) : (
-                  <button onClick={connectMeta} className="btn-outline text-xs flex items-center gap-1.5">
-                    <Link2 size={13} /> Connecter
-                  </button>
-                )}
-              </div>
-            )
-          })}
-
-          {/* Paid platforms */}
-          {PAID_PLATFORMS.map(p => {
-            const connected = accounts.find(a => a.platform === p)
-            const isPaid = userPlan !== 'free'
-            return (
-              <div key={p} className="flex items-center justify-between p-3 bg-s2 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: isPaid ? PLATFORM_COLORS[p] : '#3f3f46' }} />
-                  <div>
-                    <div className={`text-sm font-medium ${isPaid ? 'text-t1' : 'text-t3'}`}>{PLATFORM_NAMES[p]}</div>
-                    {connected && <div className="text-t3 text-xs">@{connected.platform_username}</div>}
-                  </div>
-                  {!isPaid && <span className="badge badge-gray text-xs ml-1">Premium</span>}
-                </div>
-                {isPaid ? (
-                  connected ? (
-                    <button onClick={() => disconnect(connected.id)} className="btn-ghost text-xs flex items-center gap-1.5 text-red hover:text-red">
-                      <Unlink size={13} /> Déconnecter
-                    </button>
-                  ) : (
-                    <button onClick={connectAyrshare} className="btn-outline text-xs flex items-center gap-1.5">
-                      <Link2 size={13} /> Connecter
-                    </button>
-                  )
-                ) : (
-                  <span className="text-t3 text-xs">Non disponible</span>
-                )}
-              </div>
-            )
-          })}
+        <div className="flex gap-3">
+          {(['dark', 'light'] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => { setTheme(t); localStorage.setItem('theme', t); toast('Bientôt disponible', 'success') }}
+              style={{
+                flex: 1, padding: '1rem', borderRadius: '10px', border: `1px solid ${theme === t ? '#3B7BF6' : '#27272D'}`,
+                background: theme === t ? 'rgba(59,123,246,.08)' : '#111113',
+                color: theme === t ? '#3B7BF6' : '#8E8E98', cursor: 'pointer',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.5rem', transition: '.15s',
+              }}
+            >
+              {t === 'dark' ? <Moon size={20} /> : <Sun size={20} />}
+              <span style={{ fontSize: '.83rem', fontWeight: 500 }}>{t === 'dark' ? 'Sombre' : 'Clair'}</span>
+            </button>
+          ))}
         </div>
-
-        <p className="text-t3 text-xs">
-          {userPlan === 'free'
-            ? `Plan gratuit : ${limits.platforms} plateformes (Instagram + Facebook)`
-            : `Plan ${userPlan} : jusqu'à ${limits.platforms === 999 ? 'toutes les' : limits.platforms} plateformes`}
-        </p>
       </section>
 
-      {/* Brand profile */}
+      {/* Langue */}
       <section className="card p-6 mb-6">
         <div className="flex items-center gap-2 mb-5">
-          <Sparkles size={18} className="text-accent" />
-          <h2 className="font-medium text-t1">Profil de marque</h2>
+          <Globe size={18} className="text-accent" />
+          <h2 className="font-medium text-t1">Langue</h2>
         </div>
-        <p className="text-t3 text-sm mb-4">Ces informations enrichissent la génération IA pour que les posts correspondent parfaitement à votre marque.</p>
-        <div className="space-y-4">
+        <div className="flex gap-3">
+          {([['fr', 'Français'], ['en', 'English']] as const).map(([code, label]) => (
+            <button
+              key={code}
+              onClick={() => { setLang(code); toast('Bientôt disponible', 'success') }}
+              style={{
+                padding: '.75rem 1.5rem', borderRadius: '8px', border: `1px solid ${lang === code ? '#3B7BF6' : '#27272D'}`,
+                background: lang === code ? 'rgba(59,123,246,.08)' : 'transparent',
+                color: lang === code ? '#3B7BF6' : '#8E8E98', cursor: 'pointer',
+                fontSize: '.83rem', fontWeight: 500, transition: '.15s',
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* Notifications */}
+      <section className="card p-6 mb-6">
+        <div className="flex items-center gap-2 mb-5">
+          <Bell size={18} className="text-accent" />
+          <h2 className="font-medium text-t1">Notifications</h2>
+        </div>
+        <div className="flex items-center justify-between p-3 bg-s2 rounded-lg">
           <div>
-            <label className="label">Nom de la marque</label>
-            <input className="input" placeholder="Ex: Pixel Agency" value={brandName} onChange={e => setBrandName(e.target.value)} />
+            <div className="text-t1 text-sm font-medium">Notifications email</div>
+            <div className="text-t3 text-xs mt-0.5">Résumés hebdomadaires, rappels de publication</div>
           </div>
-          <div>
-            <label className="label">Description de la marque</label>
-            <textarea className="input resize-none" rows={3} placeholder="Ce que vous faites, vos valeurs, votre audience cible..." value={brandDesc} onChange={e => setBrandDesc(e.target.value)} />
-          </div>
-          <button onClick={saveBrandProfile} disabled={savingBrand} className="btn-primary flex items-center gap-2">
-            <User size={15} />
-            {savingBrand ? 'Sauvegarde...' : 'Sauvegarder le profil'}
+          <button
+            onClick={() => setEmailNotifs(p => !p)}
+            style={{
+              width: '44px', height: '24px', borderRadius: '999px', border: 'none', cursor: 'pointer',
+              background: emailNotifs ? '#3B7BF6' : '#27272D', transition: '.2s', position: 'relative',
+            }}
+          >
+            <div style={{
+              width: '18px', height: '18px', borderRadius: '50%', background: '#fff',
+              position: 'absolute', top: '3px', transition: '.2s',
+              left: emailNotifs ? '23px' : '3px',
+            }} />
           </button>
         </div>
       </section>
 
-      {/* Billing */}
-      <section className="card p-6">
+      {/* Mot de passe */}
+      <section className="card p-6 mb-6">
+        <div className="flex items-center gap-2 mb-5">
+          <Lock size={18} className="text-accent" />
+          <h2 className="font-medium text-t1">Mot de passe</h2>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label className="label">Nouveau mot de passe</label>
+            <input className="input" type="password" placeholder="8 caractères minimum" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+          </div>
+          <div>
+            <label className="label">Confirmer le mot de passe</label>
+            <input className="input" type="password" placeholder="Répétez le mot de passe" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+          </div>
+          <button onClick={changePassword} disabled={savingPwd} className="btn-primary flex items-center gap-2">
+            <Lock size={15} /> {savingPwd ? 'Modification...' : 'Modifier le mot de passe'}
+          </button>
+        </div>
+      </section>
+
+      {/* Abonnement */}
+      <section className="card p-6 mb-6">
         <div className="flex items-center gap-2 mb-5">
           <CreditCard size={18} className="text-accent" />
           <h2 className="font-medium text-t1">Abonnement</h2>
         </div>
-
         <div className="flex items-center gap-3 mb-5 p-3 bg-s2 rounded-lg">
           <div className={`badge ${userPlan === 'free' ? 'badge-gray' : userPlan === 'premium' ? 'badge-blue' : 'badge-yellow'}`}>
             {userPlan === 'free' ? 'Gratuit' : userPlan === 'premium' ? 'Premium' : 'Business'}
           </div>
           <div className="text-t2 text-sm">
-            {userPlan === 'free' ? '3 posts/semaine · 2 plateformes' :
-             userPlan === 'premium' ? '30 posts/semaine · 5 plateformes · Scheduling' :
-             'Illimité · Toutes plateformes · 3 workspaces'}
+            {userPlan === 'free' ? `3 générations/jour · 2 plateformes` :
+             userPlan === 'premium' ? '10 générations/jour · 5 plateformes · Semaine complète' :
+             'Illimité · Toutes plateformes'}
           </div>
         </div>
-
         {userPlan === 'free' ? (
           <div className="grid grid-cols-2 gap-3">
             <button onClick={() => handleUpgrade('premium')} className="btn-primary flex items-center justify-center gap-2">
@@ -207,6 +190,33 @@ export default function SettingsPage() {
             <CreditCard size={15} /> Gérer mon abonnement
           </button>
         )}
+      </section>
+
+      {/* Danger zone */}
+      <section className="card p-6" style={{ borderColor: 'rgba(239,68,68,.2)' }}>
+        <div className="flex items-center gap-2 mb-5">
+          <Trash2 size={18} style={{ color: '#EF4444' }} />
+          <h2 className="font-medium" style={{ color: '#EF4444' }}>Zone dangereuse</h2>
+        </div>
+        <p className="text-t3 text-sm mb-4">La suppression de votre compte est irréversible. Toutes vos données seront effacées.</p>
+        <div className="space-y-3">
+          <div>
+            <label className="label">Tapez <span style={{ color: '#EF4444', fontFamily: 'monospace' }}>supprimer</span> pour confirmer</label>
+            <input className="input" placeholder="supprimer" value={confirmDelete} onChange={e => setConfirmDelete(e.target.value)} />
+          </div>
+          <button
+            disabled={confirmDelete !== 'supprimer' || deleting}
+            style={{
+              background: confirmDelete === 'supprimer' ? 'rgba(239,68,68,.1)' : 'transparent',
+              border: '1px solid rgba(239,68,68,.3)', color: '#EF4444',
+              padding: '.65rem 1.25rem', borderRadius: '8px', cursor: confirmDelete === 'supprimer' ? 'pointer' : 'not-allowed',
+              fontSize: '.83rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '.5rem',
+              opacity: confirmDelete === 'supprimer' ? 1 : .4,
+            }}
+          >
+            <Trash2 size={14} /> Supprimer mon compte
+          </button>
+        </div>
       </section>
     </div>
   )

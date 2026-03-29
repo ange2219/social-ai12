@@ -224,6 +224,12 @@ export default function CreatePage() {
     aiGenerated: boolean
   } | null>(null)
 
+  // Inline post actions
+  const [showSchedule, setShowSchedule] = useState(false)
+  const [schedDate, setSchedDate] = useState('')
+  const [schedTime, setSchedTime] = useState('')
+  const [postAction, setPostAction] = useState(false)
+
   function togglePlatform(p: Platform) {
     setSelectedPlatforms(prev =>
       prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]
@@ -270,10 +276,7 @@ export default function CreatePage() {
       setActivePreview(selectedPlatforms[0])
     })
 
-    if (Object.keys(generatedVariants).length > 0) {
-      const content = generatedVariants[selectedPlatforms[0]] || Object.values(generatedVariants)[0] || ''
-      setActionModal({ content, platforms: selectedPlatforms, aiGenerated: true })
-    }
+    // Post is shown directly in the preview — no modal
   }
 
   async function handleGenerateWeek() {
@@ -352,6 +355,73 @@ export default function CreatePage() {
     })
   }
 
+  async function saveVariantPost(status: 'draft' | 'scheduled', scheduledAt?: string): Promise<string> {
+    const content = activePreview ? variants[activePreview] : Object.values(variants)[0] || ''
+    const res = await fetch('/api/posts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content,
+        platforms: selectedPlatforms,
+        media_urls: generatedImageUrl ? [generatedImageUrl] : [],
+        ai_generated: true,
+        status,
+        scheduled_at: scheduledAt,
+      }),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Erreur')
+    return data.id
+  }
+
+  async function handlePublishVariant() {
+    if (postAction) return
+    setPostAction(true)
+    try {
+      const id = await saveVariantPost('draft')
+      const res = await fetch(`/api/posts/${id}/publish`, { method: 'POST' })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
+      toast('Post publié !', 'success')
+      setVariants({})
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : 'Erreur', 'error')
+    } finally { setPostAction(false) }
+  }
+
+  async function handleSaveDraft() {
+    if (postAction) return
+    setPostAction(true)
+    try {
+      await saveVariantPost('draft')
+      toast('Post sauvegardé en brouillon', 'success')
+      setVariants({})
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : 'Erreur', 'error')
+    } finally { setPostAction(false) }
+  }
+
+  async function handleScheduleVariant() {
+    if (!schedDate || !schedTime) { toast('Choisissez une date et une heure', 'error'); return }
+    const scheduledAt = new Date(`${schedDate}T${schedTime}`).toISOString()
+    if (new Date(scheduledAt) <= new Date()) { toast('La date doit être dans le futur', 'error'); return }
+    if (postAction) return
+    setPostAction(true)
+    try {
+      const id = await saveVariantPost('scheduled', scheduledAt)
+      const res = await fetch(`/api/posts/${id}/schedule`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scheduledAt }),
+      })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
+      toast('Post programmé !', 'success')
+      setVariants({})
+      setShowSchedule(false)
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : 'Erreur', 'error')
+    } finally { setPostAction(false) }
+  }
+
   const hasVariants = Object.keys(variants).length > 0
   const hasWeek = weekPosts.length > 0
 
@@ -372,14 +442,6 @@ export default function CreatePage() {
             ))}
           </div>
         </div>
-      )}
-
-      {/* Modal action post */}
-      {actionModal && (
-        <PostActionModal
-          {...actionModal}
-          onClose={() => setActionModal(null)}
-        />
       )}
 
       {/* Header + boutons */}
@@ -640,16 +702,38 @@ export default function CreatePage() {
                   )}
                 </button>
 
-                <button
-                  onClick={() => {
-                    const content = activePreview ? variants[activePreview] : Object.values(variants)[0]
-                    if (content) setActionModal({ content, platforms: selectedPlatforms, mediaUrls: generatedImageUrl ? [generatedImageUrl] : [], aiGenerated: true })
-                  }}
-                  className="btn-primary w-full flex items-center justify-center gap-2 py-2.5"
-                >
-                  <Send size={14} />
-                  Publier ou programmer ce post
-                </button>
+                {hasVariants && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '.75rem', marginTop: '1rem' }}>
+                    <div style={{ fontSize: '.8rem', color: '#52525C', textTransform: 'uppercase', letterSpacing: '.06em', fontWeight: 500 }}>
+                      Que faire avec ce post ?
+                    </div>
+                    <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
+                      <button className="modal-btn modal-btn-blue" style={{ flex: 1, minWidth: '140px' }} onClick={handlePublishVariant}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        Publier maintenant
+                      </button>
+                      <button className="modal-btn modal-btn-border" style={{ flex: 1, minWidth: '140px' }} onClick={() => setShowSchedule(p => !p)}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Programmer
+                      </button>
+                      <button className="modal-btn modal-btn-border" style={{ flex: 1, minWidth: '140px' }} onClick={handleSaveDraft}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        Brouillon
+                      </button>
+                    </div>
+                    {showSchedule && (
+                      <div className="modal-sched" style={{ background: '#111113', border: '1px solid #27272D', borderRadius: '10px', padding: '1rem' }}>
+                        <div className="modal-sched-row">
+                          <input type="date" value={schedDate} min={new Date(Date.now() + 5*60000).toISOString().split('T')[0]} onChange={e => setSchedDate(e.target.value)} />
+                          <input type="time" value={schedTime} onChange={e => setSchedTime(e.target.value)} />
+                        </div>
+                        <button className="modal-btn modal-btn-blue" onClick={handleScheduleVariant}>
+                          Confirmer la programmation
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </>
             ) : (
               <div className="card h-72 flex flex-col items-center justify-center text-center p-8">

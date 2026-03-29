@@ -23,8 +23,9 @@ export async function POST(req: NextRequest) {
       user_id: user.id,
       brand_name: body.brand_name,
       description: body.description,
-      tone: body.tone,
-      industry: body.industry,
+      tone: body.default_tone || body.tone,
+      industry: body.sector || body.industry,
+      posts_per_week: body.posts_per_week,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id' })
     .select()
