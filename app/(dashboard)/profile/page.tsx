@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useSearchParams } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
 import { createClient } from '@/lib/supabase/client'
 import { PLATFORM_NAMES, PLATFORM_COLORS, FREE_PLATFORMS } from '@/types'
@@ -29,8 +28,6 @@ export default function ProfilePage() {
 
   const [accounts, setAccounts] = useState<SocialAccount[]>([])
   const [userPlan, setUserPlan] = useState<'free' | 'premium' | 'business'>('free')
-
-  const searchParams = useSearchParams()
 
   const loadAccounts = useCallback(async () => {
     const accRes = await fetch('/api/social/accounts')
@@ -220,7 +217,13 @@ export default function ProfilePage() {
                       </button>
                     ) : (
                       <button
-                        onClick={() => window.location.href = '/api/auth/meta/start'}
+                        onClick={() => {
+                          window.open(
+                            '/api/auth/meta/start',
+                            'meta_oauth',
+                            'width=600,height=700,left=' + (window.screen.width / 2 - 300) + ',top=' + (window.screen.height / 2 - 350)
+                          )
+                        }}
                         style={{ background: 'rgba(59,123,246,.1)', border: '1px solid rgba(59,123,246,.3)', cursor: 'pointer', color: '#3B7BF6', fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.3rem .7rem', borderRadius: '6px', fontWeight: 500 }}
                       >
                         <Link2 size={12} /> Connecter Facebook & Instagram
