@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
     const longToken = await getLongLivedToken(tokenData.access_token)
 
     const pages = await getUserPages(longToken)
-    console.log('[Meta callback] pages trouvées:', pages.length, pages.map(p => p.name))
+    console.log('[Meta callback] pages trouvées:', pages.length, JSON.stringify(pages.map(p => ({ id: p.id, name: p.name }))))
     const admin = createAdminClient()
 
     // Utiliser la Page si dispo, sinon le profil personnel comme fallback
