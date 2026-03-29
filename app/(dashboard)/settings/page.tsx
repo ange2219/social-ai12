@@ -325,6 +325,18 @@ export default function SettingsPage() {
           </div>
           <button
             disabled={confirmDelete !== 'supprimer' || deleting}
+            onClick={async () => {
+              setDeleting(true)
+              const res = await fetch('/api/auth/delete-account', { method: 'DELETE' })
+              if (res.ok) {
+                await supabase.auth.signOut()
+                window.location.href = '/login'
+              } else {
+                const d = await res.json()
+                toast(d.error || 'Erreur suppression', 'error')
+                setDeleting(false)
+              }
+            }}
             style={{
               background: confirmDelete === 'supprimer' ? 'rgba(239,68,68,.1)' : 'transparent',
               border: '1px solid rgba(239,68,68,.3)', color: '#EF4444',
@@ -334,7 +346,7 @@ export default function SettingsPage() {
               opacity: confirmDelete === 'supprimer' ? 1 : .35, whiteSpace: 'nowrap', transition: '.2s',
             }}
           >
-            <Trash2 size={14} /> Supprimer mon compte
+            <Trash2 size={14} /> {deleting ? 'Suppression...' : 'Supprimer mon compte'}
           </button>
         </div>
       </section>

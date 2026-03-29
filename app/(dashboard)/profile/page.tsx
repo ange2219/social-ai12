@@ -6,7 +6,7 @@ import { useToast } from '@/components/ui/Toast'
 import { createClient } from '@/lib/supabase/client'
 import { PLATFORM_NAMES, PLATFORM_COLORS, FREE_PLATFORMS } from '@/types'
 import type { Platform, SocialAccount } from '@/types'
-import { User, Sparkles, Link2, Unlink, Save } from 'lucide-react'
+import { User, Sparkles, Link2, Unlink, Save, Camera } from 'lucide-react'
 
 const ALL_PLATFORMS: Platform[] = ['instagram', 'facebook', 'tiktok', 'twitter', 'linkedin']
 
@@ -16,6 +16,8 @@ export default function ProfilePage() {
 
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [savingUser, setSavingUser] = useState(false)
 
   const [brandName, setBrandName] = useState('')
@@ -44,6 +46,7 @@ export default function ProfilePage() {
       const me = await meRes.json()
       if (me?.full_name) setFullName(me.full_name)
       if (me?.plan) setUserPlan(me.plan)
+      if (me?.avatar_url) setAvatarUrl(me.avatar_url)
 
       const brandRes = await fetch('/api/brand')
       if (brandRes.ok) {
@@ -93,6 +96,23 @@ export default function ProfilePage() {
     if (res.ok) { setAccounts(prev => prev.filter(a => a.id !== id)); toast('Compte déconnecté', 'success') }
   }
 
+  async function uploadAvatar(file: File) {
+    setUploadingAvatar(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/upload/avatar', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setAvatarUrl(data.url)
+      toast('Photo de profil mise à jour', 'success')
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : 'Erreur upload', 'error')
+    } finally {
+      setUploadingAvatar(false)
+    }
+  }
+
   const initials = (fullName || email || 'U').slice(0, 2).toUpperCase()
 
   return (
@@ -115,10 +135,25 @@ export default function ProfilePage() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', padding: '.65rem', background: '#09090B', borderRadius: '8px', border: '1px solid #1E1E24', marginBottom: '1rem' }}>
-            <div className="av" style={{ width: '40px', height: '40px', fontSize: '.9rem', borderRadius: '50%', flexShrink: 0 }}>{initials}</div>
+            <label style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
+              {avatarUrl
+                ? <img src={avatarUrl} alt="" style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', display: 'block' }} />
+                : <div className="av" style={{ width: '44px', height: '44px', fontSize: '.9rem', borderRadius: '50%' }}>{initials}</div>
+              }
+              <div style={{
+                position: 'absolute', inset: 0, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'rgba(0,0,0,.5)', opacity: 0, transition: '.15s',
+              }}
+                onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+                onMouseLeave={e => (e.currentTarget.style.opacity = '0')}
+              >
+                <Camera size={14} color="#fff" />
+              </div>
+              <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadAvatar(f) }} />
+            </label>
             <div>
               <div style={{ fontSize: '.85rem', fontWeight: 500, color: '#E4E4E7' }}>{fullName || 'Sans nom'}</div>
-              <div style={{ fontSize: '.75rem', color: '#52525C' }}>{email}</div>
+              <div style={{ fontSize: '.75rem', color: '#52525C' }}>{uploadingAvatar ? 'Upload en cours...' : 'Cliquez sur la photo pour changer'}</div>
             </div>
           </div>
 

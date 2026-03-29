@@ -1,5 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import OpenAI from 'openai'
+
+const openaiForImages = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null
 import type { GenerateRequest, GenerateResponse, Platform, Plan } from '@/types'
 
 // ─── Clients ──────────────────────────────────────────────────────────────────
@@ -183,18 +185,19 @@ Réponds UNIQUEMENT en JSON : {"hashtags": ["#tag1", "#tag2", ...]}`
   return JSON.parse(text.trim()).hashtags || []
 }
 
-// ─── Recherche d'image via Unsplash (gratuit) ─────────────────────────────────
+// ─── Génération d'image via DALL-E 3 ──────────────────────────────────────────
 
 export async function generateImage(prompt: string): Promise<string | null> {
   try {
-    const query = encodeURIComponent(prompt.slice(0, 100))
-    const res = await fetch(
-      `https://api.unsplash.com/photos/random?query=${query}&orientation=squarish`,
-      { headers: { Authorization: `Client-ID ${process.env.UNSPLASH_ACCESS_KEY}` } }
-    )
-    if (!res.ok) return null
-    const data = await res.json()
-    return data.urls?.regular || null
+    if (!openaiForImages) return null
+    const response = await openaiForImages.images.generate({
+      model: 'dall-e-3',
+      prompt: `Image professionnelle pour un post social media : ${prompt.slice(0, 800)}`,
+      size: '1024x1024',
+      quality: 'standard',
+      n: 1,
+    })
+    return response.data[0]?.url || null
   } catch {
     return null
   }

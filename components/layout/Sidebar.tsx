@@ -16,6 +16,7 @@ export function Sidebar({ user, collapsed, onToggle }: {
   const router = useRouter()
   const supabase = createClient()
   const initials = (user.full_name || user.email || 'U').slice(0, 2).toUpperCase()
+  const avatar = user.avatar_url
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -112,14 +113,6 @@ export function Sidebar({ user, collapsed, onToggle }: {
 
         {!collapsed && <div className="ns">Compte</div>}
 
-        <Link href="/profile" className={ni('/profile')} title="Mon Profil">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
-          </svg>
-          {!collapsed && 'Mon Profil'}
-        </Link>
-
         <Link href="/settings" className={ni('/settings')} title="Paramètres">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
             <circle cx="12" cy="12" r="3"/>
@@ -149,12 +142,18 @@ export function Sidebar({ user, collapsed, onToggle }: {
         <div className="user-row" style={{ justifyContent: collapsed ? 'center' : undefined }}>
           {collapsed ? (
             <Link href="/profile" title={user.full_name || user.email || 'Profil'}>
-              <div className="av">{initials}</div>
+              {avatar
+                ? <img src={avatar} alt="" style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} />
+                : <div className="av">{initials}</div>
+              }
             </Link>
           ) : (
             <>
               <Link href="/profile" style={{ display: 'flex', alignItems: 'center', gap: '.6rem', flex: 1, textDecoration: 'none' }}>
-                <div className="av">{initials}</div>
+                {avatar
+                  ? <img src={avatar} alt="" style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                  : <div className="av">{initials}</div>
+                }
                 <div>
                   <div className="u-name">{user.full_name || user.email?.split('@')[0]}</div>
                   <div className="u-role">{PLAN_LABELS[user.plan]}</div>
