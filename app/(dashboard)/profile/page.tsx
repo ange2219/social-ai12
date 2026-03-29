@@ -6,7 +6,7 @@ import { useToast } from '@/components/ui/Toast'
 import { createClient } from '@/lib/supabase/client'
 import { PLATFORM_NAMES, PLATFORM_COLORS, FREE_PLATFORMS } from '@/types'
 import type { Platform, SocialAccount } from '@/types'
-import { User, Sparkles, Link2, Unlink, Save, Camera } from 'lucide-react'
+import { User, Sparkles, Link2, Unlink, Save, Camera, CheckCircle2, RefreshCw } from 'lucide-react'
 
 const ALL_PLATFORMS: Platform[] = ['instagram', 'facebook', 'tiktok', 'twitter', 'linkedin']
 
@@ -63,8 +63,10 @@ export default function ProfilePage() {
       // Feedback après callback OAuth
       const success = searchParams.get('success')
       const error = searchParams.get('error')
-      if (success === 'meta_connected') toast('Facebook & Instagram connectés !', 'success')
-      else if (error) toast(`Erreur connexion : ${error}`, 'error')
+      const page = searchParams.get('page')
+      if (success === 'facebook_instagram') toast(`Facebook "${page}" + Instagram connectés !`, 'success')
+      else if (success === 'facebook_only') toast(`Facebook "${page}" connecté (pas de compte Instagram lié)`, 'success')
+      else if (error) toast(`Erreur : ${error}`, 'error')
     }
     load()
   }, [searchParams, loadAccounts])
@@ -180,49 +182,69 @@ export default function ProfilePage() {
           </div>
 
           {/* Bloc Meta — Facebook + Instagram groupés */}
-          <div style={{ background: '#09090B', border: '1px solid #1E1E24', borderRadius: '10px', padding: '.75rem', marginBottom: '.75rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.5rem' }}>
-              <div style={{ fontSize: '.75rem', color: '#52525C', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em' }}>
-                Meta (Facebook & Instagram)
-              </div>
-              {(accounts.find(a => a.platform === 'facebook') || accounts.find(a => a.platform === 'instagram')) ? (
-                <button
-                  onClick={() => {
-                    const fb = accounts.find(a => a.platform === 'facebook')
-                    const ig = accounts.find(a => a.platform === 'instagram')
-                    if (fb) disconnect(fb.id)
-                    if (ig) disconnect(ig.id)
-                  }}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '.3rem' }}
-                >
-                  <Unlink size={12} /> Déconnecter
-                </button>
-              ) : (
-                <button
-                  onClick={() => window.location.href = '/api/auth/meta/start'}
-                  style={{ background: 'none', border: '1px solid #27272D', cursor: 'pointer', color: '#8E8E98', fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.3rem .6rem', borderRadius: '6px' }}
-                >
-                  <Link2 size={12} /> Connecter
-                </button>
-              )}
-            </div>
-            {(['facebook', 'instagram'] as Platform[]).map(p => {
-              const connected = accounts.find(a => a.platform === p)
-              return (
-                <div key={p} style={{ display: 'flex', alignItems: 'center', gap: '.6rem', padding: '.4rem 0' }}>
-                  <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: connected ? PLATFORM_COLORS[p] : '#3f3f46', flexShrink: 0 }} />
-                  <div style={{ fontSize: '.82rem', fontWeight: 500, color: connected ? '#E4E4E7' : '#52525C' }}>{PLATFORM_NAMES[p]}</div>
-                  {connected
-                    ? <span style={{ fontSize: '.72rem', color: '#52525C' }}>@{connected.platform_username}</span>
-                    : <span style={{ fontSize: '.72rem', color: '#3f3f46' }}>Non connecté</span>
-                  }
+          {(() => {
+            const fbAccount = accounts.find(a => a.platform === 'facebook')
+            const igAccount = accounts.find(a => a.platform === 'instagram')
+            const anyConnected = !!(fbAccount || igAccount)
+            return (
+              <div style={{
+                background: '#09090B',
+                border: `1px solid ${anyConnected ? 'rgba(34,197,94,.2)' : '#1E1E24'}`,
+                borderRadius: '10px', padding: '.75rem', marginBottom: '.75rem',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.6rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+                    <span style={{ fontSize: '.75rem', color: '#52525C', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em' }}>Meta</span>
+                    {anyConnected && <CheckCircle2 size={13} style={{ color: '#22C55E' }} />}
+                  </div>
+                  <div style={{ display: 'flex', gap: '.4rem' }}>
+                    <button
+                      onClick={loadAccounts}
+                      title="Rafraîchir"
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#52525C', padding: '2px', display: 'flex' }}
+                    >
+                      <RefreshCw size={12} />
+                    </button>
+                    {anyConnected ? (
+                      <button
+                        onClick={() => { if (fbAccount) disconnect(fbAccount.id); if (igAccount) disconnect(igAccount.id) }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '.3rem' }}
+                      >
+                        <Unlink size={12} /> Déconnecter
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => window.location.href = '/api/auth/meta/start'}
+                        style={{ background: 'rgba(59,123,246,.1)', border: '1px solid rgba(59,123,246,.3)', cursor: 'pointer', color: '#3B7BF6', fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.3rem .7rem', borderRadius: '6px', fontWeight: 500 }}
+                      >
+                        <Link2 size={12} /> Connecter Facebook & Instagram
+                      </button>
+                    )}
+                  </div>
                 </div>
-              )
-            })}
-            <div style={{ fontSize: '.72rem', color: '#3f3f46', marginTop: '.5rem' }}>
-              Instagram se connecte automatiquement via votre Page Facebook
-            </div>
-          </div>
+                {(['facebook', 'instagram'] as Platform[]).map(p => {
+                  const acc = accounts.find(a => a.platform === p)
+                  return (
+                    <div key={p} style={{ display: 'flex', alignItems: 'center', gap: '.6rem', padding: '.35rem 0', borderTop: '1px solid #1E1E24' }}>
+                      <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: acc ? PLATFORM_COLORS[p] : '#3f3f46', flexShrink: 0 }} />
+                      <span style={{ fontSize: '.82rem', fontWeight: 500, color: acc ? '#E4E4E7' : '#52525C', minWidth: '80px' }}>{PLATFORM_NAMES[p]}</span>
+                      {acc
+                        ? <span style={{ fontSize: '.75rem', color: '#22C55E', display: 'flex', alignItems: 'center', gap: '.25rem' }}>
+                            <CheckCircle2 size={11} /> @{acc.platform_username}
+                          </span>
+                        : <span style={{ fontSize: '.73rem', color: '#3f3f46' }}>Non connecté</span>
+                      }
+                    </div>
+                  )
+                })}
+                {!anyConnected && (
+                  <div style={{ fontSize: '.72rem', color: '#3f3f46', marginTop: '.5rem' }}>
+                    Instagram se connecte automatiquement via votre Page Facebook
+                  </div>
+                )}
+              </div>
+            )
+          })()}
 
           {/* Autres plateformes */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '.4rem' }}>

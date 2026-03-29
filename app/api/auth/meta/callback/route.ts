@@ -17,31 +17,25 @@ async function saveAccount(admin: ReturnType<typeof createAdminClient>, data: {
   access_token: string
   connected_via: string
 }) {
-  // Cherche si un compte existe déjà
-  const { data: existing } = await admin
+  // D'abord supprimer l'ancien enregistrement s'il existe
+  await admin
     .from('social_accounts')
-    .select('id')
+    .delete()
     .eq('user_id', data.user_id)
     .eq('platform', data.platform)
-    .single()
 
-  if (existing?.id) {
-    // Mise à jour
-    await admin.from('social_accounts').update({
-      platform_user_id: data.platform_user_id,
-      platform_username: data.platform_username,
-      access_token: data.access_token,
-      connected_via: data.connected_via,
-      is_active: true,
-      updated_at: new Date().toISOString(),
-    }).eq('id', existing.id)
-  } else {
-    // Insertion
-    await admin.from('social_accounts').insert({
-      ...data,
-      is_active: true,
-    })
-  }
+  // Insérer le nouveau
+  const { error } = await admin.from('social_accounts').insert({
+    user_id: data.user_id,
+    platform: data.platform,
+    platform_user_id: data.platform_user_id,
+    platform_username: data.platform_username,
+    access_token: data.access_token,
+    connected_via: data.connected_via,
+    is_active: true,
+  })
+
+  if (error) throw new Error(`Sauvegarde ${data.platform} échouée : ${error.message}`)
 }
 
 export async function GET(req: NextRequest) {
@@ -64,13 +58,12 @@ export async function GET(req: NextRequest) {
 
     const pages = await getUserPages(longToken)
     if (!pages.length) {
-      return NextResponse.redirect(new URL('/profile?error=no_facebook_page', req.url))
+      return NextResponse.redirect(new URL('/profile?error=Aucune+Page+Facebook+trouvée.+Créez+une+Page+Facebook+d\'abord.', req.url))
     }
 
     const admin = createAdminClient()
     const page = pages[0]
 
-    // Sauvegarde Facebook
     await saveAccount(admin, {
       user_id: user.id,
       platform: 'facebook',
@@ -80,24 +73,29 @@ export async function GET(req: NextRequest) {
       connected_via: 'meta_direct',
     })
 
-    // Sauvegarde Instagram si disponible
-    const igAccount = await getInstagramAccount(page.id, page.access_token)
-    if (igAccount) {
-      const igProfile = await getInstagramProfile(igAccount.id, page.access_token)
-      await saveAccount(admin, {
-        user_id: user.id,
-        platform: 'instagram',
-        platform_user_id: igAccount.id,
-        platform_username: igProfile.username,
-        access_token: encryptToken(page.access_token),
-        connected_via: 'meta_direct',
-      })
-    }
+    // Instagram si disponible
+    let igConnected = false
+    try {
+      const igAccount = await getInstagramAccount(page.id, page.access_token)
+      if (igAccount) {
+        const igProfile = await getInstagramProfile(igAccount.id, page.access_token)
+        await saveAccount(admin, {
+          user_id: user.id,
+          platform: 'instagram',
+          platform_user_id: igAccount.id,
+          platform_username: igProfile.username,
+          access_token: encryptToken(page.access_token),
+          connected_via: 'meta_direct',
+        })
+        igConnected = true
+      }
+    } catch { /* Instagram optionnel */ }
 
-    return NextResponse.redirect(new URL('/profile?success=meta_connected', req.url))
+    const successMsg = igConnected ? 'facebook_instagram' : 'facebook_only'
+    return NextResponse.redirect(new URL(`/profile?success=${successMsg}&page=${encodeURIComponent(page.name)}`, req.url))
   } catch (err) {
     console.error('Meta OAuth error:', err)
-    const msg = err instanceof Error ? err.message : 'unknown'
+    const msg = err instanceof Error ? err.message : 'Erreur inconnue'
     return NextResponse.redirect(new URL(`/profile?error=${encodeURIComponent(msg)}`, req.url))
   }
 }
