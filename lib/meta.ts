@@ -35,7 +35,10 @@ export async function exchangeCodeForToken(code: string): Promise<{
     code,
   })
   const res = await fetch(`${GRAPH}/oauth/access_token?${params}`)
-  if (!res.ok) throw new Error('Meta token exchange failed')
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(`Échange token échoué : ${err?.error?.message || res.status}`)
+  }
   return res.json()
 }
 
@@ -48,7 +51,10 @@ export async function getLongLivedToken(shortToken: string): Promise<string> {
     fb_exchange_token: shortToken,
   })
   const res = await fetch(`${GRAPH}/oauth/access_token?${params}`)
-  if (!res.ok) throw new Error('Meta long-lived token failed')
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(`Token long-lived échoué : ${err?.error?.message || res.status}`)
+  }
   const data = await res.json()
   return data.access_token
 }
@@ -56,7 +62,10 @@ export async function getLongLivedToken(shortToken: string): Promise<string> {
 /** Récupère les Pages Facebook de l'utilisateur */
 export async function getUserPages(accessToken: string) {
   const res = await fetch(`${GRAPH}/me/accounts?access_token=${accessToken}&fields=id,name,picture,access_token`)
-  if (!res.ok) throw new Error('Meta get pages failed')
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(`Récupération Pages échouée : ${err?.error?.message || res.status}`)
+  }
   const data = await res.json()
   return data.data as Array<{ id: string; name: string; access_token: string; picture?: { data: { url: string } } }>
 }
