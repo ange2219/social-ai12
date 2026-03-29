@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import {
   exchangeCodeForToken,
   getLongLivedToken,
   getUserPages,
+  getPersonalProfile,
   getInstagramAccount,
   getInstagramProfile,
 } from '@/lib/meta'
@@ -45,57 +46,83 @@ export async function GET(req: NextRequest) {
   const storedState = req.cookies.get('meta_oauth_state')?.value
 
   if (!code || state !== storedState) {
-    return NextResponse.redirect(new URL('/profile?error=oauth_invalid', req.url))
+    return popupResponse({ error: 'oauth_invalid' })
   }
 
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.redirect(new URL('/login', req.url))
+  if (!user) return popupResponse({ error: 'Non authentifié' })
 
   try {
     const tokenData = await exchangeCodeForToken(code)
     const longToken = await getLongLivedToken(tokenData.access_token)
 
     const pages = await getUserPages(longToken)
-    if (!pages.length) {
-      return NextResponse.redirect(new URL('/profile?error=Aucune+Page+Facebook+trouvée.+Créez+une+Page+Facebook+d\'abord.', req.url))
-    }
-
     const admin = createAdminClient()
-    const page = pages[0]
+
+    // Utiliser la Page si dispo, sinon le profil personnel comme fallback
+    let fbId: string
+    let fbName: string
+    let fbToken: string
+    let isPage: boolean
+
+    if (pages.length > 0) {
+      const page = pages[0]
+      fbId = page.id
+      fbName = page.name
+      fbToken = page.access_token
+      isPage = true
+    } else {
+      const profile = await getPersonalProfile(longToken)
+      fbId = profile.id
+      fbName = profile.name
+      fbToken = longToken
+      isPage = false
+    }
 
     await saveAccount(admin, {
       user_id: user.id,
       platform: 'facebook',
-      platform_user_id: page.id,
-      platform_username: page.name,
-      access_token: encryptToken(page.access_token),
-      connected_via: 'meta_direct',
+      platform_user_id: fbId,
+      platform_username: fbName,
+      access_token: encryptToken(fbToken),
+      connected_via: isPage ? 'meta_page' : 'meta_personal',
     })
 
-    // Instagram si disponible
+    // Instagram si disponible (seulement via Page)
     let igConnected = false
-    try {
-      const igAccount = await getInstagramAccount(page.id, page.access_token)
-      if (igAccount) {
-        const igProfile = await getInstagramProfile(igAccount.id, page.access_token)
-        await saveAccount(admin, {
-          user_id: user.id,
-          platform: 'instagram',
-          platform_user_id: igAccount.id,
-          platform_username: igProfile.username,
-          access_token: encryptToken(page.access_token),
-          connected_via: 'meta_direct',
-        })
-        igConnected = true
-      }
-    } catch { /* Instagram optionnel */ }
+    if (isPage) {
+      try {
+        const igAccount = await getInstagramAccount(fbId, fbToken)
+        if (igAccount) {
+          const igProfile = await getInstagramProfile(igAccount.id, fbToken)
+          await saveAccount(admin, {
+            user_id: user.id,
+            platform: 'instagram',
+            platform_user_id: igAccount.id,
+            platform_username: igProfile.username,
+            access_token: encryptToken(fbToken),
+            connected_via: 'meta_direct',
+          })
+          igConnected = true
+        }
+      } catch { /* Instagram optionnel */ }
+    }
 
     const successMsg = igConnected ? 'facebook_instagram' : 'facebook_only'
-    return NextResponse.redirect(new URL(`/profile?success=${successMsg}&page=${encodeURIComponent(page.name)}`, req.url))
+    return popupResponse({ success: successMsg, page: fbName })
   } catch (err) {
     console.error('Meta OAuth error:', err)
     const msg = err instanceof Error ? err.message : 'Erreur inconnue'
-    return NextResponse.redirect(new URL(`/profile?error=${encodeURIComponent(msg)}`, req.url))
+    return popupResponse({ error: msg })
   }
+}
+
+function popupResponse(data: Record<string, string>) {
+  const payload = JSON.stringify({ type: 'meta_oauth', ...data })
+  const html = `<!DOCTYPE html><html><body><script>
+    try { window.opener.postMessage(${payload}, '*') } catch(e) {}
+    window.close()
+  </script><p style="font-family:sans-serif;color:#aaa;text-align:center;margin-top:40px">Connexion en cours...</p></body></html>`
+  return new Response(html, { headers: { 'Content-Type': 'text/html' } })
 }

@@ -59,17 +59,23 @@ export default function ProfilePage() {
       }
 
       await loadAccounts()
+    }
+    load()
+  }, [loadAccounts])
 
-      // Feedback après callback OAuth
-      const success = searchParams.get('success')
-      const error = searchParams.get('error')
-      const page = searchParams.get('page')
+  // Écouter le postMessage du popup OAuth Meta
+  useEffect(() => {
+    function handleMessage(e: MessageEvent) {
+      if (!e.data || e.data.type !== 'meta_oauth') return
+      const { success, page, error } = e.data
       if (success === 'facebook_instagram') toast(`Facebook "${page}" + Instagram connectés !`, 'success')
       else if (success === 'facebook_only') toast(`Facebook "${page}" connecté (pas de compte Instagram lié)`, 'success')
       else if (error) toast(`Erreur : ${error}`, 'error')
+      loadAccounts()
     }
-    load()
-  }, [searchParams, loadAccounts])
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [loadAccounts])
 
   async function saveUserInfo() {
     setSavingUser(true)

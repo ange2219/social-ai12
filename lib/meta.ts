@@ -70,6 +70,16 @@ export async function getUserPages(accessToken: string) {
   return data.data as Array<{ id: string; name: string; access_token: string; picture?: { data: { url: string } } }>
 }
 
+/** Récupère le profil personnel Facebook (/me) */
+export async function getPersonalProfile(accessToken: string): Promise<{ id: string; name: string }> {
+  const res = await fetch(`${GRAPH}/me?fields=id,name&access_token=${accessToken}`)
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(`Récupération profil échouée : ${err?.error?.message || res.status}`)
+  }
+  return res.json()
+}
+
 /** Récupère le compte Instagram Business lié à une Page */
 export async function getInstagramAccount(pageId: string, pageToken: string) {
   const res = await fetch(
