@@ -61,14 +61,19 @@ export async function getLongLivedToken(shortToken: string): Promise<string> {
 
 /** Récupère les Pages Facebook de l'utilisateur */
 export async function getUserPages(accessToken: string) {
+  // Debug : permissions accordées au token
+  const permRes = await fetch(`${GRAPH}/me/permissions?access_token=${accessToken}`)
+  const permData = await permRes.json().catch(() => ({}))
+  console.log('[Meta] permissions token:', JSON.stringify(permData?.data?.map((p: {permission: string, status: string}) => `${p.permission}:${p.status}`)))
+
   // Tentative 1 : endpoint classique
   const res = await fetch(`${GRAPH}/me/accounts?access_token=${accessToken}&fields=id,name,access_token`)
+  const rawData = await res.json().catch(() => ({}))
+  console.log('[Meta] /me/accounts raw:', JSON.stringify(rawData))
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(`Récupération Pages échouée : ${err?.error?.message || res.status}`)
+    throw new Error(`Récupération Pages échouée : ${rawData?.error?.message || res.status}`)
   }
-  const data = await res.json()
-  const pages = data.data as Array<{ id: string; name: string; access_token: string }>
+  const pages = (rawData.data || []) as Array<{ id: string; name: string; access_token: string }>
   if (pages.length > 0) return pages
 
   // Tentative 2 : via businesses (Facebook Login for Business)
@@ -82,13 +87,6 @@ export async function getUserPages(accessToken: string) {
       }
     }
     if (bizPages.length > 0) return bizPages
-  }
-
-  // Tentative 3 : /me/accounts avec champ supplémentaire
-  const res3 = await fetch(`${GRAPH}/me/accounts?access_token=${accessToken}&fields=id,name,access_token&limit=100`)
-  if (res3.ok) {
-    const d3 = await res3.json()
-    if (d3.data?.length > 0) return d3.data
   }
 
   return []
