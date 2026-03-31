@@ -78,16 +78,23 @@ export async function getUserPages(accessToken: string) {
 
   // Tentative 2 : via businesses (Facebook Login for Business)
   const bizRes = await fetch(`${GRAPH}/me/businesses?fields=owned_pages{id,name,access_token}&access_token=${accessToken}`)
+  const bizRaw = await bizRes.json().catch(() => ({}))
+  console.log('[Meta] /me/businesses raw:', JSON.stringify(bizRaw))
   if (bizRes.ok) {
-    const bizData = await bizRes.json()
     const bizPages: Array<{ id: string; name: string; access_token: string }> = []
-    for (const biz of bizData.data || []) {
+    for (const biz of bizRaw.data || []) {
       for (const p of biz.owned_pages?.data || []) {
         bizPages.push(p)
       }
     }
     if (bizPages.length > 0) return bizPages
   }
+
+  // Tentative 3 : /me avec champ accounts
+  const meRes = await fetch(`${GRAPH}/me?fields=id,name,accounts{id,name,access_token}&access_token=${accessToken}`)
+  const meRaw = await meRes.json().catch(() => ({}))
+  console.log('[Meta] /me with accounts field:', JSON.stringify(meRaw))
+  if (meRes.ok && meRaw.accounts?.data?.length > 0) return meRaw.accounts.data
 
   return []
 }
