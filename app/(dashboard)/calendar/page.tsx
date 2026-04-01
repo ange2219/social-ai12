@@ -37,7 +37,7 @@ export default async function CalendarPage() {
           <h1 className="font-display text-2xl font-bold text-t1">Calendrier</h1>
           <p className="text-t3 text-sm mt-0.5">Posts programmés et publiés</p>
         </div>
-        <Link href="/create" className="btn-primary flex items-center gap-2">
+        <Link href="/posts/create" className="btn-primary flex items-center gap-2">
           <Calendar size={16} />
           Programmer un post
         </Link>
@@ -50,7 +50,7 @@ export default async function CalendarPage() {
           </div>
           <p className="text-t2 font-medium mb-1">Aucun post programmé</p>
           <p className="text-t3 text-sm mb-4">Créez des posts et programmez-les à l'avance</p>
-          <Link href="/create" className="btn-primary text-sm">Créer un post</Link>
+          <Link href="/posts/create" className="btn-primary text-sm">Créer un post</Link>
         </div>
       ) : (
         <div className="space-y-6">

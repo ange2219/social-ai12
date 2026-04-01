@@ -13,15 +13,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: user } = await admin.from('users').select('*').eq('id', authUser.id).single()
   if (!user) redirect('/login')
 
-  const topbar = (
-    <div className="topbar">
-      <div className="tb-title" id="tb-t">Tableau de bord</div>
-    </div>
-  )
-
   return (
     <ToastProvider>
-      <DashboardShell user={user as User} topbar={topbar}>
+      <DashboardShell user={user as User} topbar={null}>
         {children}
       </DashboardShell>
     </ToastProvider>

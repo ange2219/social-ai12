@@ -439,7 +439,7 @@ export default function PostsPage() {
             <RefreshCw size={13} style={{ animation: syncing ? 'rot .7s linear infinite' : 'none' }} />
             {syncing ? 'Sync...' : 'Synchroniser'}
           </button>
-          <button onClick={() => router.push('/create')} className="btn-primary flex items-center gap-2" style={{ padding: '.55rem 1.1rem', fontSize: '.82rem' }}>
+          <button onClick={() => router.push('/posts/create')} className="btn-primary flex items-center gap-2" style={{ padding: '.55rem 1.1rem', fontSize: '.82rem' }}>
             <Plus size={15} /> Créer un post
           </button>
         </div>
@@ -483,7 +483,7 @@ export default function PostsPage() {
           <div style={{ fontSize: '2rem', marginBottom: '.75rem' }}>✨</div>
           <div style={{ color: '#F4F4F6', fontWeight: 600, marginBottom: '.4rem', fontSize: '.9rem' }}>Aucun post</div>
           <div style={{ color: '#52525C', fontSize: '.8rem', marginBottom: '1.25rem' }}>Créez votre premier post en quelques secondes</div>
-          <button onClick={() => router.push('/create')} className="btn-primary flex items-center gap-2" style={{ margin: '0 auto', padding: '.5rem 1rem', fontSize: '.8rem' }}>
+          <button onClick={() => router.push('/posts/create')} className="btn-primary flex items-center gap-2" style={{ margin: '0 auto', padding: '.5rem 1rem', fontSize: '.8rem' }}>
             <Plus size={14} /> Créer un post
           </button>
         </div>
