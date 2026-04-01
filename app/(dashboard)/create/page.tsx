@@ -304,6 +304,8 @@ export default function CreatePage() {
       generatedVariants = data.variants
       setVariants(data.variants)
       setActivePreview(selectedPlatforms[0])
+      setAiUploadedUrl(null)
+      if (aiFileRef.current) aiFileRef.current.value = ''
     })
 
     // Post is shown directly in the preview — no modal
