@@ -3,9 +3,9 @@ import type { Platform } from '@/types'
 
 const PLATFORM_CHAR_LIMITS: Partial<Record<Platform, number>> = {
   twitter: 280,
-  instagram: 2200,
+  instagram: 2000,
   linkedin: 3000,
-  facebook: 500,
+  facebook: 2000,
   tiktok: 300,
 }
 
