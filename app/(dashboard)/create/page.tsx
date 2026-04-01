@@ -95,7 +95,16 @@ function PostActionModal({ content, platforms, mediaUrls, aiGenerated, onClose }
     } finally { setLoading(false) }
   }
 
+  function checkInstagramImage(): boolean {
+    if (platforms.includes('instagram') && (!mediaUrls || mediaUrls.length === 0)) {
+      toast('Instagram nécessite une image. Ajoutez une photo avant de publier sur Instagram.', 'error')
+      return false
+    }
+    return true
+  }
+
   async function handlePublish() {
+    if (!checkInstagramImage()) return
     setLoading(true)
     try {
       const id = await savePost()
@@ -109,6 +118,7 @@ function PostActionModal({ content, platforms, mediaUrls, aiGenerated, onClose }
   }
 
   async function handleSchedule() {
+    if (!checkInstagramImage()) return
     if (!schedDate || !schedTime) { toast('Choisissez une date et une heure', 'error'); return }
     const scheduledAt = new Date(`${schedDate}T${schedTime}`).toISOString()
     if (new Date(scheduledAt) <= new Date()) { toast('La date doit être dans le futur', 'error'); return }
