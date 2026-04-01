@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Grid3X3, List, Send, Trash2, Eye, EyeOff, X, Save, Pencil, RotateCcw, RefreshCw } from 'lucide-react'
+import { Plus, Grid3X3, List, Send, Trash2, Eye, EyeOff, X, Save, Pencil, RotateCcw, RefreshCw, Upload, ImageOff } from 'lucide-react'
 import { useToast } from '@/components/ui/Toast'
 
 const DELETE_COOLDOWN_MS = 5 * 60 * 1000
@@ -63,6 +63,8 @@ export default function PostsPage() {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
   const [editContent, setEditContent] = useState('')
   const [editPlatforms, setEditPlatforms] = useState<string[]>([])
+  const [editMediaUrl, setEditMediaUrl] = useState<string | null>(null)
+  const [uploadingMedia, setUploadingMedia] = useState(false)
   const [saving, setSaving] = useState(false)
 
   function loadPosts() {
@@ -118,12 +120,30 @@ export default function PostsPage() {
     setSelectedPost(post)
     setEditContent(post.content)
     setEditPlatforms([...post.platforms])
+    setEditMediaUrl(post.media_urls?.[0] || null)
   }
 
   function closePost() {
     setSelectedPost(null)
     setEditContent('')
     setEditPlatforms([])
+    setEditMediaUrl(null)
+  }
+
+  async function handleMediaUpload(file: File) {
+    setUploadingMedia(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: fd })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d.error)
+      setEditMediaUrl(d.url)
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : 'Erreur upload', 'error')
+    } finally {
+      setUploadingMedia(false)
+    }
   }
 
   async function saveEdit() {
@@ -133,12 +153,13 @@ export default function PostsPage() {
       const res = await fetch(`/api/posts/${selectedPost.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: editContent, platforms: editPlatforms }),
+        body: JSON.stringify({ content: editContent, platforms: editPlatforms, media_urls: editMediaUrl ? [editMediaUrl] : [] }),
       })
       if (!res.ok) throw new Error('Erreur de sauvegarde')
       toast('Brouillon mis à jour', 'success')
-      setPosts(prev => prev.map(p => p.id === selectedPost.id ? { ...p, content: editContent, platforms: editPlatforms } : p))
-      setSelectedPost(prev => prev ? { ...prev, content: editContent, platforms: editPlatforms } : null)
+      const updatedMediaUrls = editMediaUrl ? [editMediaUrl] : []
+      setPosts(prev => prev.map(p => p.id === selectedPost.id ? { ...p, content: editContent, platforms: editPlatforms, media_urls: updatedMediaUrls } : p))
+      setSelectedPost(prev => prev ? { ...prev, content: editContent, platforms: editPlatforms, media_urls: updatedMediaUrls } : null)
     } catch (err: unknown) {
       toast(err instanceof Error ? err.message : 'Erreur', 'error')
     } finally {
@@ -147,7 +168,8 @@ export default function PostsPage() {
   }
 
   async function publishPost(post: Post, closeModal = false) {
-    if (post.platforms.includes('instagram') && (!post.media_urls || post.media_urls.length === 0)) {
+    const effectiveMediaUrls = editMediaUrl ? [editMediaUrl] : post.media_urls
+    if (post.platforms.includes('instagram') && (!effectiveMediaUrls || effectiveMediaUrls.length === 0)) {
       toast('Veuillez ajouter une image pour Instagram.', 'warning')
       return
     }
@@ -244,11 +266,34 @@ export default function PostsPage() {
             </div>
 
             {/* Image */}
-            {selectedPost.media_urls?.[0] && (
-              <div style={{ background: '#0A0A0C' }}>
-                <img src={selectedPost.media_urls[0]} alt="" style={{ width: '100%', maxHeight: '280px', objectFit: 'contain', display: 'block' }} />
+            {editMediaUrl ? (
+              <div style={{ background: '#0A0A0C', position: 'relative' }}>
+                <img src={editMediaUrl} alt="" style={{ width: '100%', maxHeight: '280px', objectFit: 'contain', display: 'block' }} />
+                {isDraft && (
+                  <div style={{ position: 'absolute', bottom: '8px', right: '8px', display: 'flex', gap: '.4rem' }}>
+                    <label style={{ cursor: 'pointer', background: 'rgba(0,0,0,.7)', border: '1px solid rgba(255,255,255,.15)', borderRadius: '6px', padding: '.35rem .6rem', display: 'flex', alignItems: 'center', gap: '.35rem', fontSize: '.72rem', color: '#E4E4E7' }}>
+                      <Upload size={12} /> {uploadingMedia ? 'Upload...' : 'Changer'}
+                      <input type="file" accept="image/*,video/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handleMediaUpload(f) }} />
+                    </label>
+                    <button onClick={() => setEditMediaUrl(null)} style={{ background: 'rgba(239,68,68,.7)', border: 'none', borderRadius: '6px', padding: '.35rem .5rem', cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center' }}>
+                      <X size={12} />
+                    </button>
+                  </div>
+                )}
               </div>
-            )}
+            ) : isDraft ? (
+              <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '.5rem', padding: '1.5rem', background: '#0D0D0F', border: '1px dashed #27272D', cursor: 'pointer', transition: '.15s' }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = '#3B7BF6')}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = '#27272D')}
+              >
+                {uploadingMedia
+                  ? <div style={{ width: '20px', height: '20px', border: '2px solid rgba(59,123,246,.3)', borderTopColor: '#3B7BF6', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
+                  : <Upload size={20} color="#3f3f46" />
+                }
+                <span style={{ fontSize: '.78rem', color: '#52525C' }}>{uploadingMedia ? 'Upload en cours...' : 'Ajouter une image ou vidéo'}</span>
+                <input type="file" accept="image/*,video/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handleMediaUpload(f) }} />
+              </label>
+            ) : null}
 
             <div style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {/* Contenu */}
