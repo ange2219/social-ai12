@@ -592,8 +592,8 @@ export default function CreatePage() {
             onClick={() => setMode(mode === 'manual' ? 'single' : 'manual')}
             style={{
               background: mode === 'manual' ? 'rgba(59,123,246,.1)' : 'transparent',
-              border: `1px solid ${mode === 'manual' ? '#3B7BF6' : '#27272D'}`,
-              color: mode === 'manual' ? '#3B7BF6' : '#8E8E98',
+              border: `1px solid ${mode === 'manual' ? '#4646FF' : '#27272D'}`,
+              color: mode === 'manual' ? '#4646FF' : '#8E8E98',
               padding: '.65rem 1.1rem', borderRadius: '8px', fontFamily: "'DM Sans', sans-serif",
               fontSize: '.83rem', fontWeight: 500, cursor: 'pointer',
               display: 'flex', alignItems: 'center', gap: '.5rem', whiteSpace: 'nowrap', transition: '.15s',
@@ -888,7 +888,7 @@ export default function CreatePage() {
                         <div style={{
                           width: '30px', height: '30px', borderRadius: '7px',
                           background: 'rgba(59,123,246,.1)', display: 'flex', alignItems: 'center',
-                          justifyContent: 'center', color: '#3B7BF6', fontSize: '.8rem', fontWeight: 700, flexShrink: 0,
+                          justifyContent: 'center', color: '#4646FF', fontSize: '.8rem', fontWeight: 700, flexShrink: 0,
                         }}>
                           J{post.day}
                         </div>

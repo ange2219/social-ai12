@@ -23,7 +23,7 @@ module.exports = {
         t1: '#fafafa',
         t2: '#a1a1aa',
         t3: '#71717a',
-        accent: '#3b7bf6',
+        accent: '#4646ff',
         'accent-hover': '#2563eb',
         green: '#22c55e',
         red: '#ef4444',

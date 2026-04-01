@@ -141,7 +141,7 @@ export default function ProfilePage() {
         {/* Infos personnelles */}
         <section className="card p-5">
           <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '1rem' }}>
-            <User size={16} style={{ color: '#3B7BF6' }} />
+            <User size={16} style={{ color: '#4646FF' }} />
             <span style={{ fontSize: '.9rem', fontWeight: 600, color: '#F4F4F6' }}>Informations personnelles</span>
           </div>
 
@@ -186,7 +186,7 @@ export default function ProfilePage() {
         {/* Réseaux sociaux */}
         <section className="card p-5">
           <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.75rem' }}>
-            <Link2 size={16} style={{ color: '#3B7BF6' }} />
+            <Link2 size={16} style={{ color: '#4646FF' }} />
             <span style={{ fontSize: '.9rem', fontWeight: 600, color: '#F4F4F6' }}>Réseaux sociaux</span>
           </div>
 
@@ -210,7 +210,7 @@ export default function ProfilePage() {
                     ) : (
                       <button
                         onClick={() => window.open('/api/auth/meta/start', 'meta_oauth', 'width=600,height=700,left=' + (window.screen.width / 2 - 300) + ',top=' + (window.screen.height / 2 - 350))}
-                        style={{ background: 'rgba(59,123,246,.1)', border: '1px solid rgba(59,123,246,.3)', cursor: 'pointer', color: '#3B7BF6', fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.3rem .7rem', borderRadius: '6px', fontWeight: 500 }}
+                        style={{ background: 'rgba(59,123,246,.1)', border: '1px solid rgba(59,123,246,.3)', cursor: 'pointer', color: '#4646FF', fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.3rem .7rem', borderRadius: '6px', fontWeight: 500 }}
                       >
                         <Link2 size={12} /> Connecter
                       </button>
@@ -277,7 +277,7 @@ export default function ProfilePage() {
       {/* Ligne 2 : Profil de marque — pleine largeur */}
       <section className="card p-5">
         <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '1rem' }}>
-          <Sparkles size={16} style={{ color: '#3B7BF6' }} />
+          <Sparkles size={16} style={{ color: '#4646FF' }} />
           <span style={{ fontSize: '.9rem', fontWeight: 600, color: '#F4F4F6' }}>Profil de marque</span>
           <span style={{ marginLeft: 'auto', fontSize: '.75rem', color: '#52525C' }}>Utilisé par l'IA pour personnaliser vos posts</span>
         </div>

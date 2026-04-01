@@ -13,7 +13,7 @@ export default function PrivacyPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '2rem' }}>
             <div style={{
               width: '32px', height: '32px', borderRadius: '8px',
-              background: '#3B7BF6', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: '#4646FF', display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
@@ -119,7 +119,7 @@ export default function PrivacyPage() {
             </h2>
             <p>
               Pour toute question concernant cette politique de confidentialité ou vos données personnelles,
-              contactez-nous à : <strong style={{ color: '#3B7BF6' }}>privacy@social-ia.com</strong>
+              contactez-nous à : <strong style={{ color: '#4646FF' }}>privacy@social-ia.com</strong>
             </p>
           </section>
 

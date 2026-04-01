@@ -367,11 +367,11 @@ export default function PostsPage() {
               </div>
             ) : isDraft ? (
               <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '.5rem', padding: '1.5rem', background: '#0D0D0F', border: '1px dashed #27272D', cursor: 'pointer', transition: '.15s' }}
-                onMouseEnter={e => (e.currentTarget.style.borderColor = '#3B7BF6')}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = '#4646FF')}
                 onMouseLeave={e => (e.currentTarget.style.borderColor = '#27272D')}
               >
                 {uploadingMedia
-                  ? <div style={{ width: '20px', height: '20px', border: '2px solid rgba(59,123,246,.3)', borderTopColor: '#3B7BF6', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
+                  ? <div style={{ width: '20px', height: '20px', border: '2px solid rgba(59,123,246,.3)', borderTopColor: '#4646FF', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
                   : <Upload size={20} color="#3f3f46" />
                 }
                 <span style={{ fontSize: '.78rem', color: '#52525C' }}>{uploadingMedia ? 'Upload en cours...' : 'Ajouter une image ou vidéo'}</span>
@@ -442,7 +442,7 @@ export default function PostsPage() {
                     <button
                       onClick={() => restorePost(selectedPost.id)}
                       disabled={restoring === selectedPost.id}
-                      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem', padding: '.6rem', borderRadius: '8px', border: '1px solid rgba(59,123,246,.4)', background: 'rgba(59,123,246,.1)', color: '#3B7BF6', cursor: 'pointer', fontSize: '.83rem', fontWeight: 600 }}
+                      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem', padding: '.6rem', borderRadius: '8px', border: '1px solid rgba(59,123,246,.4)', background: 'rgba(59,123,246,.1)', color: '#4646FF', cursor: 'pointer', fontSize: '.83rem', fontWeight: 600 }}
                     >
                       <RotateCcw size={14} /> {restoring === selectedPost.id ? 'Restauration...' : 'Restaurer en brouillon'}
                     </button>
@@ -581,9 +581,9 @@ export default function PostsPage() {
           {(['all', 'published', 'draft', 'scheduled', 'failed', 'deleted'] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)} style={{
               padding: '.3rem .75rem', borderRadius: '6px', fontSize: '.75rem', fontWeight: 500, cursor: 'pointer',
-              border: filter === f ? (f === 'deleted' ? '1px solid rgba(239,68,68,.5)' : '1px solid #3B7BF6') : '1px solid #27272D',
+              border: filter === f ? (f === 'deleted' ? '1px solid rgba(239,68,68,.5)' : '1px solid #4646FF') : '1px solid #27272D',
               background: filter === f ? (f === 'deleted' ? 'rgba(239,68,68,.1)' : 'rgba(59,123,246,.12)') : '#111113',
-              color: filter === f ? (f === 'deleted' ? '#EF4444' : '#3B7BF6') : '#8E8E98', transition: '.15s',
+              color: filter === f ? (f === 'deleted' ? '#EF4444' : '#4646FF') : '#8E8E98', transition: '.15s',
               display: 'flex', alignItems: 'center', gap: '.3rem',
             }}>
               {f === 'deleted' && <Trash2 size={11} />}
@@ -595,16 +595,16 @@ export default function PostsPage() {
           {selectMode && filtered.length > 0 && (
             <button onClick={toggleSelectAll}
               style={{ padding: '.3rem .65rem', borderRadius: '6px', border: '1px solid #27272D', background: '#111113', color: '#8E8E98', cursor: 'pointer', fontSize: '.73rem', display: 'flex', alignItems: 'center', gap: '.3rem', marginRight: '.25rem' }}>
-              {selectedIds.size === filtered.length ? <CheckSquare size={12} color="#3B7BF6" /> : <Square size={12} />}
+              {selectedIds.size === filtered.length ? <CheckSquare size={12} color="#4646FF" /> : <Square size={12} />}
               {selectedIds.size === filtered.length ? 'Tout désélectionner' : 'Tout sélectionner'}
             </button>
           )}
           {(['grid', 'list'] as const).map(v => (
             <button key={v} onClick={() => setView(v)} style={{
               padding: '.3rem .5rem', borderRadius: '6px',
-              border: view === v ? '1px solid #3B7BF6' : '1px solid #27272D',
+              border: view === v ? '1px solid #4646FF' : '1px solid #27272D',
               background: view === v ? 'rgba(59,123,246,.12)' : '#111113',
-              color: view === v ? '#3B7BF6' : '#52525C', cursor: 'pointer', display: 'flex', alignItems: 'center',
+              color: view === v ? '#4646FF' : '#52525C', cursor: 'pointer', display: 'flex', alignItems: 'center',
             }}>
               {v === 'grid' ? <Grid3X3 size={14} /> : <List size={14} />}
             </button>
@@ -631,14 +631,14 @@ export default function PostsPage() {
             return (
             <div key={post.id}
               onClick={() => selectMode ? toggleSelect(post.id) : openPost(post)}
-              style={{ background: '#111113', border: `1px solid ${isSelected ? '#3B7BF6' : '#27272D'}`, borderRadius: '10px', overflow: 'hidden', transition: '.15s', cursor: 'pointer', position: 'relative' }}
-              onMouseEnter={e => { if (!isSelected) e.currentTarget.style.borderColor = '#3B7BF6' }}
+              style={{ background: '#111113', border: `1px solid ${isSelected ? '#4646FF' : '#27272D'}`, borderRadius: '10px', overflow: 'hidden', transition: '.15s', cursor: 'pointer', position: 'relative' }}
+              onMouseEnter={e => { if (!isSelected) e.currentTarget.style.borderColor = '#4646FF' }}
               onMouseLeave={e => { if (!isSelected) e.currentTarget.style.borderColor = '#27272D' }}
             >
               {selectMode && (
                 <div style={{ position: 'absolute', top: '6px', left: '6px', zIndex: 10 }}>
                   {isSelected
-                    ? <CheckSquare size={18} color="#3B7BF6" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.8))' }} />
+                    ? <CheckSquare size={18} color="#4646FF" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.8))' }} />
                     : <Square size={18} color="rgba(255,255,255,.6)" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.8))' }} />
                   }
                 </div>
@@ -665,9 +665,9 @@ export default function PostsPage() {
                   {(post.status === 'draft' || post.status === 'failed') && (
                     <div style={{ display: 'flex', gap: '.25rem' }} onClick={e => e.stopPropagation()}>
                       <button onClick={() => publishPost(post)} disabled={publishing === post.id} title="Publier"
-                        style={{ background: 'rgba(59,123,246,.15)', border: '1px solid rgba(59,123,246,.3)', borderRadius: '5px', padding: '.2rem .35rem', cursor: 'pointer', color: '#3B7BF6', display: 'flex', alignItems: 'center' }}>
+                        style={{ background: 'rgba(59,123,246,.15)', border: '1px solid rgba(59,123,246,.3)', borderRadius: '5px', padding: '.2rem .35rem', cursor: 'pointer', color: '#4646FF', display: 'flex', alignItems: 'center' }}>
                         {publishing === post.id
-                          ? <div style={{ width: '10px', height: '10px', border: '1.5px solid rgba(59,123,246,.3)', borderTopColor: '#3B7BF6', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
+                          ? <div style={{ width: '10px', height: '10px', border: '1.5px solid rgba(59,123,246,.3)', borderTopColor: '#4646FF', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
                           : <Send size={10} />}
                       </button>
                       <button onClick={() => askDelete(post.id)} disabled={deleting === post.id} title="Supprimer"
@@ -688,13 +688,13 @@ export default function PostsPage() {
             return (
             <div key={post.id}
               onClick={() => selectMode ? toggleSelect(post.id) : openPost(post)}
-              style={{ background: '#111113', border: `1px solid ${isSelected ? '#3B7BF6' : '#27272D'}`, borderRadius: '8px', padding: '.75rem 1rem', display: 'flex', alignItems: 'center', gap: '1rem', transition: '.15s', cursor: 'pointer' }}
-              onMouseEnter={e => { if (!isSelected) e.currentTarget.style.borderColor = '#3B7BF6' }}
+              style={{ background: '#111113', border: `1px solid ${isSelected ? '#4646FF' : '#27272D'}`, borderRadius: '8px', padding: '.75rem 1rem', display: 'flex', alignItems: 'center', gap: '1rem', transition: '.15s', cursor: 'pointer' }}
+              onMouseEnter={e => { if (!isSelected) e.currentTarget.style.borderColor = '#4646FF' }}
               onMouseLeave={e => { if (!isSelected) e.currentTarget.style.borderColor = '#27272D' }}
             >
               {selectMode && (
                 <div style={{ flexShrink: 0 }}>
-                  {isSelected ? <CheckSquare size={17} color="#3B7BF6" /> : <Square size={17} color="#52525C" />}
+                  {isSelected ? <CheckSquare size={17} color="#4646FF" /> : <Square size={17} color="#52525C" />}
                 </div>
               )}
               <div style={{ width: '44px', height: '44px', borderRadius: '6px', background: '#18181C', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -721,9 +721,9 @@ export default function PostsPage() {
                 {(post.status === 'draft' || post.status === 'failed') && (
                   <>
                     <button onClick={() => publishPost(post)} disabled={publishing === post.id}
-                      style={{ background: 'rgba(59,123,246,.15)', border: '1px solid rgba(59,123,246,.3)', borderRadius: '6px', padding: '.3rem .6rem', cursor: 'pointer', color: '#3B7BF6', display: 'flex', alignItems: 'center', gap: '.3rem', fontSize: '.72rem', fontWeight: 500 }}>
+                      style={{ background: 'rgba(59,123,246,.15)', border: '1px solid rgba(59,123,246,.3)', borderRadius: '6px', padding: '.3rem .6rem', cursor: 'pointer', color: '#4646FF', display: 'flex', alignItems: 'center', gap: '.3rem', fontSize: '.72rem', fontWeight: 500 }}>
                       {publishing === post.id
-                        ? <div style={{ width: '11px', height: '11px', border: '1.5px solid rgba(59,123,246,.3)', borderTopColor: '#3B7BF6', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
+                        ? <div style={{ width: '11px', height: '11px', border: '1.5px solid rgba(59,123,246,.3)', borderTopColor: '#4646FF', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
                         : <Send size={11} />} Publier
                     </button>
                     <button onClick={() => askDelete(post.id)} disabled={deleting === post.id}

@@ -4,7 +4,7 @@ export default function Loading() {
       <div style={{
         width: '28px', height: '28px',
         border: '2.5px solid rgba(255,255,255,.08)',
-        borderTopColor: '#3B7BF6',
+        borderTopColor: '#4646FF',
         borderRadius: '50%',
         animation: 'rot .7s linear infinite',
       }} />

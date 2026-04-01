@@ -124,7 +124,7 @@ export function LogoAnimation({ size = 160 }: { size?: number }) {
         top: '50%', left: '50%',
         transform: 'translate(-50%, -50%)',
         width: center, height: center,
-        background: '#3B7BF6',
+        background: '#4646FF',
         borderRadius: Math.round(center * 0.28),
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         boxShadow: '0 0 20px rgba(59,123,246,0.45)',

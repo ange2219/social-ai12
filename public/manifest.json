@@ -5,7 +5,7 @@
   "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#09090B",
-  "theme_color": "#3B7BF6",
+  "theme_color": "#4646FF",
   "orientation": "portrait-primary",
   "icons": [
     {

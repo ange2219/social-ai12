@@ -78,7 +78,7 @@ export default function LoginPage() {
             <div className="fg">
               <label className="fl" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 Mot de passe
-                <Link href="/reset-password" style={{ fontSize: '.74rem', color: '#3B7BF6', textDecoration: 'none' }}>Oublié ?</Link>
+                <Link href="/reset-password" style={{ fontSize: '.74rem', color: '#4646FF', textDecoration: 'none' }}>Oublié ?</Link>
               </label>
               <input className="fi" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required />
             </div>

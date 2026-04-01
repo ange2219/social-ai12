@@ -90,7 +90,7 @@ export default function SettingsPage() {
         {/* Apparence */}
         <section className="card p-5">
           <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '1rem' }}>
-            <Moon size={16} style={{ color: '#3B7BF6' }} />
+            <Moon size={16} style={{ color: '#4646FF' }} />
             <span style={{ fontSize: '.9rem', fontWeight: 600, color: '#F4F4F6' }}>Apparence</span>
           </div>
           <div style={{ display: 'flex', gap: '.75rem' }}>
@@ -100,9 +100,9 @@ export default function SettingsPage() {
                 onClick={() => { setTheme(t); localStorage.setItem('theme', t); toast('Bientôt disponible', 'success') }}
                 style={{
                   flex: 1, padding: '.85rem', borderRadius: '10px',
-                  border: `1px solid ${theme === t ? '#3B7BF6' : '#27272D'}`,
+                  border: `1px solid ${theme === t ? '#4646FF' : '#27272D'}`,
                   background: theme === t ? 'rgba(59,123,246,.08)' : '#111113',
-                  color: theme === t ? '#3B7BF6' : '#52525C', cursor: 'pointer',
+                  color: theme === t ? '#4646FF' : '#52525C', cursor: 'pointer',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.4rem', transition: '.15s',
                 }}
               >
@@ -119,7 +119,7 @@ export default function SettingsPage() {
           {/* Langue */}
           <section className="card p-5">
             <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '1rem' }}>
-              <Globe size={16} style={{ color: '#3B7BF6' }} />
+              <Globe size={16} style={{ color: '#4646FF' }} />
               <span style={{ fontSize: '.9rem', fontWeight: 600, color: '#F4F4F6' }}>Langue</span>
             </div>
             <div style={{ display: 'flex', gap: '.5rem' }}>
@@ -129,9 +129,9 @@ export default function SettingsPage() {
                   onClick={() => { setLang(code); toast('Bientôt disponible', 'success') }}
                   style={{
                     flex: 1, padding: '.6rem', borderRadius: '8px',
-                    border: `1px solid ${lang === code ? '#3B7BF6' : '#27272D'}`,
+                    border: `1px solid ${lang === code ? '#4646FF' : '#27272D'}`,
                     background: lang === code ? 'rgba(59,123,246,.08)' : 'transparent',
-                    color: lang === code ? '#3B7BF6' : '#8E8E98', cursor: 'pointer',
+                    color: lang === code ? '#4646FF' : '#8E8E98', cursor: 'pointer',
                     fontSize: '.8rem', fontWeight: 500, transition: '.15s',
                   }}
                 >
@@ -144,7 +144,7 @@ export default function SettingsPage() {
           {/* Notifications */}
           <section className="card p-5" style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '1rem' }}>
-              <Bell size={16} style={{ color: '#3B7BF6' }} />
+              <Bell size={16} style={{ color: '#4646FF' }} />
               <span style={{ fontSize: '.9rem', fontWeight: 600, color: '#F4F4F6' }}>Notifications</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.65rem .75rem', background: '#09090B', borderRadius: '8px', border: '1px solid #1E1E24' }}>
@@ -156,7 +156,7 @@ export default function SettingsPage() {
                 onClick={() => setEmailNotifs(p => !p)}
                 style={{
                   width: '42px', height: '22px', borderRadius: '999px', border: 'none', cursor: 'pointer',
-                  background: emailNotifs ? '#3B7BF6' : '#27272D', transition: '.2s', position: 'relative', flexShrink: 0,
+                  background: emailNotifs ? '#4646FF' : '#27272D', transition: '.2s', position: 'relative', flexShrink: 0,
                 }}
               >
                 <div style={{
@@ -176,7 +176,7 @@ export default function SettingsPage() {
         {/* Mot de passe */}
         <section className="card p-5">
           <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '1rem' }}>
-            <Lock size={16} style={{ color: '#3B7BF6' }} />
+            <Lock size={16} style={{ color: '#4646FF' }} />
             <span style={{ fontSize: '.9rem', fontWeight: 600, color: '#F4F4F6' }}>Mot de passe</span>
             {pwdStep === 'verified' && (
               <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '.3rem', fontSize: '.75rem', color: '#22C55E' }}>
@@ -262,7 +262,7 @@ export default function SettingsPage() {
         {/* Abonnement */}
         <section className="card p-5">
           <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '1rem' }}>
-            <CreditCard size={16} style={{ color: '#3B7BF6' }} />
+            <CreditCard size={16} style={{ color: '#4646FF' }} />
             <span style={{ fontSize: '.9rem', fontWeight: 600, color: '#F4F4F6' }}>Abonnement</span>
           </div>
 
@@ -271,7 +271,7 @@ export default function SettingsPage() {
               <div style={{
                 padding: '.2rem .6rem', borderRadius: '999px', fontSize: '.72rem', fontWeight: 600,
                 background: userPlan === 'free' ? '#27272D' : userPlan === 'premium' ? 'rgba(59,123,246,.15)' : 'rgba(251,191,36,.12)',
-                color: userPlan === 'free' ? '#8E8E98' : userPlan === 'premium' ? '#3B7BF6' : '#FBBF24',
+                color: userPlan === 'free' ? '#8E8E98' : userPlan === 'premium' ? '#4646FF' : '#FBBF24',
               }}>
                 {userPlan === 'free' ? 'Gratuit' : userPlan === 'premium' ? 'Premium' : 'Business'}
               </div>

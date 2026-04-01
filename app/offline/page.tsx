@@ -23,7 +23,7 @@ export default function OfflinePage() {
         style={{
           marginTop: '0.5rem',
           padding: '0.6rem 1.4rem',
-          background: '#3B7BF6',
+          background: '#4646FF',
           border: 'none',
           borderRadius: 8,
           color: '#fff',

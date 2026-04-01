@@ -154,7 +154,7 @@ export default function EditPostPage() {
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-      <div style={{ width: '28px', height: '28px', border: '2.5px solid rgba(255,255,255,.08)', borderTopColor: '#3B7BF6', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
+      <div style={{ width: '28px', height: '28px', border: '2.5px solid rgba(255,255,255,.08)', borderTopColor: '#4646FF', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
     </div>
   )
 
@@ -201,11 +201,11 @@ export default function EditPostPage() {
             </div>
           ) : (
             <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '.5rem', padding: '2rem', background: '#0D0D0F', border: '1px dashed #27272D', borderRadius: '8px', cursor: 'pointer', transition: '.15s' }}
-              onMouseEnter={e => (e.currentTarget.style.borderColor = '#3B7BF6')}
+              onMouseEnter={e => (e.currentTarget.style.borderColor = '#4646FF')}
               onMouseLeave={e => (e.currentTarget.style.borderColor = '#27272D')}
             >
               {uploading
-                ? <div style={{ width: '20px', height: '20px', border: '2px solid rgba(59,123,246,.3)', borderTopColor: '#3B7BF6', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
+                ? <div style={{ width: '20px', height: '20px', border: '2px solid rgba(59,123,246,.3)', borderTopColor: '#4646FF', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
                 : <Upload size={20} color="#3f3f46" />}
               <span style={{ fontSize: '.78rem', color: '#52525C' }}>{uploading ? 'Upload en cours...' : 'Ajouter une image ou vidéo'}</span>
               <input type="file" accept="image/*,video/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handleMediaUpload(f) }} />

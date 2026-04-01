@@ -65,7 +65,7 @@ export function PWAInstall() {
         onClick={install}
         style={{
           padding: '0.4rem 0.9rem',
-          background: '#3B7BF6',
+          background: '#4646FF',
           border: 'none',
           borderRadius: 8,
           color: '#fff',
