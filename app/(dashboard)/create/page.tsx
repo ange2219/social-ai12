@@ -97,7 +97,7 @@ function PostActionModal({ content, platforms, mediaUrls, aiGenerated, onClose }
 
   function checkInstagramImage(): boolean {
     if (platforms.includes('instagram') && (!mediaUrls || mediaUrls.length === 0)) {
-      toast('Instagram nécessite une image. Ajoutez une photo avant de publier sur Instagram.', 'error')
+      toast('Veuillez ajouter une image pour Instagram.', 'error')
       return false
     }
     return true

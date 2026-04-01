@@ -41,7 +41,7 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
 
         if (account.platform === 'instagram') {
           const mediaUrl = post.media_urls?.[0]
-          if (!mediaUrl) continue
+          if (!mediaUrl) throw new Error('Veuillez ajouter une image pour Instagram.')
           const id = await publishInstagramPost({
             igUserId: account.platform_user_id,
             pageToken: token,
