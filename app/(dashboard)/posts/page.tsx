@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Grid3X3, List, Send, Trash2, Eye, EyeOff, X, Save, Pencil, RotateCcw, RefreshCw, Upload, ImageOff } from 'lucide-react'
+import { Plus, Grid3X3, List, Send, Trash2, Eye, EyeOff, X, Save, Pencil, RotateCcw, RefreshCw, Upload, CheckSquare, Square } from 'lucide-react'
 import { useToast } from '@/components/ui/Toast'
 
 const DELETE_COOLDOWN_MS = 5 * 60 * 1000
@@ -68,6 +68,81 @@ export default function PostsPage() {
   const [editMediaUrl, setEditMediaUrl] = useState<string | null>(null)
   const [uploadingMedia, setUploadingMedia] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  // Multi-sélection
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkDeleting, setBulkDeleting] = useState(false)
+
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filtered.map(p => p.id)))
+    }
+  }
+
+  function exitSelectMode() {
+    setSelectMode(false)
+    setSelectedIds(new Set())
+  }
+
+  async function bulkDelete() {
+    if (selectedIds.size === 0) return
+    const needsPassword = !lastDeletedAt.current || Date.now() - lastDeletedAt.current >= DELETE_COOLDOWN_MS
+    if (needsPassword) {
+      setBulkConfirm(true)
+      setPassword('')
+      return
+    }
+    await doBulkDelete()
+  }
+
+  const [bulkConfirm, setBulkConfirm] = useState(false)
+
+  async function confirmBulkDelete() {
+    setPwLoading(true)
+    try {
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user?.email) throw new Error('Non connecté')
+      const { error } = await supabase.auth.signInWithPassword({ email: user.email, password })
+      if (error) throw new Error('Mot de passe incorrect')
+      setBulkConfirm(false)
+      setPassword('')
+      await doBulkDelete()
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : 'Erreur', 'error')
+    } finally {
+      setPwLoading(false)
+    }
+  }
+
+  async function doBulkDelete() {
+    setBulkDeleting(true)
+    const ids = Array.from(selectedIds)
+    try {
+      await Promise.all(ids.map(id => fetch(`/api/posts/${id}`, { method: 'DELETE' })))
+      toast(`${ids.length} post${ids.length > 1 ? 's' : ''} supprimé${ids.length > 1 ? 's' : ''}`, 'success')
+      lastDeletedAt.current = Date.now()
+      setPosts(prev => prev.filter(p => !ids.includes(p.id)))
+      setTotal(prev => prev - ids.length)
+      exitSelectMode()
+    } catch {
+      toast('Erreur lors de la suppression', 'error')
+    } finally {
+      setBulkDeleting(false)
+    }
+  }
 
   function loadPosts() {
     setLoading(true)
@@ -427,6 +502,46 @@ export default function PostsPage() {
         </div>
       )}
 
+      {/* ── Modal confirmation suppression bulk ── */}
+      {bulkConfirm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.75)', backdropFilter: 'blur(6px)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={e => { if (e.target === e.currentTarget) { setBulkConfirm(false); setPassword('') } }}
+        >
+          <div style={{ background: '#111113', border: '1px solid #27272D', borderRadius: '14px', padding: '1.75rem', width: '100%', maxWidth: '360px' }}>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#F4F4F6', fontFamily: "'Bricolage Grotesque', sans-serif", marginBottom: '.4rem' }}>Supprimer {selectedIds.size} post{selectedIds.size > 1 ? 's' : ''}</div>
+            <div style={{ fontSize: '.82rem', color: '#8E8E98', marginBottom: '1.25rem', lineHeight: 1.5 }}>Entrez votre mot de passe pour confirmer la suppression.</div>
+            <div style={{ position: 'relative', marginBottom: '1rem' }}>
+              <input type={showPw ? 'text' : 'password'} placeholder="Mot de passe" value={password}
+                onChange={e => setPassword(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') confirmBulkDelete() }}
+                autoFocus className="input" style={{ width: '100%', paddingRight: '2.5rem' }} />
+              <button onClick={() => setShowPw(p => !p)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#52525C', display: 'flex' }}>
+                {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+              </button>
+            </div>
+            <div style={{ display: 'flex', gap: '.6rem' }}>
+              <button onClick={() => { setBulkConfirm(false); setPassword('') }} style={{ flex: 1, padding: '.6rem', borderRadius: '8px', border: '1px solid #27272D', background: 'transparent', color: '#8E8E98', cursor: 'pointer', fontSize: '.83rem' }}>Annuler</button>
+              <button onClick={confirmBulkDelete} disabled={!password || pwLoading} style={{ flex: 1, padding: '.6rem', borderRadius: '8px', border: 'none', background: '#EF4444', color: '#fff', cursor: 'pointer', fontSize: '.83rem', fontWeight: 600, opacity: !password || pwLoading ? .5 : 1 }}>
+                {pwLoading ? 'Vérification...' : 'Supprimer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Barre de sélection flottante ── */}
+      {selectMode && selectedIds.size > 0 && (
+        <div style={{ position: 'fixed', bottom: '1.5rem', left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#18181C', border: '1px solid #27272D', borderRadius: '12px', padding: '.75rem 1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', boxShadow: '0 8px 32px rgba(0,0,0,.6)', backdropFilter: 'blur(8px)' }}>
+          <span style={{ fontSize: '.82rem', color: '#8E8E98' }}>{selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}</span>
+          <button onClick={bulkDelete} disabled={bulkDeleting}
+            style={{ display: 'flex', alignItems: 'center', gap: '.4rem', padding: '.45rem .9rem', borderRadius: '8px', border: 'none', background: '#EF4444', color: '#fff', cursor: 'pointer', fontSize: '.8rem', fontWeight: 600, opacity: bulkDeleting ? .6 : 1 }}>
+            <Trash2 size={13} /> {bulkDeleting ? 'Suppression...' : 'Supprimer'}
+          </button>
+          <button onClick={exitSelectMode} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#52525C', display: 'flex', padding: '4px' }}>
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
         <div>
@@ -434,6 +549,17 @@ export default function PostsPage() {
           <p style={{ color: '#52525C', fontSize: '.8rem', marginTop: '.15rem' }}>{total} post{total !== 1 ? 's' : ''} au total</p>
         </div>
         <div style={{ display: 'flex', gap: '.5rem' }}>
+          {selectMode ? (
+            <button onClick={exitSelectMode}
+              style={{ padding: '.5rem .75rem', borderRadius: '8px', border: '1px solid #27272D', background: '#111113', color: '#8E8E98', cursor: 'pointer', fontSize: '.78rem' }}>
+              Annuler
+            </button>
+          ) : (
+            <button onClick={() => setSelectMode(true)}
+              style={{ padding: '.5rem .75rem', borderRadius: '8px', border: '1px solid #27272D', background: '#111113', color: '#52525C', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.78rem' }}>
+              <CheckSquare size={13} /> Sélectionner
+            </button>
+          )}
           <button onClick={syncPlatforms} disabled={syncing} title="Vérifier si des posts ont été supprimés sur les plateformes"
             style={{ padding: '.5rem .75rem', borderRadius: '8px', border: '1px solid #27272D', background: '#111113', color: '#52525C', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.78rem' }}>
             <RefreshCw size={13} style={{ animation: syncing ? 'rot .7s linear infinite' : 'none' }} />
@@ -461,7 +587,14 @@ export default function PostsPage() {
             </button>
           ))}
         </div>
-        <div style={{ display: 'flex', gap: '.3rem' }}>
+        <div style={{ display: 'flex', gap: '.3rem', alignItems: 'center' }}>
+          {selectMode && filtered.length > 0 && (
+            <button onClick={toggleSelectAll}
+              style={{ padding: '.3rem .65rem', borderRadius: '6px', border: '1px solid #27272D', background: '#111113', color: '#8E8E98', cursor: 'pointer', fontSize: '.73rem', display: 'flex', alignItems: 'center', gap: '.3rem', marginRight: '.25rem' }}>
+              {selectedIds.size === filtered.length ? <CheckSquare size={12} color="#3B7BF6" /> : <Square size={12} />}
+              {selectedIds.size === filtered.length ? 'Tout désélectionner' : 'Tout sélectionner'}
+            </button>
+          )}
           {(['grid', 'list'] as const).map(v => (
             <button key={v} onClick={() => setView(v)} style={{
               padding: '.3rem .5rem', borderRadius: '6px',
@@ -489,12 +622,23 @@ export default function PostsPage() {
         </div>
       ) : view === 'grid' ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '.6rem' }}>
-          {filtered.map(post => (
-            <div key={post.id} onClick={() => openPost(post)}
-              style={{ background: '#111113', border: '1px solid #27272D', borderRadius: '10px', overflow: 'hidden', transition: '.15s', cursor: 'pointer' }}
-              onMouseEnter={e => (e.currentTarget.style.borderColor = '#3B7BF6')}
-              onMouseLeave={e => (e.currentTarget.style.borderColor = '#27272D')}
+          {filtered.map(post => {
+            const isSelected = selectedIds.has(post.id)
+            return (
+            <div key={post.id}
+              onClick={() => selectMode ? toggleSelect(post.id) : openPost(post)}
+              style={{ background: '#111113', border: `1px solid ${isSelected ? '#3B7BF6' : '#27272D'}`, borderRadius: '10px', overflow: 'hidden', transition: '.15s', cursor: 'pointer', position: 'relative' }}
+              onMouseEnter={e => { if (!isSelected) e.currentTarget.style.borderColor = '#3B7BF6' }}
+              onMouseLeave={e => { if (!isSelected) e.currentTarget.style.borderColor = '#27272D' }}
             >
+              {selectMode && (
+                <div style={{ position: 'absolute', top: '6px', left: '6px', zIndex: 10 }}>
+                  {isSelected
+                    ? <CheckSquare size={18} color="#3B7BF6" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.8))' }} />
+                    : <Square size={18} color="rgba(255,255,255,.6)" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.8))' }} />
+                  }
+                </div>
+              )}
               <div style={{ aspectRatio: '1', background: '#18181C', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {post.media_urls?.[0]
                   ? <img src={post.media_urls[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
@@ -531,16 +675,24 @@ export default function PostsPage() {
                 </div>
               </div>
             </div>
-          ))}
+          )})}
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
-          {filtered.map(post => (
-            <div key={post.id} onClick={() => openPost(post)}
-              style={{ background: '#111113', border: '1px solid #27272D', borderRadius: '8px', padding: '.75rem 1rem', display: 'flex', alignItems: 'center', gap: '1rem', transition: '.15s', cursor: 'pointer' }}
-              onMouseEnter={e => (e.currentTarget.style.borderColor = '#3B7BF6')}
-              onMouseLeave={e => (e.currentTarget.style.borderColor = '#27272D')}
+          {filtered.map(post => {
+            const isSelected = selectedIds.has(post.id)
+            return (
+            <div key={post.id}
+              onClick={() => selectMode ? toggleSelect(post.id) : openPost(post)}
+              style={{ background: '#111113', border: `1px solid ${isSelected ? '#3B7BF6' : '#27272D'}`, borderRadius: '8px', padding: '.75rem 1rem', display: 'flex', alignItems: 'center', gap: '1rem', transition: '.15s', cursor: 'pointer' }}
+              onMouseEnter={e => { if (!isSelected) e.currentTarget.style.borderColor = '#3B7BF6' }}
+              onMouseLeave={e => { if (!isSelected) e.currentTarget.style.borderColor = '#27272D' }}
             >
+              {selectMode && (
+                <div style={{ flexShrink: 0 }}>
+                  {isSelected ? <CheckSquare size={17} color="#3B7BF6" /> : <Square size={17} color="#52525C" />}
+                </div>
+              )}
               <div style={{ width: '44px', height: '44px', borderRadius: '6px', background: '#18181C', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {post.media_urls?.[0]
                   ? <img src={post.media_urls[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -578,7 +730,7 @@ export default function PostsPage() {
                 )}
               </div>
             </div>
-          ))}
+          )})}
         </div>
       )}
     </div>
