@@ -15,6 +15,7 @@ const PLATFORM_SHORT: Record<string, string> = {
   instagram: 'IG', facebook: 'FB', tiktok: 'TK', twitter: 'X', linkedin: 'LI', youtube: 'YT', pinterest: 'PT',
 }
 const ALL_PLATFORMS = ['instagram', 'facebook', 'tiktok', 'twitter', 'linkedin', 'youtube', 'pinterest']
+const FREE_PLATFORMS = ['instagram', 'facebook']
 
 function stClass(s: string) {
   if (s === 'draft') return 'st st-p'
@@ -53,6 +54,7 @@ export default function PostsPage() {
   const [deleting, setDeleting] = useState<string | null>(null)
   const [restoring, setRestoring] = useState<string | null>(null)
   const [syncing, setSyncing] = useState(false)
+  const [userPlan, setUserPlan] = useState<'free' | 'premium' | 'business'>('free')
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
@@ -114,7 +116,10 @@ export default function PostsPage() {
     }
   }
 
-  useEffect(() => { loadPosts() }, [])
+  useEffect(() => {
+    loadPosts()
+    fetch('/api/auth/me').then(r => r.json()).then(d => { if (d?.plan) setUserPlan(d.plan) }).catch(() => {})
+  }, [])
 
   function openPost(post: Post) {
     setSelectedPost(post)
@@ -319,24 +324,27 @@ export default function PostsPage() {
                 <label className="label" style={{ marginBottom: '.5rem', display: 'block' }}>Plateformes</label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.4rem' }}>
                   {(isDraft ? ALL_PLATFORMS : selectedPost.platforms).map(p => {
+                    const isPlanLocked = isDraft && userPlan === 'free' && !FREE_PLATFORMS.includes(p)
                     const active = isDraft ? editPlatforms.includes(p) : true
                     return (
                       <button
                         key={p}
                         onClick={() => {
-                          if (!isDraft) return
+                          if (!isDraft || isPlanLocked) return
                           setEditPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p])
                         }}
+                        title={isPlanLocked ? 'Plan Pro requis' : undefined}
                         style={{
                           padding: '.25rem .65rem', borderRadius: '6px', fontSize: '.73rem', fontWeight: 600,
-                          border: `1px solid ${active ? PLATFORM_COLORS[p] + '60' : '#27272D'}`,
-                          background: active ? PLATFORM_COLORS[p] + '18' : 'transparent',
-                          color: active ? PLATFORM_COLORS[p] : '#3f3f46',
-                          cursor: isDraft ? 'pointer' : 'default',
-                          transition: '.12s',
+                          border: `1px solid ${isPlanLocked ? '#1E1E24' : active ? PLATFORM_COLORS[p] + '60' : '#27272D'}`,
+                          background: isPlanLocked ? 'transparent' : active ? PLATFORM_COLORS[p] + '18' : 'transparent',
+                          color: isPlanLocked ? '#2a2a30' : active ? PLATFORM_COLORS[p] : '#3f3f46',
+                          cursor: isPlanLocked ? 'not-allowed' : isDraft ? 'pointer' : 'default',
+                          transition: '.12s', position: 'relative',
                         }}
                       >
                         {PLATFORM_SHORT[p]}
+                        {isPlanLocked && <span style={{ fontSize: '.5rem', marginLeft: '.2rem', opacity: .6 }}>Pro</span>}
                       </button>
                     )
                   })}
