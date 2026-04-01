@@ -197,6 +197,10 @@ export default function PostsPage() {
   }, [])
 
   function openPost(post: Post) {
+    if (post.status === 'draft' || post.status === 'failed') {
+      router.push(`/posts/${post.id}/edit`)
+      return
+    }
     setSelectedPost(post)
     setEditContent(post.content)
     setEditPlatforms([...post.platforms])

@@ -433,23 +433,31 @@ export default function CreatePage() {
     })
   }
 
-  async function saveVariantPost(status: 'draft' | 'scheduled', scheduledAt?: string): Promise<string> {
-    const content = activePreview ? variants[activePreview] : Object.values(variants)[0] || ''
-    const res = await fetch('/api/posts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        content,
-        platforms: selectedPlatforms,
-        media_urls: (() => { const u = aiUploadedUrl || generatedImageUrl; return u ? [u] : [] })(),
-        ai_generated: true,
-        status,
-        scheduled_at: scheduledAt,
-      }),
-    })
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.error || 'Erreur')
-    return data.id
+  // Sauvegarde UN post par plateforme (chaque variante a son propre contenu)
+  async function saveAllVariants(status: 'draft' | 'scheduled' | 'failed', scheduledAt?: string): Promise<string[]> {
+    const mediaUrl = aiUploadedUrl || generatedImageUrl
+    const ids: string[] = []
+    const platformsToSave = selectedPlatforms.filter(p => variants[p])
+    // Si pas de variantes distinctes, sauvegarder un seul post groupé
+    if (platformsToSave.length === 0) throw new Error('Aucun contenu à sauvegarder')
+    for (const platform of platformsToSave) {
+      const res = await fetch('/api/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: variants[platform] || '',
+          platforms: [platform],
+          media_urls: mediaUrl ? [mediaUrl] : [],
+          ai_generated: true,
+          status,
+          scheduled_at: scheduledAt,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erreur')
+      ids.push(data.id)
+    }
+    return ids
   }
 
   async function handlePublishVariant() {
@@ -461,9 +469,8 @@ export default function CreatePage() {
     }
     setPostAction(true)
     try {
-      const id = await saveVariantPost('draft')
-      const res = await fetch(`/api/posts/${id}/publish`, { method: 'POST' })
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
+      const ids = await saveAllVariants('draft')
+      await Promise.all(ids.map(id => fetch(`/api/posts/${id}/publish`, { method: 'POST' })))
       toast('Post publié !', 'success')
       setVariants({})
       sessionStorage.removeItem('social_ia_create_draft')
@@ -476,8 +483,8 @@ export default function CreatePage() {
     if (postAction) return
     setPostAction(true)
     try {
-      await saveVariantPost('draft')
-      toast('Post sauvegardé en brouillon', 'success')
+      const ids = await saveAllVariants('draft')
+      toast(`${ids.length} brouillon${ids.length > 1 ? 's' : ''} sauvegardé${ids.length > 1 ? 's' : ''}`, 'success')
       setVariants({})
       sessionStorage.removeItem('social_ia_create_draft')
     } catch (err: unknown) {
@@ -489,19 +496,8 @@ export default function CreatePage() {
     if (postAction) return
     setPostAction(true)
     try {
-      const content = selectedPlatforms[0] ? variants[selectedPlatforms[0]] : Object.values(variants)[0]
-      await fetch('/api/posts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content: content || '',
-          platforms: selectedPlatforms,
-          media_urls: (() => { const u = aiUploadedUrl || generatedImageUrl; return u ? [u] : [] })(),
-          ai_generated: true,
-          status: 'failed',
-        }),
-      })
-      toast('Post rejeté', 'success')
+      await saveAllVariants('failed')
+      toast('Posts rejetés', 'success')
       setVariants({})
       sessionStorage.removeItem('social_ia_create_draft')
     } catch (err: unknown) {
@@ -516,13 +512,15 @@ export default function CreatePage() {
     if (postAction) return
     setPostAction(true)
     try {
-      const id = await saveVariantPost('scheduled', scheduledAt)
-      const res = await fetch(`/api/posts/${id}/schedule`, {
+      const ids = await saveAllVariants('scheduled', scheduledAt)
+      const results = await Promise.all(ids.map(id => fetch(`/api/posts/${id}/schedule`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ scheduledAt }),
-      })
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
+      })))
+      for (const res of results) {
+        if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
+      }
       toast('Post programmé !', 'success')
       setVariants({})
       sessionStorage.removeItem('social_ia_create_draft')
