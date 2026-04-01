@@ -10,26 +10,19 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 interface OnboardingData {
-  // Étape 1
   account_type: string
-  // Étape 2
   brand_name: string
   industry: string
   description: string
   website: string
-  // Étape 3
   target_audience: string
   audience_age: string
   audience_interests: string
   audience_location: string
-  // Étape 4
   content_pillars: string[]
   tone: string
   avoid_words: string
-  // Étape 5
   objectives: string[]
   posts_per_week: number
 }
@@ -50,8 +43,6 @@ const INITIAL: OnboardingData = {
   objectives: [],
   posts_per_week: 5,
 }
-
-// ─── Constantes ───────────────────────────────────────────────────────────────
 
 const ACCOUNT_TYPES = [
   { value: 'creator', label: 'Créateur / Freelance', desc: 'Marque personnelle, influenceur, consultant', icon: User },
@@ -89,15 +80,7 @@ const OBJECTIVES = [
   { value: 'expertise', label: 'Montrer l\'expertise', icon: Trophy },
 ]
 
-const STEPS = [
-  'Type de compte',
-  'Identité',
-  'Audience',
-  'Contenu & Ton',
-  'Objectifs',
-]
-
-// ─── Composant principal ───────────────────────────────────────────────────────
+const STEPS = ['Compte & Marque', 'Audience & Contenu', 'Objectifs']
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(0)
@@ -126,10 +109,8 @@ export default function OnboardingPage() {
   }
 
   function canNext(): boolean {
-    if (step === 0) return !!data.account_type
-    if (step === 1) return !!data.brand_name && !!data.industry && !!data.description
-    if (step === 2) return !!data.target_audience && !!data.audience_age
-    if (step === 3) return data.content_pillars.filter(Boolean).length >= 1 && !!data.tone
+    if (step === 0) return !!data.account_type && !!data.brand_name && !!data.industry && !!data.description
+    if (step === 1) return !!data.target_audience && !!data.audience_age && data.content_pillars.filter(Boolean).length >= 1 && !!data.tone
     return data.objectives.length >= 1
   }
 
@@ -148,7 +129,6 @@ export default function OnboardingPage() {
       setSaving(false)
     }
   }
-
 
   return (
     <div className="min-h-screen bg-bg flex flex-col items-center justify-center p-6">
@@ -176,7 +156,7 @@ export default function OnboardingPage() {
                 {i < step ? <Check size={13} /> : i + 1}
               </div>
               {i < STEPS.length - 1 && (
-                <div className={cn('h-px w-12 transition-all', i < step ? 'bg-accent' : 'bg-s3')} />
+                <div className={cn('h-px w-24 transition-all', i < step ? 'bg-accent' : 'bg-s3')} />
               )}
             </div>
           ))}
@@ -187,48 +167,47 @@ export default function OnboardingPage() {
       {/* Card */}
       <div className="w-full max-w-lg card p-8">
 
-        {/* ── Étape 1 : Type de compte ── */}
+        {/* ── Étape 1 : Compte + Profil de marque ── */}
         {step === 0 && (
-          <div className="animate-fadeUp">
-            <h2 className="font-display text-2xl font-bold text-t1 mb-1">Bienvenue sur Social IA</h2>
-            <p className="text-t3 text-sm mb-6">Quel type de compte décrit le mieux votre activité ?</p>
-            <div className="space-y-3">
-              {ACCOUNT_TYPES.map(type => (
-                <button
-                  key={type.value}
-                  onClick={() => update('account_type', type.value)}
-                  className={cn(
-                    'w-full flex items-center gap-4 p-4 rounded-xl border transition-all text-left',
-                    data.account_type === type.value
-                      ? 'border-accent bg-accent/10'
-                      : 'border-b1 hover:border-b2 bg-s2'
-                  )}
-                >
-                  <type.icon size={22} className={data.account_type === type.value ? 'text-accent' : 'text-t3'} />
-                  <div>
-                    <div className={cn('font-medium text-sm', data.account_type === type.value ? 'text-accent' : 'text-t1')}>
-                      {type.label}
-                    </div>
-                    <div className="text-t3 text-xs mt-0.5">{type.desc}</div>
-                  </div>
-                  {data.account_type === type.value && (
-                    <div className="ml-auto w-5 h-5 rounded-full bg-accent flex items-center justify-center">
-                      <Check size={11} className="text-white" />
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── Étape 2 : Identité ── */}
-        {step === 1 && (
-          <div className="animate-fadeUp space-y-4">
+          <div className="animate-fadeUp space-y-5">
             <div>
-              <h2 className="font-display text-2xl font-bold text-t1 mb-1">Votre identité</h2>
-              <p className="text-t3 text-sm mb-6">Ces infos permettront à l'IA de personnaliser chaque post</p>
+              <h2 className="font-display text-2xl font-bold text-t1 mb-1">Bienvenue sur Social IA</h2>
+              <p className="text-t3 text-sm mb-2">Quelques infos pour personnaliser votre expérience</p>
             </div>
+
+            {/* Type de compte */}
+            <div>
+              <label className="label">Type de compte *</label>
+              <div className="space-y-2">
+                {ACCOUNT_TYPES.map(type => (
+                  <button
+                    key={type.value}
+                    onClick={() => update('account_type', type.value)}
+                    className={cn(
+                      'w-full flex items-center gap-4 p-3.5 rounded-xl border transition-all text-left',
+                      data.account_type === type.value
+                        ? 'border-accent bg-accent/10'
+                        : 'border-b1 hover:border-b2 bg-s2'
+                    )}
+                  >
+                    <type.icon size={18} className={data.account_type === type.value ? 'text-accent' : 'text-t3'} />
+                    <div>
+                      <div className={cn('font-medium text-sm', data.account_type === type.value ? 'text-accent' : 'text-t1')}>
+                        {type.label}
+                      </div>
+                      <div className="text-t3 text-xs mt-0.5">{type.desc}</div>
+                    </div>
+                    {data.account_type === type.value && (
+                      <div className="ml-auto w-5 h-5 rounded-full bg-accent flex items-center justify-center shrink-0">
+                        <Check size={11} className="text-white" />
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Profil de marque */}
             <div>
               <label className="label">Nom de la marque / votre nom *</label>
               <input className="input" placeholder="Ex: Pixel Agency" value={data.brand_name} onChange={e => update('brand_name', e.target.value)} />
@@ -258,18 +237,20 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* ── Étape 3 : Audience ── */}
-        {step === 2 && (
-          <div className="animate-fadeUp space-y-4">
+        {/* ── Étape 2 : Audience + Ligne éditoriale ── */}
+        {step === 1 && (
+          <div className="animate-fadeUp space-y-5">
             <div>
-              <h2 className="font-display text-2xl font-bold text-t1 mb-1">Votre audience cible</h2>
-              <p className="text-t3 text-sm mb-6">L'IA adaptera le langage et les références à votre audience</p>
+              <h2 className="font-display text-2xl font-bold text-t1 mb-1">Audience & Contenu</h2>
+              <p className="text-t3 text-sm">L'IA adaptera le ton et les sujets à votre audience</p>
             </div>
+
+            {/* Audience */}
             <div>
               <label className="label">Qui sont vos clients / abonnés ? *</label>
               <input
                 className="input"
-                placeholder="Ex: Entrepreneurs de 25-40 ans qui cherchent à développer leur business en ligne"
+                placeholder="Ex: Entrepreneurs de 25-40 ans cherchant à développer leur business"
                 value={data.target_audience}
                 onChange={e => update('target_audience', e.target.value)}
               />
@@ -317,29 +298,17 @@ export default function OnboardingPage() {
                 ))}
               </div>
             </div>
-          </div>
-        )}
 
-        {/* ── Étape 4 : Contenu & Ton ── */}
-        {step === 3 && (
-          <div className="animate-fadeUp space-y-5">
-            <div>
-              <h2 className="font-display text-2xl font-bold text-t1 mb-1">Contenu & Ton</h2>
-              <p className="text-t3 text-sm mb-6">Définissez votre stratégie de contenu</p>
-            </div>
-            <div>
-              <label className="label">Vos 3 piliers de contenu *</label>
+            {/* Ligne éditoriale */}
+            <div className="pt-1 border-t border-b1">
+              <label className="label mt-1">Vos piliers de contenu * <span className="text-t3 font-normal">(au moins 1)</span></label>
               <p className="text-t3 text-xs mb-2">Les grands thèmes sur lesquels vous communiquez</p>
               <div className="space-y-2">
                 {[0, 1, 2].map(i => (
                   <input
                     key={i}
                     className="input"
-                    placeholder={[
-                      'Ex: Conseils et tutoriels',
-                      'Ex: Coulisses de l\'entreprise',
-                      'Ex: Promotions et offres',
-                    ][i]}
+                    placeholder={['Ex: Conseils et tutoriels', 'Ex: Coulisses de l\'entreprise', 'Ex: Promotions et offres'][i]}
                     value={data.content_pillars[i]}
                     onChange={e => updatePillar(i, e.target.value)}
                   />
@@ -358,9 +327,7 @@ export default function OnboardingPage() {
                       data.tone === t.value ? 'border-accent bg-accent/10' : 'border-b1 bg-s2 hover:border-b2'
                     )}
                   >
-                    <div className={cn('text-sm font-medium', data.tone === t.value ? 'text-accent' : 'text-t1')}>
-                      {t.label}
-                    </div>
+                    <div className={cn('text-sm font-medium', data.tone === t.value ? 'text-accent' : 'text-t1')}>{t.label}</div>
                     <div className="text-t3 text-xs mt-0.5">{t.desc}</div>
                   </button>
                 ))}
@@ -378,12 +345,12 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* ── Étape 5 : Objectifs ── */}
-        {step === 4 && (
+        {/* ── Étape 3 : Objectifs ── */}
+        {step === 2 && (
           <div className="animate-fadeUp space-y-5">
             <div>
               <h2 className="font-display text-2xl font-bold text-t1 mb-1">Vos objectifs</h2>
-              <p className="text-t3 text-sm mb-6">Pourquoi publiez-vous sur les réseaux ? (plusieurs choix possibles)</p>
+              <p className="text-t3 text-sm mb-2">Pourquoi publiez-vous sur les réseaux ? <span className="text-t3">(plusieurs choix)</span></p>
             </div>
             <div className="grid grid-cols-2 gap-2">
               {OBJECTIVES.map(obj => {
@@ -398,9 +365,7 @@ export default function OnboardingPage() {
                     )}
                   >
                     <obj.icon size={17} className={selected ? 'text-accent' : 'text-t3'} />
-                    <span className={cn('text-sm font-medium', selected ? 'text-accent' : 'text-t1')}>
-                      {obj.label}
-                    </span>
+                    <span className={cn('text-sm font-medium', selected ? 'text-accent' : 'text-t1')}>{obj.label}</span>
                     {selected && (
                       <div className="ml-auto w-4 h-4 rounded-full bg-accent flex items-center justify-center shrink-0">
                         <Check size={10} className="text-white" />
@@ -414,8 +379,7 @@ export default function OnboardingPage() {
               <label className="label">Fréquence de publication souhaitée</label>
               <div className="flex items-center gap-4">
                 <input
-                  type="range"
-                  min={1} max={21}
+                  type="range" min={1} max={21}
                   value={data.posts_per_week}
                   onChange={e => update('posts_per_week', parseInt(e.target.value))}
                   className="flex-1 accent-accent"
@@ -426,11 +390,9 @@ export default function OnboardingPage() {
               </div>
             </div>
 
-            {/* Récap */}
             <div className="bg-accent/5 border border-accent/20 rounded-xl p-4">
               <div className="flex items-center gap-2 text-accent text-sm font-medium mb-2">
-                <Sparkles size={14} />
-                Votre profil IA est prêt
+                <Sparkles size={14} /> Votre profil IA est prêt
               </div>
               <p className="text-t3 text-xs leading-relaxed">
                 L'IA connaîtra votre marque, votre audience et vos objectifs. Chaque post généré sera personnalisé pour <strong className="text-t2">{data.brand_name}</strong>.
@@ -455,9 +417,7 @@ export default function OnboardingPage() {
             <button
               onClick={() => setStep(s => s + 1)}
               disabled={!canNext()}
-              className={cn('btn-primary flex items-center gap-2',
-                !canNext() && 'opacity-40 cursor-not-allowed'
-              )}
+              className={cn('btn-primary flex items-center gap-2', !canNext() && 'opacity-40 cursor-not-allowed')}
             >
               Continuer <ChevronRight size={16} />
             </button>
@@ -465,13 +425,9 @@ export default function OnboardingPage() {
             <button
               onClick={handleFinish}
               disabled={!canNext() || saving}
-              className={cn('btn-primary flex items-center gap-2',
-                (!canNext() || saving) && 'opacity-40 cursor-not-allowed'
-              )}
+              className={cn('btn-primary flex items-center gap-2', (!canNext() || saving) && 'opacity-40 cursor-not-allowed')}
             >
-              {saving ? 'Finalisation...' : (
-                <><Check size={15} /> Accéder au dashboard</>
-              )}
+              {saving ? 'Finalisation...' : <><Check size={15} /> Accéder au dashboard</>}
             </button>
           )}
         </div>
