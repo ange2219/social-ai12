@@ -44,14 +44,15 @@ interface Post {
 export default function PostsPage() {
   const router = useRouter()
   const [posts, setPosts] = useState<Post[]>([])
+  const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'published' | 'draft' | 'scheduled' | 'failed'>('all')
   const [view, setView] = useState<'grid' | 'list'>('grid')
 
   useEffect(() => {
-    fetch('/api/posts')
+    fetch('/api/posts?limit=100')
       .then(r => r.json())
-      .then(d => { setPosts(Array.isArray(d) ? d : []); setLoading(false) })
+      .then(d => { setPosts(d.posts || []); setTotal(d.total || 0); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])
 
@@ -66,7 +67,7 @@ export default function PostsPage() {
           <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1.3rem', fontWeight: 700, color: '#F4F4F6', letterSpacing: '-.02em' }}>
             Mes Posts
           </h1>
-          <p style={{ color: '#52525C', fontSize: '.8rem', marginTop: '.15rem' }}>{posts.length} post{posts.length !== 1 ? 's' : ''} au total</p>
+          <p style={{ color: '#52525C', fontSize: '.8rem', marginTop: '.15rem' }}>{total} post{total !== 1 ? 's' : ''} au total</p>
         </div>
         <button
           onClick={() => router.push('/create')}
