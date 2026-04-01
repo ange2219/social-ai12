@@ -6,6 +6,7 @@ const IG_REDIRECT_URI = process.env.INSTAGRAM_REDIRECT_URI!
 
 export function getInstagramOAuthUrl(state: string): string {
   const params = new URLSearchParams({
+    force_reauth: 'true',
     client_id: IG_APP_ID,
     redirect_uri: IG_REDIRECT_URI,
     scope: 'instagram_basic',
