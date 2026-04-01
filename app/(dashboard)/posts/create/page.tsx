@@ -337,6 +337,7 @@ export default function CreatePage() {
       setActivePreview(selectedPlatforms[0])
       setAiUploadedUrl(null)
       if (aiFileRef.current) aiFileRef.current.value = ''
+      setBrief('')
     })
 
     // Post is shown directly in the preview — no modal
@@ -356,6 +357,7 @@ export default function CreatePage() {
       if (!res.ok) { toast(data.error || 'Erreur', 'error'); return }
       setWeekPosts(data.week || [])
       setExpandedDay(1)
+      setBrief('')
       toast(`${data.week?.length || 0} posts générés !`, 'success')
     })
   }
