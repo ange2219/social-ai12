@@ -9,7 +9,7 @@ export function getInstagramOAuthUrl(state: string): string {
     force_reauth: 'true',
     client_id: IG_APP_ID,
     redirect_uri: IG_REDIRECT_URI,
-    scope: 'instagram_basic',
+    scope: 'instagram_business_basic,instagram_business_content_publish',
     response_type: 'code',
     state,
   })
