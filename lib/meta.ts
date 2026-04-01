@@ -121,7 +121,10 @@ export async function publishInstagramPost(params: {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(containerBody),
   })
-  if (!containerRes.ok) throw new Error('Instagram media container failed')
+  if (!containerRes.ok) {
+    const e = await containerRes.json().catch(() => ({}))
+    throw new Error(`Instagram media container failed: ${e?.error?.message || containerRes.status}`)
+  }
   const { id: creationId } = await containerRes.json()
 
   // 2. Publier le container
@@ -130,7 +133,10 @@ export async function publishInstagramPost(params: {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ creation_id: creationId, access_token: params.pageToken }),
   })
-  if (!publishRes.ok) throw new Error('Instagram publish failed')
+  if (!publishRes.ok) {
+    const e = await publishRes.json().catch(() => ({}))
+    throw new Error(`Instagram publish failed: ${e?.error?.message || publishRes.status}`)
+  }
   const { id } = await publishRes.json()
   return id
 }
@@ -157,7 +163,10 @@ export async function publishFacebookPost(params: {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
-  if (!res.ok) throw new Error('Facebook publish failed')
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}))
+    throw new Error(`Facebook publish failed: ${e?.error?.message || res.status}`)
+  }
   const data = await res.json()
   return data.id || data.post_id
 }
