@@ -148,7 +148,7 @@ export default function PostsPage() {
 
   async function publishPost(post: Post, closeModal = false) {
     if (post.platforms.includes('instagram') && (!post.media_urls || post.media_urls.length === 0)) {
-      toast('Veuillez ajouter une image pour Instagram.', 'error')
+      toast('Veuillez ajouter une image pour Instagram.', 'warning')
       return
     }
     setPublishing(post.id)

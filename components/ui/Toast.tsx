@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect, createContext, useContext, useCallback } from 'react'
-import { X, CheckCircle, AlertCircle, Info } from 'lucide-react'
+import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-type ToastType = 'success' | 'error' | 'info'
+type ToastType = 'success' | 'error' | 'info' | 'warning'
 
 interface Toast {
   id: string
@@ -33,12 +33,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const remove = (id: string) => setToasts(prev => prev.filter(t => t.id !== id))
 
-  const ICONS = { success: CheckCircle, error: AlertCircle, info: Info }
+  const ICONS = { success: CheckCircle, error: AlertCircle, info: Info, warning: AlertTriangle }
   const COLORS = {
     success: 'border-green/30 bg-green/5 text-green',
     error: 'border-red/30 bg-red/5 text-red',
     info: 'border-accent/30 bg-accent/5 text-accent',
+    warning: '',
   }
+  const WARNING_STYLE = { border: '1px solid rgba(251,191,36,.4)', background: 'rgba(251,191,36,.08)', color: '#FBBF24' }
 
   return (
     <ToastContext.Provider value={{ toast }}>
@@ -51,8 +53,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               key={t.id}
               className={cn(
                 'flex items-center gap-3 px-4 py-3 rounded-lg border backdrop-blur-sm shadow-xl animate-fadeUp pointer-events-auto max-w-sm',
-                COLORS[t.type]
+                t.type !== 'warning' ? COLORS[t.type] : ''
               )}
+              style={t.type === 'warning' ? WARNING_STYLE : undefined}
             >
               <Icon size={16} className="shrink-0" />
               <span className="text-sm text-t1 flex-1">{t.message}</span>
