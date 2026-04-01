@@ -46,6 +46,7 @@ export interface Post {
   published_at: string | null
   ayrshare_post_id: string | null
   meta_post_ids: Record<string, string> | null
+  content_variants: Record<string, string> | null
   ai_generated: boolean
   error_message: string | null
   created_at: string

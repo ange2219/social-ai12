@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const { content, platforms, media_urls, ai_generated, status } = body
+  const { content, platforms, media_urls, ai_generated, status, content_variants } = body
 
   if (!content || !platforms?.length) {
     return NextResponse.json({ error: 'content et platforms requis' }, { status: 400 })
@@ -56,6 +56,7 @@ export async function POST(req: NextRequest) {
       media_urls: media_urls || [],
       ai_generated: ai_generated || false,
       status: insertStatus,
+      ...(content_variants ? { content_variants } : {}),
     })
     .select()
     .single()

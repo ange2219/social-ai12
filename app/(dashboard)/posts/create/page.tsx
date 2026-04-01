@@ -433,31 +433,26 @@ export default function CreatePage() {
     })
   }
 
-  // Sauvegarde UN post par plateforme (chaque variante a son propre contenu)
-  async function saveAllVariants(status: 'draft' | 'scheduled' | 'failed', scheduledAt?: string): Promise<string[]> {
+  async function saveVariantPost(status: 'draft' | 'scheduled' | 'failed', scheduledAt?: string): Promise<string> {
     const mediaUrl = aiUploadedUrl || generatedImageUrl
-    const ids: string[] = []
-    const platformsToSave = selectedPlatforms.filter(p => variants[p])
-    // Si pas de variantes distinctes, sauvegarder un seul post groupé
-    if (platformsToSave.length === 0) throw new Error('Aucun contenu à sauvegarder')
-    for (const platform of platformsToSave) {
-      const res = await fetch('/api/posts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content: variants[platform] || '',
-          platforms: [platform],
-          media_urls: mediaUrl ? [mediaUrl] : [],
-          ai_generated: true,
-          status,
-          scheduled_at: scheduledAt,
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erreur')
-      ids.push(data.id)
-    }
-    return ids
+    const primaryContent = activePreview ? variants[activePreview] : Object.values(variants)[0] || ''
+    const content_variants = Object.keys(variants).length > 1 ? variants : undefined
+    const res = await fetch('/api/posts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content: primaryContent,
+        platforms: selectedPlatforms,
+        media_urls: mediaUrl ? [mediaUrl] : [],
+        ai_generated: true,
+        status,
+        scheduled_at: scheduledAt,
+        content_variants,
+      }),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Erreur')
+    return data.id
   }
 
   async function handlePublishVariant() {
@@ -469,8 +464,9 @@ export default function CreatePage() {
     }
     setPostAction(true)
     try {
-      const ids = await saveAllVariants('draft')
-      await Promise.all(ids.map(id => fetch(`/api/posts/${id}/publish`, { method: 'POST' })))
+      const id = await saveVariantPost('draft')
+      const res = await fetch(`/api/posts/${id}/publish`, { method: 'POST' })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
       toast('Post publié !', 'success')
       setVariants({})
       sessionStorage.removeItem('social_ia_create_draft')
@@ -483,8 +479,8 @@ export default function CreatePage() {
     if (postAction) return
     setPostAction(true)
     try {
-      const ids = await saveAllVariants('draft')
-      toast(`${ids.length} brouillon${ids.length > 1 ? 's' : ''} sauvegardé${ids.length > 1 ? 's' : ''}`, 'success')
+      await saveVariantPost('draft')
+      toast('Brouillon sauvegardé', 'success')
       setVariants({})
       sessionStorage.removeItem('social_ia_create_draft')
     } catch (err: unknown) {
@@ -496,8 +492,8 @@ export default function CreatePage() {
     if (postAction) return
     setPostAction(true)
     try {
-      await saveAllVariants('failed')
-      toast('Posts rejetés', 'success')
+      await saveVariantPost('failed')
+      toast('Post rejeté', 'success')
       setVariants({})
       sessionStorage.removeItem('social_ia_create_draft')
     } catch (err: unknown) {
@@ -512,15 +508,13 @@ export default function CreatePage() {
     if (postAction) return
     setPostAction(true)
     try {
-      const ids = await saveAllVariants('scheduled', scheduledAt)
-      const results = await Promise.all(ids.map(id => fetch(`/api/posts/${id}/schedule`, {
+      const id = await saveVariantPost('scheduled', scheduledAt)
+      const res = await fetch(`/api/posts/${id}/schedule`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ scheduledAt }),
-      })))
-      for (const res of results) {
-        if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
-      }
+      })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
       toast('Post programmé !', 'success')
       setVariants({})
       sessionStorage.removeItem('social_ia_create_draft')

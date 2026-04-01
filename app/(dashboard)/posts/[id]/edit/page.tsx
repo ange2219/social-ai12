@@ -13,8 +13,8 @@ const PLATFORM_NAMES: Record<string, string> = {
   instagram: 'Instagram', facebook: 'Facebook', tiktok: 'TikTok',
   twitter: 'Twitter / X', linkedin: 'LinkedIn', youtube: 'YouTube', pinterest: 'Pinterest',
 }
-const PLATFORM_SHORT: Record<string, string> = {
-  instagram: 'IG', facebook: 'FB', tiktok: 'TK', twitter: 'X', linkedin: 'LI', youtube: 'YT', pinterest: 'PT',
+const PLATFORM_CHAR_LIMITS: Record<string, number> = {
+  instagram: 2000, facebook: 2000, twitter: 280, linkedin: 3000, tiktok: 300,
 }
 const ALL_PLATFORMS = ['instagram', 'facebook', 'tiktok', 'twitter', 'linkedin', 'youtube', 'pinterest']
 const FREE_PLATFORMS = ['instagram', 'facebook']
@@ -22,6 +22,7 @@ const FREE_PLATFORMS = ['instagram', 'facebook']
 interface Post {
   id: string
   content: string
+  content_variants: Record<string, string> | null
   platforms: string[]
   status: string
   media_urls: string[]
@@ -36,7 +37,8 @@ export default function EditPostPage() {
 
   const [post, setPost] = useState<Post | null>(null)
   const [loading, setLoading] = useState(true)
-  const [content, setContent] = useState('')
+  // variants[platform] = contenu éditable
+  const [variants, setVariants] = useState<Record<string, string>>({})
   const [platforms, setPlatforms] = useState<string[]>([])
   const [mediaUrl, setMediaUrl] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -50,9 +52,17 @@ export default function EditPostPage() {
       .then(d => {
         if (d.id) {
           setPost(d)
-          setContent(d.content)
           setPlatforms(d.platforms || [])
           setMediaUrl(d.media_urls?.[0] || null)
+          // Charger les variantes par plateforme
+          if (d.content_variants && Object.keys(d.content_variants).length > 0) {
+            setVariants(d.content_variants)
+          } else {
+            // Post sans variantes : même contenu pour toutes les plateformes
+            const v: Record<string, string> = {}
+            for (const p of (d.platforms || [])) v[p] = d.content
+            setVariants(v)
+          }
         }
         setLoading(false)
       })
@@ -78,13 +88,19 @@ export default function EditPostPage() {
   }
 
   async function handleSave() {
-    if (!content.trim()) { toast('Le contenu ne peut pas être vide', 'error'); return }
+    const primaryContent = platforms[0] ? variants[platforms[0]] : Object.values(variants)[0] || ''
+    if (!primaryContent.trim()) { toast('Le contenu ne peut pas être vide', 'error'); return }
     setSaving(true)
     try {
       const res = await fetch(`/api/posts/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, platforms, media_urls: mediaUrl ? [mediaUrl] : [] }),
+        body: JSON.stringify({
+          content: primaryContent,
+          platforms,
+          media_urls: mediaUrl ? [mediaUrl] : [],
+          content_variants: Object.keys(variants).length > 1 ? variants : undefined,
+        }),
       })
       if (!res.ok) throw new Error('Erreur de sauvegarde')
       toast('Brouillon mis à jour', 'success')
@@ -117,12 +133,18 @@ export default function EditPostPage() {
 
   async function handleReject() {
     try {
-      const res = await fetch(`/api/posts/${id}`, {
+      const primaryContent = platforms[0] ? variants[platforms[0]] : Object.values(variants)[0] || ''
+      await fetch(`/api/posts/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, platforms, media_urls: mediaUrl ? [mediaUrl] : [], status: 'failed' }),
+        body: JSON.stringify({
+          content: primaryContent,
+          platforms,
+          media_urls: mediaUrl ? [mediaUrl] : [],
+          content_variants: Object.keys(variants).length > 1 ? variants : undefined,
+          status: 'failed',
+        }),
       })
-      if (!res.ok) throw new Error()
       toast('Post rejeté', 'success')
       router.push('/posts')
     } catch {
@@ -139,9 +161,6 @@ export default function EditPostPage() {
   if (!post) return (
     <div style={{ padding: '2rem', textAlign: 'center', color: '#52525C' }}>Post introuvable</div>
   )
-
-  const charLimit = platforms.includes('instagram') ? 2000 : platforms.includes('facebook') ? 2000 : platforms.includes('twitter') ? 280 : platforms.includes('linkedin') ? 3000 : null
-  const over = charLimit ? content.length > charLimit : false
 
   return (
     <div style={{ padding: '1.5rem 2rem 4rem', maxWidth: '720px' }}>
@@ -168,7 +187,7 @@ export default function EditPostPage() {
         <div className="card p-4">
           <label className="label" style={{ marginBottom: '.5rem', display: 'block' }}>Image / Vidéo</label>
           {mediaUrl ? (
-            <div style={{ position: 'relative', display: 'inline-block' }}>
+            <div style={{ position: 'relative' }}>
               <img src={mediaUrl} alt="" style={{ width: '100%', maxHeight: '260px', objectFit: 'contain', borderRadius: '8px', display: 'block', background: '#0D0D0F' }} />
               <div style={{ position: 'absolute', bottom: '8px', right: '8px', display: 'flex', gap: '.4rem' }}>
                 <label style={{ cursor: 'pointer', background: 'rgba(0,0,0,.75)', border: '1px solid rgba(255,255,255,.15)', borderRadius: '6px', padding: '.3rem .6rem', display: 'flex', alignItems: 'center', gap: '.35rem', fontSize: '.72rem', color: '#E4E4E7' }}>
@@ -185,7 +204,8 @@ export default function EditPostPage() {
               onMouseEnter={e => (e.currentTarget.style.borderColor = '#3B7BF6')}
               onMouseLeave={e => (e.currentTarget.style.borderColor = '#27272D')}
             >
-              {uploading ? <div style={{ width: '20px', height: '20px', border: '2px solid rgba(59,123,246,.3)', borderTopColor: '#3B7BF6', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
+              {uploading
+                ? <div style={{ width: '20px', height: '20px', border: '2px solid rgba(59,123,246,.3)', borderTopColor: '#3B7BF6', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
                 : <Upload size={20} color="#3f3f46" />}
               <span style={{ fontSize: '.78rem', color: '#52525C' }}>{uploading ? 'Upload en cours...' : 'Ajouter une image ou vidéo'}</span>
               <input type="file" accept="image/*,video/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handleMediaUpload(f) }} />
@@ -193,26 +213,36 @@ export default function EditPostPage() {
           )}
         </div>
 
-        {/* Contenu */}
-        <div className="card p-4">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.5rem' }}>
-            <label className="label" style={{ marginBottom: 0 }}>Contenu</label>
-            {charLimit && (
-              <span style={{ fontSize: '.72rem', fontFamily: 'monospace', color: over ? '#EF4444' : '#52525C' }}>
-                {content.length}/{charLimit}
-              </span>
-            )}
-          </div>
-          <textarea
-            className="input resize-none"
-            rows={8}
-            value={content}
-            onChange={e => setContent(e.target.value)}
-            style={{ width: '100%', lineHeight: 1.65, borderColor: over ? 'rgba(239,68,68,.4)' : undefined }}
-            placeholder="Contenu du post…"
-          />
-          {over && <p style={{ fontSize: '.75rem', color: '#EF4444', marginTop: '.35rem' }}>⚠ Dépasse la limite de {charLimit} caractères ({content.length - charLimit!} de trop)</p>}
-        </div>
+        {/* Contenu — un textarea par plateforme */}
+        {platforms.map(p => {
+          const limit = PLATFORM_CHAR_LIMITS[p]
+          const val = variants[p] || ''
+          const over = limit ? val.length > limit : false
+          return (
+            <div key={p} className="card p-4">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: PLATFORM_COLORS[p] || '#555' }} />
+                  <label className="label" style={{ marginBottom: 0 }}>{PLATFORM_NAMES[p] || p}</label>
+                </div>
+                {limit && (
+                  <span style={{ fontSize: '.72rem', fontFamily: 'monospace', color: over ? '#EF4444' : '#52525C' }}>
+                    {val.length}/{limit}
+                  </span>
+                )}
+              </div>
+              <textarea
+                className="input resize-none"
+                rows={6}
+                value={val}
+                onChange={e => setVariants(prev => ({ ...prev, [p]: e.target.value }))}
+                style={{ width: '100%', lineHeight: 1.65, borderColor: over ? 'rgba(239,68,68,.4)' : undefined }}
+                placeholder={`Contenu pour ${PLATFORM_NAMES[p] || p}…`}
+              />
+              {over && <p style={{ fontSize: '.75rem', color: '#EF4444', marginTop: '.35rem' }}>⚠ Dépasse la limite de {limit} caractères ({val.length - limit} de trop)</p>}
+            </div>
+          )
+        })}
 
         {/* Plateformes */}
         <div className="card p-4">
@@ -223,7 +253,11 @@ export default function EditPostPage() {
               const active = platforms.includes(p)
               return (
                 <button key={p}
-                  onClick={() => { if (locked) return; setPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]) }}
+                  onClick={() => {
+                    if (locked) return
+                    setPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p])
+                    if (!variants[p]) setVariants(prev => ({ ...prev, [p]: Object.values(prev)[0] || '' }))
+                  }}
                   title={locked ? 'Plan Pro requis' : undefined}
                   style={{
                     padding: '.3rem .75rem', borderRadius: '7px', fontSize: '.78rem', fontWeight: 600,
@@ -244,11 +278,11 @@ export default function EditPostPage() {
 
         {/* Actions */}
         <div style={{ display: 'flex', gap: '.6rem', flexWrap: 'wrap' }}>
-          <button onClick={handleSave} disabled={saving || !content.trim()}
+          <button onClick={handleSave} disabled={saving}
             style={{ flex: 1, minWidth: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem', padding: '.65rem 1rem', borderRadius: '8px', border: '1px solid #27272D', background: '#111113', color: saving ? '#52525C' : '#E4E4E7', cursor: saving ? 'not-allowed' : 'pointer', fontSize: '.83rem', fontWeight: 500 }}>
             <Save size={14} /> {saving ? 'Sauvegarde...' : 'Sauvegarder'}
           </button>
-          <button onClick={handlePublish} disabled={publishing || !content.trim() || !platforms.length}
+          <button onClick={handlePublish} disabled={publishing || !platforms.length}
             style={{ flex: 1, minWidth: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem', padding: '.65rem 1rem', borderRadius: '8px', border: 'none', background: publishing ? '#16A34A80' : '#22C55E', color: '#fff', cursor: publishing ? 'not-allowed' : 'pointer', fontSize: '.83rem', fontWeight: 600 }}>
             {publishing ? <div style={{ width: '13px', height: '13px', border: '2px solid rgba(255,255,255,.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'rot .7s linear infinite' }} /> : <Send size={14} />}
             {publishing ? 'Publication...' : 'Publier maintenant'}
