@@ -16,8 +16,8 @@ const githubAI = new OpenAI({
 // ─── Contraintes par plateforme ────────────────────────────────────────────────
 
 const PLATFORM_CONSTRAINTS: Record<Platform, string> = {
-  instagram: 'Max 2200 caractères. 5-10 hashtags pertinents à la fin. Emojis bienvenus. Caption engageante avec CTA.',
-  facebook:  'Ton conversationnel. Max 500 caractères recommandés. CTA encouragé. 2-3 hashtags max.',
+  instagram: 'Max 2000 caractères. 5-10 hashtags pertinents à la fin. Emojis bienvenus. Caption engageante avec CTA. Vise 800-1500 caractères pour un bon engagement.',
+  facebook:  'Ton conversationnel. Max 2000 caractères. CTA encouragé. 2-3 hashtags max. Vise 800-1500 caractères, développe le sujet avec du détail et de la valeur ajoutée.',
   twitter:   'Max 280 caractères. Percutant et direct. 1-2 hashtags max. Hook fort en première phrase.',
   linkedin:  'Ton professionnel. Max 1300 caractères recommandés. 3 hashtags max. Structure lisible avec sauts de ligne.',
   tiktok:    'Court et dynamique. Max 300 caractères. Hook fort en première phrase. 3-5 hashtags tendance.',
