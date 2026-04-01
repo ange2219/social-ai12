@@ -605,7 +605,7 @@ export default function CreatePage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Colonne gauche — Config */}
         <div className="space-y-4">
 

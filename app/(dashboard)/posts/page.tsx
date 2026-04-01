@@ -547,7 +547,7 @@ export default function PostsPage() {
       )}
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '.75rem' }}>
         <div>
           <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1.3rem', fontWeight: 700, color: '#F4F4F6', letterSpacing: '-.02em' }}>Mes Posts</h1>
           <p style={{ color: '#52525C', fontSize: '.8rem', marginTop: '.15rem' }}>{total} post{total !== 1 ? 's' : ''} au total</p>
@@ -576,8 +576,8 @@ export default function PostsPage() {
       </div>
 
       {/* Filters + view toggle */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-        <div style={{ display: 'flex', gap: '.4rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', gap: '.5rem' }}>
+        <div className="mob-scroll" style={{ display: 'flex', gap: '.4rem', flex: 1, overflowX: 'auto' }}>
           {(['all', 'published', 'draft', 'scheduled', 'failed', 'deleted'] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)} style={{
               padding: '.3rem .75rem', borderRadius: '6px', fontSize: '.75rem', fontWeight: 500, cursor: 'pointer',

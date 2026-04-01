@@ -239,3 +239,79 @@ body {
 @keyframes fadeUp   { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes shimmer  { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
 @keyframes blink    { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+
+/* ══════════════════════════════════════
+   MOBILE — bottom nav + responsive
+══════════════════════════════════════ */
+
+/* ── Bottom navigation bar (mobile only) ── */
+.mobile-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 60px;
+  background: #111113;
+  border-top: 1px solid #27272D;
+  z-index: 50;
+  padding: 0 .5rem;
+  align-items: center;
+  justify-content: space-around;
+}
+.mobile-nav a {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; flex: 1; padding: .4rem 0;
+  color: #52525C; text-decoration: none; font-size: .58rem; font-weight: 500;
+  transition: color .15s; border-radius: 8px;
+}
+.mobile-nav a.on { color: #3B7BF6; }
+.mobile-nav a svg { flex-shrink: 0; }
+.mobile-nav .mob-create {
+  width: 40px; height: 40px; border-radius: 12px;
+  background: #3B7BF6; display: flex; align-items: center; justify-content: center;
+  color: #fff; flex-direction: row; gap: 0; padding: 0;
+}
+
+@media (max-width: 767px) {
+  /* Masquer la sidebar */
+  .sidebar { display: none !important; }
+
+  /* Afficher la bottom nav */
+  .mobile-nav { display: flex; }
+
+  /* Ajouter espace bas pour la bottom nav */
+  .main { padding-bottom: 60px; }
+
+  /* Réduire padding des pages */
+  .pc { padding: 1rem .9rem; }
+
+  /* Stats 2 colonnes */
+  .stats-row { grid-template-columns: repeat(2, 1fr); gap: .6rem; margin-bottom: 1rem; }
+
+  /* Mini grid 2 colonnes */
+  .mini-grid { grid-template-columns: repeat(2, 1fr); }
+
+  /* Gen band en colonne */
+  .gen-band { flex-direction: column; align-items: flex-start; gap: 1rem; }
+
+  /* Modals plein écran bas sur mobile */
+  .modal-ov { align-items: flex-end; padding: 0; }
+  .modal-box {
+    border-radius: 20px 20px 0 0;
+    max-width: 100%;
+    width: 100%;
+    padding: 1.5rem 1.25rem 2rem;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  /* Auth box plein width */
+  .auth-box { max-width: 100%; border-radius: 0; border-left: none; border-right: none; border-bottom: none; min-height: 100vh; padding: 2rem 1.25rem; }
+
+  /* Topbar mobile */
+  .topbar { padding: .75rem 1rem; }
+
+  /* Scroll horizontal pour les filtres */
+  .mob-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .mob-scroll::-webkit-scrollbar { display: none; }
+  .mob-scroll > * { flex-wrap: nowrap !important; }
+}
