@@ -452,6 +452,11 @@ export default function CreatePage() {
 
   async function handlePublishVariant() {
     if (postAction) return
+    const mediaUrl = aiUploadedUrl || generatedImageUrl
+    if (selectedPlatforms.includes('instagram') && !mediaUrl) {
+      toast('Veuillez ajouter une image pour Instagram.', 'warning')
+      return
+    }
     setPostAction(true)
     try {
       const id = await saveVariantPost('draft')
