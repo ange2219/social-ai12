@@ -128,7 +128,18 @@ export async function publishInstagramPost(params: {
   }
   const { id: creationId } = await containerRes.json()
 
-  // 2. Publier le container
+  // 2. Attendre que le container soit prêt
+  for (let i = 0; i < 10; i++) {
+    await new Promise(r => setTimeout(r, 2000))
+    const statusRes = await fetch(`${IG_GRAPH}/${creationId}?fields=status_code&access_token=${params.pageToken}`)
+    if (statusRes.ok) {
+      const { status_code } = await statusRes.json()
+      if (status_code === 'FINISHED') break
+      if (status_code === 'ERROR') throw new Error('Instagram media processing failed')
+    }
+  }
+
+  // 3. Publier le container
   const publishRes = await fetch(`${IG_GRAPH}/${params.igUserId}/media_publish`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
