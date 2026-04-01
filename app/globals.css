@@ -215,6 +215,8 @@ body {
 .modal-btn-border:hover { border-color: #3f3f46; background: #18181C; }
 .modal-btn-ghost  { background: transparent; color: #52525C; border: none; font-size: .82rem; justify-content: center; }
 .modal-btn-ghost:hover { color: #8E8E98; }
+.modal-btn-red    { background: rgba(239,68,68,.1); color: #EF4444; border: 1px solid rgba(239,68,68,.25); }
+.modal-btn-red:hover { background: rgba(239,68,68,.18); }
 .modal-sep        { border: none; border-top: 1px solid #1C1C21; margin: .5rem 0; }
 .modal-sched      { display: flex; flex-direction: column; gap: .75rem; }
 .modal-sched-row  { display: flex; gap: .5rem; }

@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Grid3X3, List, Send, Trash2, RotateCcw } from 'lucide-react'
+import { Plus, Grid3X3, List, Send, Trash2, Eye, EyeOff } from 'lucide-react'
 import { useToast } from '@/components/ui/Toast'
+
+const DELETE_COOLDOWN_MS = 5 * 60 * 1000 // 5 minutes
 
 const PLATFORM_COLORS: Record<string, string> = {
   instagram: '#E1306C', facebook: '#1877F2', tiktok: '#000',
@@ -40,6 +42,11 @@ export default function PostsPage() {
   const [view, setView] = useState<'grid' | 'list'>('grid')
   const [publishing, setPublishing] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [confirmId, setConfirmId] = useState<string | null>(null)
+  const [password, setPassword] = useState('')
+  const [showPw, setShowPw] = useState(false)
+  const [pwLoading, setPwLoading] = useState(false)
+  const lastDeletedAt = useRef<number | null>(null)
 
   function loadPosts() {
     setLoading(true)
@@ -66,12 +73,44 @@ export default function PostsPage() {
     }
   }
 
-  async function deletePost(id: string) {
+  function askDelete(id: string) {
+    // Si une suppression a été faite dans les 5 dernières minutes, pas besoin de mot de passe
+    if (lastDeletedAt.current && Date.now() - lastDeletedAt.current < DELETE_COOLDOWN_MS) {
+      doDelete(id)
+    } else {
+      setConfirmId(id)
+      setPassword('')
+    }
+  }
+
+  async function confirmDelete() {
+    if (!confirmId) return
+    setPwLoading(true)
+    try {
+      // Vérifier le mot de passe via Supabase
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user?.email) throw new Error('Non connecté')
+      const { error } = await supabase.auth.signInWithPassword({ email: user.email, password })
+      if (error) throw new Error('Mot de passe incorrect')
+      await doDelete(confirmId)
+      setConfirmId(null)
+      setPassword('')
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : 'Erreur', 'error')
+    } finally {
+      setPwLoading(false)
+    }
+  }
+
+  async function doDelete(id: string) {
     setDeleting(id)
     try {
       const res = await fetch(`/api/posts/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Erreur suppression')
       toast('Post supprimé', 'success')
+      lastDeletedAt.current = Date.now()
       setPosts(prev => prev.filter(p => p.id !== id))
       setTotal(prev => prev - 1)
     } catch (err: unknown) {
@@ -85,6 +124,55 @@ export default function PostsPage() {
 
   return (
     <div style={{ padding: '1.5rem 2rem 3rem' }}>
+
+      {/* Modal confirmation suppression */}
+      {confirmId && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.75)', backdropFilter: 'blur(6px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={e => { if (e.target === e.currentTarget) { setConfirmId(null); setPassword('') } }}
+        >
+          <div style={{ background: '#111113', border: '1px solid #27272D', borderRadius: '14px', padding: '1.75rem', width: '100%', maxWidth: '360px' }}>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#F4F4F6', fontFamily: "'Bricolage Grotesque', sans-serif", marginBottom: '.4rem' }}>
+              Confirmer la suppression
+            </div>
+            <div style={{ fontSize: '.82rem', color: '#8E8E98', marginBottom: '1.25rem', lineHeight: 1.5 }}>
+              Cette action est irréversible. Entrez votre mot de passe pour confirmer.
+            </div>
+            <div style={{ position: 'relative', marginBottom: '1rem' }}>
+              <input
+                type={showPw ? 'text' : 'password'}
+                placeholder="Mot de passe"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') confirmDelete() }}
+                autoFocus
+                className="input"
+                style={{ width: '100%', paddingRight: '2.5rem' }}
+              />
+              <button
+                onClick={() => setShowPw(p => !p)}
+                style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#52525C', display: 'flex' }}
+              >
+                {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+              </button>
+            </div>
+            <div style={{ display: 'flex', gap: '.6rem' }}>
+              <button
+                onClick={() => { setConfirmId(null); setPassword('') }}
+                style={{ flex: 1, padding: '.6rem', borderRadius: '8px', border: '1px solid #27272D', background: 'transparent', color: '#8E8E98', cursor: 'pointer', fontSize: '.83rem' }}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={!password || pwLoading}
+                style={{ flex: 1, padding: '.6rem', borderRadius: '8px', border: 'none', background: '#EF4444', color: '#fff', cursor: 'pointer', fontSize: '.83rem', fontWeight: 600, opacity: !password || pwLoading ? .5 : 1 }}
+              >
+                {pwLoading ? 'Vérification...' : 'Supprimer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
@@ -180,7 +268,7 @@ export default function PostsPage() {
                         }
                       </button>
                       <button
-                        onClick={() => deletePost(post.id)}
+                        onClick={() => askDelete(post.id)}
                         disabled={deleting === post.id}
                         title="Supprimer"
                         style={{ background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.2)', borderRadius: '5px', padding: '.2rem .35rem', cursor: 'pointer', color: '#EF4444', display: 'flex', alignItems: 'center' }}
@@ -242,7 +330,7 @@ export default function PostsPage() {
                       Publier
                     </button>
                     <button
-                      onClick={() => deletePost(post.id)}
+                      onClick={() => askDelete(post.id)}
                       disabled={deleting === post.id}
                       style={{ background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.2)', borderRadius: '6px', padding: '.3rem .5rem', cursor: 'pointer', color: '#EF4444', display: 'flex', alignItems: 'center' }}
                     >

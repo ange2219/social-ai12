@@ -32,11 +32,14 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const { content, platforms, media_urls, ai_generated } = body
+  const { content, platforms, media_urls, ai_generated, status } = body
 
   if (!content || !platforms?.length) {
     return NextResponse.json({ error: 'content et platforms requis' }, { status: 400 })
   }
+
+  const allowedStatuses = ['draft', 'failed']
+  const insertStatus = allowedStatuses.includes(status) ? status : 'draft'
 
   const { data, error } = await supabase
     .from('posts')
@@ -46,7 +49,7 @@ export async function POST(req: NextRequest) {
       platforms,
       media_urls: media_urls || [],
       ai_generated: ai_generated || false,
-      status: 'draft',
+      status: insertStatus,
     })
     .select()
     .single()

@@ -78,6 +78,23 @@ function PostActionModal({ content, platforms, mediaUrls, aiGenerated, onClose }
     } finally { setLoading(false) }
   }
 
+  async function handleReject() {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, platforms, media_urls: mediaUrls || [], ai_generated: aiGenerated, status: 'failed' }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erreur')
+      toast('Post rejeté', 'success')
+      onClose()
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : 'Erreur', 'error')
+    } finally { setLoading(false) }
+  }
+
   async function handlePublish() {
     setLoading(true)
     try {
@@ -136,6 +153,10 @@ function PostActionModal({ content, platforms, mediaUrls, aiGenerated, onClose }
               <button className="modal-btn modal-btn-border" onClick={handleDraft} disabled={loading}>
                 <Save size={15} />
                 Sauvegarder en brouillon
+              </button>
+              <button className="modal-btn modal-btn-red" onClick={handleReject} disabled={loading}>
+                <X size={15} />
+                Rejeter ce post
               </button>
               <button className="modal-btn modal-btn-ghost" onClick={onClose} disabled={loading}>
                 Annuler
