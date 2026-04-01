@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { LogoAnimation } from '@/components/LogoAnimation'
 
 export default function LoginPage() {
   const [tab, setTab] = useState<'login' | 'register'>('login')
@@ -45,14 +46,10 @@ export default function LoginPage() {
     <div style={{ minHeight: '100vh', background: '#09090B', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
       <div className="auth-box">
 
-        {/* Logo — identique mockup */}
-        <div className="auth-logo">
-          <div className="logo-mark">
-            <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-              <path d="M18 13a2 2 0 0 1-2 2H6l-4 4V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8z" fill="white" fillOpacity=".9"/>
-            </svg>
-          </div>
-          <span className="logo-name">Social <span>IA</span></span>
+        {/* Logo animé */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+          <LogoAnimation size={120} />
+          <span className="logo-name" style={{ fontSize: '1.25rem' }}>Social <span>IA</span></span>
         </div>
 
         {/* Header */}
