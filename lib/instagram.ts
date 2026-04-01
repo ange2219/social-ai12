@@ -12,7 +12,7 @@ export function getInstagramOAuthUrl(state: string): string {
     response_type: 'code',
     state,
   })
-  return `https://api.instagram.com/oauth/authorize?${params}`
+  return `https://www.instagram.com/oauth/authorize?${params}`
 }
 
 export async function exchangeInstagramCode(code: string): Promise<{ access_token: string; user_id: number }> {
