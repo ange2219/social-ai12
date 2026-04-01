@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Sidebar } from './Sidebar'
+import { TopNav } from './TopNav'
 import type { User } from '@/types'
 
 function MobileNav({ pathname }: { pathname: string }) {
@@ -53,28 +52,14 @@ export function DashboardShell({ user, topbar, children }: {
   topbar: React.ReactNode
   children: React.ReactNode
 }) {
-  const [collapsed, setCollapsed] = useState(false)
   const pathname = usePathname()
 
-  useEffect(() => {
-    const saved = localStorage.getItem('sb-collapsed')
-    if (saved === 'true') setCollapsed(true)
-  }, [])
-
-  function toggle() {
-    setCollapsed(prev => {
-      localStorage.setItem('sb-collapsed', String(!prev))
-      return !prev
-    })
-  }
-
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#09090B' }}>
-      <Sidebar user={user} collapsed={collapsed} onToggle={toggle} />
-      <div className={`main${collapsed ? ' main-exp' : ''}`}>
-        {topbar}
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#09090B' }}>
+      <TopNav user={user} />
+      <main className="v2-main">
         {children}
-      </div>
+      </main>
       <MobileNav pathname={pathname} />
     </div>
   )
