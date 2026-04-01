@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 export const runtime = 'nodejs'
 
@@ -17,7 +18,10 @@ export async function POST(req: NextRequest) {
     const path = `${user.id}/${Date.now()}.${ext}`
     const buffer = Buffer.from(await file.arrayBuffer())
 
-    const admin = createAdminClient()
+    const admin = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_KEY!
+    )
     const { error } = await admin.storage
       .from('media')
       .upload(path, buffer, { contentType: file.type, upsert: false })
@@ -28,6 +32,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { data: { publicUrl } } = admin.storage.from('media').getPublicUrl(path)
+
 
     return NextResponse.json({ url: publicUrl })
   } catch (err) {
