@@ -202,6 +202,10 @@ export default function CreatePage() {
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null)
   const [uploadedMediaUrl, setUploadedMediaUrl] = useState<string | null>(null)
 
+  // AI mode image upload
+  const [aiUploadedUrl, setAiUploadedUrl] = useState<string | null>(null)
+  const aiFileRef = useRef<HTMLInputElement>(null)
+
   // Overlay génération
   const [overlayOpen, setOverlayOpen] = useState(false)
   const [overlaySteps, setOverlaySteps] = useState<string[]>([])
@@ -215,6 +219,32 @@ export default function CreatePage() {
       if (data?.plan && data.plan !== 'free') setIsPro(true)
     })
   }, [])
+
+  // Restore draft from sessionStorage on mount
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem('social_ia_create_draft')
+      if (saved) {
+        const d = JSON.parse(saved)
+        if (d.brief !== undefined) setBrief(d.brief)
+        if (d.tone) setTone(d.tone)
+        if (d.selectedPlatforms) setSelectedPlatforms(d.selectedPlatforms)
+        if (d.variants) { setVariants(d.variants); if (d.selectedPlatforms?.[0]) setActivePreview(d.selectedPlatforms[0]) }
+        if (d.manualContent !== undefined) setManualContent(d.manualContent)
+        if (d.aiUploadedUrl) setAiUploadedUrl(d.aiUploadedUrl)
+        if (d.generatedImageUrl) setGeneratedImageUrl(d.generatedImageUrl)
+      }
+    } catch { /* ignore */ }
+  }, [])
+
+  // Persist draft to sessionStorage
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('social_ia_create_draft', JSON.stringify({
+        brief, tone, selectedPlatforms, variants, manualContent, aiUploadedUrl, generatedImageUrl,
+      }))
+    } catch { /* ignore */ }
+  }, [brief, tone, selectedPlatforms, variants, manualContent, aiUploadedUrl, generatedImageUrl])
 
   // Modal action
   const [actionModal, setActionModal] = useState<{
@@ -305,6 +335,19 @@ export default function CreatePage() {
     setUploadedMediaUrl(null)
   }
 
+  async function handleAiImageUpload(file: File) {
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setAiUploadedUrl(data.url)
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : 'Erreur upload', 'error')
+    }
+  }
+
   async function handleGenerateImage() {
     const content = activePreview ? variants[activePreview] : Object.values(variants)[0]
     if (!content) { return }
@@ -363,7 +406,7 @@ export default function CreatePage() {
       body: JSON.stringify({
         content,
         platforms: selectedPlatforms,
-        media_urls: generatedImageUrl ? [generatedImageUrl] : [],
+        media_urls: (() => { const u = aiUploadedUrl || generatedImageUrl; return u ? [u] : [] })(),
         ai_generated: true,
         status,
         scheduled_at: scheduledAt,
@@ -383,6 +426,7 @@ export default function CreatePage() {
       if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
       toast('Post publié !', 'success')
       setVariants({})
+      sessionStorage.removeItem('social_ia_create_draft')
     } catch (err: unknown) {
       toast(err instanceof Error ? err.message : 'Erreur', 'error')
     } finally { setPostAction(false) }
@@ -395,6 +439,7 @@ export default function CreatePage() {
       await saveVariantPost('draft')
       toast('Post sauvegardé en brouillon', 'success')
       setVariants({})
+      sessionStorage.removeItem('social_ia_create_draft')
     } catch (err: unknown) {
       toast(err instanceof Error ? err.message : 'Erreur', 'error')
     } finally { setPostAction(false) }
@@ -416,6 +461,7 @@ export default function CreatePage() {
       if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
       toast('Post programmé !', 'success')
       setVariants({})
+      sessionStorage.removeItem('social_ia_create_draft')
       setShowSchedule(false)
     } catch (err: unknown) {
       toast(err instanceof Error ? err.message : 'Erreur', 'error')
@@ -646,33 +692,23 @@ export default function CreatePage() {
           {mode === 'single' && (
             hasVariants ? (
               <>
-                <div className="flex gap-2 flex-wrap">
-                  {selectedPlatforms.filter(p => variants[p]).map(p => (
-                    <button
-                      key={p}
-                      onClick={() => setActivePreview(p)}
-                      className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-                        activePreview === p ? 'border-accent bg-accent/10 text-accent' : 'border-b1 text-t2 hover:text-t1'
-                      }`}
-                    >
+                {selectedPlatforms.filter(p => variants[p]).map(p => (
+                  <div key={p} className="space-y-2">
+                    <div style={{ fontSize: '.75rem', color: '#8E8E98', textTransform: 'uppercase', letterSpacing: '.06em', fontWeight: 600 }}>
                       {PLATFORM_NAMES[p]}
-                    </button>
-                  ))}
-                </div>
-                {activePreview && variants[activePreview] && (
-                  <PlatformPreview platform={activePreview} content={variants[activePreview]!} />
-                )}
-                {activePreview && (
-                  <div className="card p-4">
-                    <label className="label">Modifier le texte</label>
-                    <textarea
-                      className="input resize-none"
-                      rows={5}
-                      value={variants[activePreview] || ''}
-                      onChange={e => setVariants(prev => ({ ...prev, [activePreview]: e.target.value }))}
-                    />
+                    </div>
+                    <PlatformPreview platform={p} content={variants[p]!} />
+                    <div className="card p-4">
+                      <label className="label">Modifier le texte</label>
+                      <textarea
+                        className="input resize-none"
+                        rows={5}
+                        value={variants[p] || ''}
+                        onChange={e => setVariants(prev => ({ ...prev, [p]: e.target.value }))}
+                      />
+                    </div>
                   </div>
-                )}
+                ))}
                 {/* Image générée */}
                 {generatedImageUrl && (
                   <div className="card overflow-hidden">
@@ -701,6 +737,39 @@ export default function CreatePage() {
                     </>
                   )}
                 </button>
+
+                {/* Importer une photo (mode IA — free users) */}
+                <input
+                  ref={aiFileRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleAiImageUpload(f) }}
+                />
+                {aiUploadedUrl ? (
+                  <div className="card overflow-hidden" style={{ position: 'relative' }}>
+                    <img src={aiUploadedUrl} alt="Photo importée" style={{ width: '100%', display: 'block' }} />
+                    <button
+                      onClick={() => setAiUploadedUrl(null)}
+                      style={{
+                        position: 'absolute', top: '8px', right: '8px',
+                        background: 'rgba(0,0,0,.7)', border: 'none', borderRadius: '50%',
+                        width: '28px', height: '28px', display: 'flex', alignItems: 'center',
+                        justifyContent: 'center', cursor: 'pointer', color: '#fff',
+                      }}
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => aiFileRef.current?.click()}
+                    className="btn-outline w-full flex items-center justify-center gap-2 py-2.5"
+                  >
+                    <Upload size={14} />
+                    Importer une photo
+                  </button>
+                )}
 
                 {hasVariants && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '.75rem', marginTop: '1rem' }}>
