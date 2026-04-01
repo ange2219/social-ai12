@@ -74,7 +74,7 @@ export default async function DashboardPage() {
       {/* Posts récents */}
       <div className="sh">
         <h3>Posts récents</h3>
-        <Link href="/create" className="lk">Voir tous →</Link>
+        <Link href="/posts" className="lk">Voir tous →</Link>
       </div>
 
       {posts.length === 0 ? (
