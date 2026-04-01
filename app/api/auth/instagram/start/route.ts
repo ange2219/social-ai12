@@ -9,7 +9,9 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const state = randomBytes(16).toString('hex')
-  const response = NextResponse.redirect(getInstagramOAuthUrl(state))
+  const oauthUrl = getInstagramOAuthUrl(state)
+  console.log('[Instagram start] OAuth URL:', oauthUrl)
+  const response = NextResponse.redirect(oauthUrl)
   response.cookies.set('instagram_oauth_state', state, { httpOnly: true, maxAge: 600, path: '/' })
   return response
 }
