@@ -1,7 +1,8 @@
 /** Instagram Graph API — connexion directe (sans Page Facebook) */
 
-const IG_APP_ID = process.env.INSTAGRAM_APP_ID!
-const IG_APP_SECRET = process.env.INSTAGRAM_APP_SECRET!
+// Pour les apps Meta Entreprise, l'OAuth Instagram utilise le Facebook App ID
+const IG_APP_ID = process.env.META_APP_ID!
+const IG_APP_SECRET = process.env.META_APP_SECRET!
 const IG_REDIRECT_URI = process.env.INSTAGRAM_REDIRECT_URI!
 
 export function getInstagramOAuthUrl(state: string): string {
