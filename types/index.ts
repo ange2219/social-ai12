@@ -9,7 +9,7 @@ export type Platform =
   | 'youtube'
   | 'pinterest'
 
-export type PostStatus = 'draft' | 'scheduled' | 'published' | 'failed'
+export type PostStatus = 'draft' | 'scheduled' | 'published' | 'failed' | 'deleted'
 
 export type ConnectedVia = 'meta_direct' | 'ayrshare'
 

@@ -11,6 +11,8 @@ export async function GET(req: NextRequest) {
   const limit = parseInt(searchParams.get('limit') || '20')
   const offset = parseInt(searchParams.get('offset') || '0')
 
+  const includeDeleted = searchParams.get('includeDeleted') === 'true'
+
   let query = supabase
     .from('posts')
     .select('*', { count: 'exact' })
@@ -18,7 +20,11 @@ export async function GET(req: NextRequest) {
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1)
 
-  if (status) query = query.eq('status', status)
+  if (status) {
+    query = query.eq('status', status)
+  } else if (!includeDeleted) {
+    query = query.neq('status', 'deleted')
+  }
 
   const { data, error, count } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

@@ -62,7 +62,6 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
   if (post?.status === 'published' && post?.meta_post_ids) {
     const metaPostIds = post.meta_post_ids as Record<string, string>
 
-    // Récupère les tokens des comptes connectés
     const { data: accounts } = await admin
       .from('social_accounts')
       .select('platform, access_token, platform_user_id')
@@ -83,17 +82,34 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
         } else if (account.platform === 'instagram') {
           await fetch(`${IG_GRAPH}/${postId}?access_token=${token}`, { method: 'DELETE' })
         }
-      } catch {
-        // On continue même si la suppression sur la plateforme échoue
-      }
+      } catch { /* continue même si la suppression échoue */ }
     }
   }
 
-  const { error } = await supabase
+  // Soft delete → corbeille
+  const { error } = await admin
     .from('posts')
-    .delete()
+    .update({ status: 'deleted' })
     .eq('id', params.id)
     .eq('user_id', user.id)
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ success: true })
+}
+
+export async function PATCH(_req: NextRequest, { params }: { params: { id: string } }) {
+  // Restaurer depuis la corbeille
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const admin = createAdminClient()
+  const { error } = await admin
+    .from('posts')
+    .update({ status: 'draft' })
+    .eq('id', params.id)
+    .eq('user_id', user.id)
+    .eq('status', 'deleted')
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ success: true })

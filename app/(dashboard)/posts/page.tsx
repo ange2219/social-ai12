@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Grid3X3, List, Send, Trash2, Eye, EyeOff, X, Save, Pencil } from 'lucide-react'
+import { Plus, Grid3X3, List, Send, Trash2, Eye, EyeOff, X, Save, Pencil, RotateCcw, RefreshCw } from 'lucide-react'
 import { useToast } from '@/components/ui/Toast'
 
 const DELETE_COOLDOWN_MS = 5 * 60 * 1000
@@ -17,10 +17,18 @@ const PLATFORM_SHORT: Record<string, string> = {
 const ALL_PLATFORMS = ['instagram', 'facebook', 'tiktok', 'twitter', 'linkedin', 'youtube', 'pinterest']
 
 function stClass(s: string) {
-  return s === 'draft' ? 'st st-p' : s === 'scheduled' ? 'st st-pub' : s === 'published' ? 'st st-a' : 'st st-r'
+  if (s === 'draft') return 'st st-p'
+  if (s === 'scheduled') return 'st st-pub'
+  if (s === 'published') return 'st st-a'
+  if (s === 'deleted') return 'st'
+  return 'st st-r'
 }
 function stLabel(s: string) {
-  return s === 'draft' ? 'Brouillon' : s === 'scheduled' ? 'Programmé' : s === 'published' ? 'Publié' : 'Rejeté'
+  if (s === 'draft') return 'Brouillon'
+  if (s === 'scheduled') return 'Programmé'
+  if (s === 'published') return 'Publié'
+  if (s === 'deleted') return 'Corbeille'
+  return 'Rejeté'
 }
 
 interface Post {
@@ -39,10 +47,12 @@ export default function PostsPage() {
   const [posts, setPosts] = useState<Post[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<'all' | 'published' | 'draft' | 'scheduled' | 'failed'>('all')
+  const [filter, setFilter] = useState<'all' | 'published' | 'draft' | 'scheduled' | 'failed' | 'deleted'>('all')
   const [view, setView] = useState<'grid' | 'list'>('grid')
   const [publishing, setPublishing] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [restoring, setRestoring] = useState<string | null>(null)
+  const [syncing, setSyncing] = useState(false)
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
@@ -57,10 +67,49 @@ export default function PostsPage() {
 
   function loadPosts() {
     setLoading(true)
-    fetch('/api/posts?limit=100')
+    fetch('/api/posts?limit=100&includeDeleted=true')
       .then(r => r.json())
       .then(d => { setPosts(d.posts || []); setTotal(d.total || 0); setLoading(false) })
       .catch(() => setLoading(false))
+  }
+
+  async function restorePost(id: string) {
+    setRestoring(id)
+    try {
+      const res = await fetch(`/api/posts/${id}`, { method: 'PATCH' })
+      if (!res.ok) throw new Error('Erreur restauration')
+      toast('Post restauré en brouillon', 'success')
+      setPosts(prev => prev.map(p => p.id === id ? { ...p, status: 'draft' } : p))
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : 'Erreur', 'error')
+    } finally {
+      setRestoring(null)
+    }
+  }
+
+  async function hardDelete(id: string) {
+    try {
+      await fetch(`/api/posts/${id}/destroy`, { method: 'DELETE' })
+      setPosts(prev => prev.filter(p => p.id !== id))
+      setTotal(prev => prev - 1)
+      if (selectedPost?.id === id) closePost()
+      toast('Post supprimé définitivement', 'success')
+    } catch { /* ignore */ }
+  }
+
+  async function syncPlatforms() {
+    setSyncing(true)
+    try {
+      const res = await fetch('/api/posts/sync', { method: 'POST' })
+      const d = await res.json()
+      if (d.updated > 0) toast(`${d.updated} post(s) mis à jour depuis les plateformes`, 'success')
+      else toast('Tout est à jour', 'success')
+      loadPosts()
+    } catch {
+      toast('Erreur de synchronisation', 'error')
+    } finally {
+      setSyncing(false)
+    }
   }
 
   useEffect(() => { loadPosts() }, [])
@@ -163,8 +212,12 @@ export default function PostsPage() {
     }
   }
 
-  const filtered = filter === 'all' ? posts : posts.filter(p => p.status === filter)
+  const filtered = filter === 'all'
+    ? posts.filter(p => p.status !== 'deleted')
+    : posts.filter(p => p.status === filter)
   const isDraft = selectedPost?.status === 'draft' || selectedPost?.status === 'failed'
+  const isDeleted = selectedPost?.status === 'deleted'
+  const trashCount = posts.filter(p => p.status === 'deleted').length
 
   return (
     <div style={{ padding: '1.5rem 2rem 3rem' }}>
@@ -252,36 +305,43 @@ export default function PostsPage() {
 
               {/* Actions */}
               <div style={{ display: 'flex', gap: '.6rem', paddingTop: '.25rem' }}>
-                {isDraft && (
-                  <button
-                    onClick={saveEdit}
-                    disabled={saving}
-                    className="btn-primary flex items-center gap-2"
-                    style={{ flex: 1, justifyContent: 'center', padding: '.6rem' }}
-                  >
-                    <Save size={14} /> {saving ? 'Sauvegarde...' : 'Sauvegarder'}
-                  </button>
+                {isDeleted ? (
+                  <>
+                    <button
+                      onClick={() => restorePost(selectedPost.id)}
+                      disabled={restoring === selectedPost.id}
+                      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem', padding: '.6rem', borderRadius: '8px', border: '1px solid rgba(59,123,246,.4)', background: 'rgba(59,123,246,.1)', color: '#3B7BF6', cursor: 'pointer', fontSize: '.83rem', fontWeight: 600 }}
+                    >
+                      <RotateCcw size={14} /> {restoring === selectedPost.id ? 'Restauration...' : 'Restaurer en brouillon'}
+                    </button>
+                    <button
+                      onClick={() => hardDelete(selectedPost.id)}
+                      style={{ padding: '.6rem .8rem', borderRadius: '8px', border: '1px solid rgba(239,68,68,.3)', background: 'rgba(239,68,68,.08)', color: '#EF4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.8rem' }}
+                    >
+                      <Trash2 size={14} /> Supprimer définitivement
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {isDraft && (
+                      <button onClick={saveEdit} disabled={saving} className="btn-primary flex items-center gap-2" style={{ flex: 1, justifyContent: 'center', padding: '.6rem' }}>
+                        <Save size={14} /> {saving ? 'Sauvegarde...' : 'Sauvegarder'}
+                      </button>
+                    )}
+                    {isDraft && (
+                      <button onClick={() => publishPost(selectedPost, true)} disabled={publishing === selectedPost.id}
+                        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem', padding: '.6rem', borderRadius: '8px', border: 'none', background: '#22C55E', color: '#fff', cursor: 'pointer', fontSize: '.83rem', fontWeight: 600 }}>
+                        {publishing === selectedPost.id
+                          ? <div style={{ width: '13px', height: '13px', border: '2px solid rgba(255,255,255,.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
+                          : <Send size={14} />} Publier
+                      </button>
+                    )}
+                    <button onClick={() => askDelete(selectedPost.id)} disabled={deleting === selectedPost.id}
+                      style={{ padding: '.6rem .8rem', borderRadius: '8px', border: '1px solid rgba(239,68,68,.3)', background: 'rgba(239,68,68,.08)', color: '#EF4444', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                      <Trash2 size={15} />
+                    </button>
+                  </>
                 )}
-                {(isDraft) && (
-                  <button
-                    onClick={() => publishPost(selectedPost, true)}
-                    disabled={publishing === selectedPost.id}
-                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem', padding: '.6rem', borderRadius: '8px', border: 'none', background: '#22C55E', color: '#fff', cursor: 'pointer', fontSize: '.83rem', fontWeight: 600 }}
-                  >
-                    {publishing === selectedPost.id
-                      ? <div style={{ width: '13px', height: '13px', border: '2px solid rgba(255,255,255,.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
-                      : <Send size={14} />
-                    }
-                    Publier
-                  </button>
-                )}
-                <button
-                  onClick={() => askDelete(selectedPost.id)}
-                  disabled={deleting === selectedPost.id}
-                  style={{ padding: '.6rem .8rem', borderRadius: '8px', border: '1px solid rgba(239,68,68,.3)', background: 'rgba(239,68,68,.08)', color: '#EF4444', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                >
-                  <Trash2 size={15} />
-                </button>
               </div>
             </div>
           </div>
@@ -320,22 +380,31 @@ export default function PostsPage() {
           <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1.3rem', fontWeight: 700, color: '#F4F4F6', letterSpacing: '-.02em' }}>Mes Posts</h1>
           <p style={{ color: '#52525C', fontSize: '.8rem', marginTop: '.15rem' }}>{total} post{total !== 1 ? 's' : ''} au total</p>
         </div>
-        <button onClick={() => router.push('/create')} className="btn-primary flex items-center gap-2" style={{ padding: '.55rem 1.1rem', fontSize: '.82rem' }}>
-          <Plus size={15} /> Créer un post
-        </button>
+        <div style={{ display: 'flex', gap: '.5rem' }}>
+          <button onClick={syncPlatforms} disabled={syncing} title="Vérifier si des posts ont été supprimés sur les plateformes"
+            style={{ padding: '.5rem .75rem', borderRadius: '8px', border: '1px solid #27272D', background: '#111113', color: '#52525C', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.78rem' }}>
+            <RefreshCw size={13} style={{ animation: syncing ? 'rot .7s linear infinite' : 'none' }} />
+            {syncing ? 'Sync...' : 'Synchroniser'}
+          </button>
+          <button onClick={() => router.push('/create')} className="btn-primary flex items-center gap-2" style={{ padding: '.55rem 1.1rem', fontSize: '.82rem' }}>
+            <Plus size={15} /> Créer un post
+          </button>
+        </div>
       </div>
 
       {/* Filters + view toggle */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
         <div style={{ display: 'flex', gap: '.4rem', flexWrap: 'wrap' }}>
-          {(['all', 'published', 'draft', 'scheduled', 'failed'] as const).map(f => (
+          {(['all', 'published', 'draft', 'scheduled', 'failed', 'deleted'] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)} style={{
               padding: '.3rem .75rem', borderRadius: '6px', fontSize: '.75rem', fontWeight: 500, cursor: 'pointer',
-              border: filter === f ? '1px solid #3B7BF6' : '1px solid #27272D',
-              background: filter === f ? 'rgba(59,123,246,.12)' : '#111113',
-              color: filter === f ? '#3B7BF6' : '#8E8E98', transition: '.15s',
+              border: filter === f ? (f === 'deleted' ? '1px solid rgba(239,68,68,.5)' : '1px solid #3B7BF6') : '1px solid #27272D',
+              background: filter === f ? (f === 'deleted' ? 'rgba(239,68,68,.1)' : 'rgba(59,123,246,.12)') : '#111113',
+              color: filter === f ? (f === 'deleted' ? '#EF4444' : '#3B7BF6') : '#8E8E98', transition: '.15s',
+              display: 'flex', alignItems: 'center', gap: '.3rem',
             }}>
-              {f === 'all' ? 'Tous' : f === 'published' ? 'Publiés' : f === 'draft' ? 'Brouillons' : f === 'scheduled' ? 'Programmés' : 'Rejetés'}
+              {f === 'deleted' && <Trash2 size={11} />}
+              {f === 'all' ? 'Tous' : f === 'published' ? 'Publiés' : f === 'draft' ? 'Brouillons' : f === 'scheduled' ? 'Programmés' : f === 'failed' ? 'Rejetés' : `Corbeille${trashCount > 0 ? ` (${trashCount})` : ''}`}
             </button>
           ))}
         </div>
