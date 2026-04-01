@@ -96,13 +96,15 @@ export async function getInstagramProfile(igUserId: string, pageToken: string) {
   return res.json()
 }
 
-/** Publie un post sur Instagram */
+/** Publie un post sur Instagram (Professional Login — graph.instagram.com) */
 export async function publishInstagramPost(params: {
   igUserId: string
   pageToken: string
   caption: string
   imageUrl?: string
 }): Promise<string> {
+  const IG_GRAPH = 'https://graph.instagram.com/v19.0'
+
   // 1. Créer le media container
   const containerBody: Record<string, string> = {
     caption: params.caption,
@@ -112,11 +114,10 @@ export async function publishInstagramPost(params: {
     containerBody.image_url = params.imageUrl
     containerBody.media_type = 'IMAGE'
   } else {
-    // Post texte seul non supporté sur Instagram — utiliser une image requise
     throw new Error('Instagram nécessite une image')
   }
 
-  const containerRes = await fetch(`${GRAPH}/${params.igUserId}/media`, {
+  const containerRes = await fetch(`${IG_GRAPH}/${params.igUserId}/media`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(containerBody),
@@ -128,7 +129,7 @@ export async function publishInstagramPost(params: {
   const { id: creationId } = await containerRes.json()
 
   // 2. Publier le container
-  const publishRes = await fetch(`${GRAPH}/${params.igUserId}/media_publish`, {
+  const publishRes = await fetch(`${IG_GRAPH}/${params.igUserId}/media_publish`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ creation_id: creationId, access_token: params.pageToken }),
