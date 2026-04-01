@@ -483,6 +483,30 @@ export default function CreatePage() {
     } finally { setPostAction(false) }
   }
 
+  async function handleRejectVariant() {
+    if (postAction) return
+    setPostAction(true)
+    try {
+      const content = selectedPlatforms[0] ? variants[selectedPlatforms[0]] : Object.values(variants)[0]
+      await fetch('/api/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: content || '',
+          platforms: selectedPlatforms,
+          media_urls: (() => { const u = aiUploadedUrl || generatedImageUrl; return u ? [u] : [] })(),
+          ai_generated: true,
+          status: 'failed',
+        }),
+      })
+      toast('Post rejeté', 'success')
+      setVariants({})
+      sessionStorage.removeItem('social_ia_create_draft')
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : 'Erreur', 'error')
+    } finally { setPostAction(false) }
+  }
+
   async function handleScheduleVariant() {
     if (!schedDate || !schedTime) { toast('Choisissez une date et une heure', 'error'); return }
     const scheduledAt = new Date(`${schedDate}T${schedTime}`).toISOString()
@@ -826,6 +850,10 @@ export default function CreatePage() {
                       <button className="modal-btn modal-btn-border" style={{ flex: 1, minWidth: '140px' }} onClick={handleSaveDraft}>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                         Brouillon
+                      </button>
+                      <button className="modal-btn modal-btn-red" style={{ flex: 1, minWidth: '140px' }} onClick={handleRejectVariant}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        Rejeter
                       </button>
                     </div>
                     {showSchedule && (
