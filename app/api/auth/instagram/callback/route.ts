@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   try {
     const tokenData = await exchangeInstagramCode(code)
     const longToken = await getInstagramLongLivedToken(tokenData.access_token)
-    const igUser = await getInstagramUser(String(tokenData.user_id), longToken)
+    const igUser = await getInstagramUser(longToken)
 
     const admin = createAdminClient()
     await admin.from('social_accounts').delete().eq('user_id', user.id).eq('platform', 'instagram')
