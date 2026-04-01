@@ -14,7 +14,7 @@ const PLATFORM_COLORS: Record<string, string> = {
 const PLATFORM_SHORT: Record<string, string> = {
   instagram: 'IG', facebook: 'FB', tiktok: 'TK', twitter: 'X', linkedin: 'LI', youtube: 'YT', pinterest: 'PT',
 }
-const ALL_PLATFORMS = ['instagram', 'facebook', 'tiktok', 'twitter', 'linkedin']
+const ALL_PLATFORMS = ['instagram', 'facebook', 'tiktok', 'twitter', 'linkedin', 'youtube', 'pinterest']
 
 function stClass(s: string) {
   if (s === 'draft') return 'st st-p'
