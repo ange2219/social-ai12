@@ -61,42 +61,10 @@ export async function getLongLivedToken(shortToken: string): Promise<string> {
 
 /** Récupère les Pages Facebook de l'utilisateur */
 export async function getUserPages(accessToken: string) {
-  // Debug : permissions accordées au token
-  const permRes = await fetch(`${GRAPH}/me/permissions?access_token=${accessToken}`)
-  const permData = await permRes.json().catch(() => ({}))
-  console.log('[Meta] permissions token:', JSON.stringify(permData?.data?.map((p: {permission: string, status: string}) => `${p.permission}:${p.status}`)))
-
-  // Tentative 1 : endpoint classique
   const res = await fetch(`${GRAPH}/me/accounts?access_token=${accessToken}&fields=id,name,access_token`)
-  const rawData = await res.json().catch(() => ({}))
-  console.log('[Meta] /me/accounts raw:', JSON.stringify(rawData))
-  if (!res.ok) {
-    throw new Error(`Récupération Pages échouée : ${rawData?.error?.message || res.status}`)
-  }
-  const pages = (rawData.data || []) as Array<{ id: string; name: string; access_token: string }>
-  if (pages.length > 0) return pages
-
-  // Tentative 2 : via businesses (Facebook Login for Business)
-  const bizRes = await fetch(`${GRAPH}/me/businesses?fields=owned_pages{id,name,access_token}&access_token=${accessToken}`)
-  const bizRaw = await bizRes.json().catch(() => ({}))
-  console.log('[Meta] /me/businesses raw:', JSON.stringify(bizRaw))
-  if (bizRes.ok) {
-    const bizPages: Array<{ id: string; name: string; access_token: string }> = []
-    for (const biz of bizRaw.data || []) {
-      for (const p of biz.owned_pages?.data || []) {
-        bizPages.push(p)
-      }
-    }
-    if (bizPages.length > 0) return bizPages
-  }
-
-  // Tentative 3 : /me avec champ accounts
-  const meRes = await fetch(`${GRAPH}/me?fields=id,name,accounts{id,name,access_token}&access_token=${accessToken}`)
-  const meRaw = await meRes.json().catch(() => ({}))
-  console.log('[Meta] /me with accounts field:', JSON.stringify(meRaw))
-  if (meRes.ok && meRaw.accounts?.data?.length > 0) return meRaw.accounts.data
-
-  return []
+  if (!res.ok) return []
+  const data = await res.json()
+  return (data.data || []) as Array<{ id: string; name: string; access_token: string }>
 }
 
 /** Récupère le profil personnel Facebook (/me) */

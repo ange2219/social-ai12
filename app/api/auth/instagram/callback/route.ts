@@ -1,13 +1,13 @@
 import { NextRequest } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { exchangeCodeForToken, getLongLivedToken, getUserPages, getPersonalProfile } from '@/lib/meta'
+import { exchangeInstagramCode, getInstagramLongLivedToken, getInstagramUser } from '@/lib/instagram'
 import { encryptToken } from '@/lib/utils'
 
 export async function GET(req: NextRequest) {
   const url = req.nextUrl
   const code = url.searchParams.get('code')
   const state = url.searchParams.get('state')
-  const storedState = req.cookies.get('meta_oauth_state')?.value
+  const storedState = req.cookies.get('instagram_oauth_state')?.value
 
   if (!code || state !== storedState) {
     return popupResponse({ error: 'oauth_invalid' })
@@ -18,50 +18,33 @@ export async function GET(req: NextRequest) {
   if (!user) return popupResponse({ error: 'Non authentifié' })
 
   try {
-    const tokenData = await exchangeCodeForToken(code)
-    const longToken = await getLongLivedToken(tokenData.access_token)
+    const tokenData = await exchangeInstagramCode(code)
+    const longToken = await getInstagramLongLivedToken(tokenData.access_token)
+    const igUser = await getInstagramUser(String(tokenData.user_id), longToken)
 
-    const pages = await getUserPages(longToken)
     const admin = createAdminClient()
-
-    let fbId: string
-    let fbName: string
-    let fbToken: string
-
-    if (pages.length > 0) {
-      const page = pages[0]
-      fbId = page.id
-      fbName = page.name
-      fbToken = page.access_token
-    } else {
-      const profile = await getPersonalProfile(longToken)
-      fbId = profile.id
-      fbName = profile.name
-      fbToken = longToken
-    }
-
-    await admin.from('social_accounts').delete().eq('user_id', user.id).eq('platform', 'facebook')
+    await admin.from('social_accounts').delete().eq('user_id', user.id).eq('platform', 'instagram')
     const { error } = await admin.from('social_accounts').insert({
       user_id: user.id,
-      platform: 'facebook',
-      platform_user_id: fbId,
-      platform_username: fbName,
-      access_token: encryptToken(fbToken),
+      platform: 'instagram',
+      platform_user_id: igUser.id,
+      platform_username: igUser.username,
+      access_token: encryptToken(longToken),
       connected_via: 'meta_direct',
       is_active: true,
     })
-    if (error) throw new Error(`Sauvegarde Facebook échouée : ${error.message}`)
+    if (error) throw new Error(`Sauvegarde Instagram échouée : ${error.message}`)
 
-    return popupResponse({ success: 'facebook', page: fbName })
+    return popupResponse({ success: 'instagram', username: igUser.username })
   } catch (err) {
-    console.error('Meta OAuth error:', err)
+    console.error('Instagram OAuth error:', err)
     const msg = err instanceof Error ? err.message : 'Erreur inconnue'
     return popupResponse({ error: msg })
   }
 }
 
 function popupResponse(data: Record<string, string>) {
-  const payload = JSON.stringify({ type: 'meta_oauth', ...data })
+  const payload = JSON.stringify({ type: 'instagram_oauth', ...data })
   const html = `<!DOCTYPE html><html><body><script>
     try { window.opener.postMessage(${payload}, '*') } catch(e) {}
     window.close()

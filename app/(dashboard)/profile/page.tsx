@@ -60,15 +60,21 @@ export default function ProfilePage() {
     load()
   }, [loadAccounts])
 
-  // Écouter le postMessage du popup OAuth Meta
+  // Écouter les postMessage des popups OAuth
   useEffect(() => {
     function handleMessage(e: MessageEvent) {
-      if (!e.data || e.data.type !== 'meta_oauth') return
-      const { success, page, error } = e.data
-      if (success === 'facebook_instagram') toast(`Facebook "${page}" + Instagram connectés !`, 'success')
-      else if (success === 'facebook_only') toast(`Facebook "${page}" connecté (pas de compte Instagram lié)`, 'success')
-      else if (error) toast(`Erreur : ${error}`, 'error')
-      loadAccounts()
+      if (!e.data) return
+      if (e.data.type === 'meta_oauth') {
+        const { success, page, error } = e.data
+        if (success) toast(`Facebook "${page}" connecté !`, 'success')
+        else if (error) toast(`Erreur Facebook : ${error}`, 'error')
+        loadAccounts()
+      } else if (e.data.type === 'instagram_oauth') {
+        const { success, username, error } = e.data
+        if (success) toast(`Instagram @${username} connecté !`, 'success')
+        else if (error) toast(`Erreur Instagram : ${error}`, 'error')
+        loadAccounts()
+      }
     }
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
@@ -184,73 +190,63 @@ export default function ProfilePage() {
             <span style={{ fontSize: '.9rem', fontWeight: 600, color: '#F4F4F6' }}>Réseaux sociaux</span>
           </div>
 
-          {/* Bloc Meta — Facebook + Instagram groupés */}
+          {/* Facebook */}
           {(() => {
-            const fbAccount = accounts.find(a => a.platform === 'facebook')
-            const igAccount = accounts.find(a => a.platform === 'instagram')
-            const anyConnected = !!(fbAccount || igAccount)
+            const acc = accounts.find(a => a.platform === 'facebook')
             return (
-              <div style={{
-                background: '#09090B',
-                border: `1px solid ${anyConnected ? 'rgba(34,197,94,.2)' : '#1E1E24'}`,
-                borderRadius: '10px', padding: '.75rem', marginBottom: '.75rem',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.6rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
-                    <span style={{ fontSize: '.75rem', color: '#52525C', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em' }}>Meta</span>
-                    {anyConnected && <CheckCircle2 size={13} style={{ color: '#22C55E' }} />}
+              <div style={{ background: '#09090B', border: `1px solid ${acc ? 'rgba(34,197,94,.2)' : '#1E1E24'}`, borderRadius: '10px', padding: '.75rem', marginBottom: '.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem' }}>
+                    <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: acc ? PLATFORM_COLORS['facebook'] : '#3f3f46' }} />
+                    <span style={{ fontSize: '.82rem', fontWeight: 500, color: acc ? '#E4E4E7' : '#52525C' }}>{PLATFORM_NAMES['facebook']}</span>
+                    {acc && <span style={{ fontSize: '.75rem', color: '#22C55E', display: 'flex', alignItems: 'center', gap: '.25rem' }}><CheckCircle2 size={11} /> @{acc.platform_username}</span>}
                   </div>
-                  <div style={{ display: 'flex', gap: '.4rem' }}>
-                    <button
-                      onClick={loadAccounts}
-                      title="Rafraîchir"
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#52525C', padding: '2px', display: 'flex' }}
-                    >
-                      <RefreshCw size={12} />
-                    </button>
-                    {anyConnected ? (
-                      <button
-                        onClick={() => { if (fbAccount) disconnect(fbAccount.id); if (igAccount) disconnect(igAccount.id) }}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '.3rem' }}
-                      >
+                  <div style={{ display: 'flex', gap: '.4rem', alignItems: 'center' }}>
+                    <button onClick={loadAccounts} title="Rafraîchir" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#52525C', padding: '2px', display: 'flex' }}><RefreshCw size={12} /></button>
+                    {acc ? (
+                      <button onClick={() => disconnect(acc.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '.3rem' }}>
                         <Unlink size={12} /> Déconnecter
                       </button>
                     ) : (
                       <button
-                        onClick={() => {
-                          window.open(
-                            '/api/auth/meta/start',
-                            'meta_oauth',
-                            'width=600,height=700,left=' + (window.screen.width / 2 - 300) + ',top=' + (window.screen.height / 2 - 350)
-                          )
-                        }}
+                        onClick={() => window.open('/api/auth/meta/start', 'meta_oauth', 'width=600,height=700,left=' + (window.screen.width / 2 - 300) + ',top=' + (window.screen.height / 2 - 350))}
                         style={{ background: 'rgba(59,123,246,.1)', border: '1px solid rgba(59,123,246,.3)', cursor: 'pointer', color: '#3B7BF6', fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.3rem .7rem', borderRadius: '6px', fontWeight: 500 }}
                       >
-                        <Link2 size={12} /> Connecter Facebook & Instagram
+                        <Link2 size={12} /> Connecter
                       </button>
                     )}
                   </div>
                 </div>
-                {(['facebook', 'instagram'] as Platform[]).map(p => {
-                  const acc = accounts.find(a => a.platform === p)
-                  return (
-                    <div key={p} style={{ display: 'flex', alignItems: 'center', gap: '.6rem', padding: '.35rem 0', borderTop: '1px solid #1E1E24' }}>
-                      <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: acc ? PLATFORM_COLORS[p] : '#3f3f46', flexShrink: 0 }} />
-                      <span style={{ fontSize: '.82rem', fontWeight: 500, color: acc ? '#E4E4E7' : '#52525C', minWidth: '80px' }}>{PLATFORM_NAMES[p]}</span>
-                      {acc
-                        ? <span style={{ fontSize: '.75rem', color: '#22C55E', display: 'flex', alignItems: 'center', gap: '.25rem' }}>
-                            <CheckCircle2 size={11} /> @{acc.platform_username}
-                          </span>
-                        : <span style={{ fontSize: '.73rem', color: '#3f3f46' }}>Non connecté</span>
-                      }
-                    </div>
-                  )
-                })}
-                {!anyConnected && (
-                  <div style={{ fontSize: '.72rem', color: '#3f3f46', marginTop: '.5rem' }}>
-                    Instagram se connecte automatiquement via votre Page Facebook
+              </div>
+            )
+          })()}
+
+          {/* Instagram */}
+          {(() => {
+            const acc = accounts.find(a => a.platform === 'instagram')
+            return (
+              <div style={{ background: '#09090B', border: `1px solid ${acc ? 'rgba(34,197,94,.2)' : '#1E1E24'}`, borderRadius: '10px', padding: '.75rem', marginBottom: '.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem' }}>
+                    <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: acc ? PLATFORM_COLORS['instagram'] : '#3f3f46' }} />
+                    <span style={{ fontSize: '.82rem', fontWeight: 500, color: acc ? '#E4E4E7' : '#52525C' }}>{PLATFORM_NAMES['instagram']}</span>
+                    {acc && <span style={{ fontSize: '.75rem', color: '#22C55E', display: 'flex', alignItems: 'center', gap: '.25rem' }}><CheckCircle2 size={11} /> @{acc.platform_username}</span>}
                   </div>
-                )}
+                  <div style={{ display: 'flex', gap: '.4rem', alignItems: 'center' }}>
+                    {acc ? (
+                      <button onClick={() => disconnect(acc.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '.3rem' }}>
+                        <Unlink size={12} /> Déconnecter
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => window.open('/api/auth/instagram/start', 'instagram_oauth', 'width=600,height=700,left=' + (window.screen.width / 2 - 300) + ',top=' + (window.screen.height / 2 - 350))}
+                        style={{ background: 'rgba(225,48,108,.1)', border: '1px solid rgba(225,48,108,.3)', cursor: 'pointer', color: '#E1306C', fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.3rem .7rem', borderRadius: '6px', fontWeight: 500 }}
+                      >
+                        <Link2 size={12} /> Connecter
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             )
           })()}
