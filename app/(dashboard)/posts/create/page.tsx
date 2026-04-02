@@ -249,6 +249,10 @@ export default function CreatePage() {
     createClient().from('users').select('plan').single().then(({ data }) => {
       if (data?.plan && data.plan !== 'free') setIsPro(true)
     })
+    // Charger le ton de marque enregistré dans le profil
+    fetch('/api/brand').then(r => r.ok ? r.json() : null).then(b => {
+      if (b?.tone) setTone(b.tone as GenerateTone)
+    }).catch(() => {})
   }, [])
 
   // Restore draft from sessionStorage on mount

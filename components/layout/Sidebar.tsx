@@ -32,11 +32,6 @@ export function Sidebar({ user, collapsed, onToggle }: {
 
       {/* Logo + toggle */}
       <div className="sb-logo" style={{ justifyContent: collapsed ? 'center' : undefined, position: 'relative' }}>
-        <div className="logo-mark">
-          <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-            <path d="M18 13a2 2 0 0 1-2 2H6l-4 4V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8z" fill="white" fillOpacity=".9"/>
-          </svg>
-        </div>
         {!collapsed && <span className="logo-name">Social <span>IA</span></span>}
         <button
           onClick={onToggle}

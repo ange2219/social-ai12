@@ -26,10 +26,35 @@ export async function GET(req: NextRequest) {
     query = query.neq('status', 'deleted')
   }
 
-  const { data, error, count } = await query
+  const { data: posts, error, count } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  return NextResponse.json({ posts: data, total: count })
+  // Joindre les analytics pour chaque post
+  const postIds = (posts || []).map((p: any) => p.id)
+  let analyticsMap: Record<string, { likes: number; comments: number; shares: number; impressions: number; reach: number }> = {}
+  if (postIds.length > 0) {
+    const { data: analyticsRows } = await supabase
+      .from('analytics')
+      .select('post_id, likes, comments, shares, impressions, reach')
+      .in('post_id', postIds)
+    for (const row of analyticsRows || []) {
+      if (!analyticsMap[row.post_id]) {
+        analyticsMap[row.post_id] = { likes: 0, comments: 0, shares: 0, impressions: 0, reach: 0 }
+      }
+      analyticsMap[row.post_id].likes       += row.likes || 0
+      analyticsMap[row.post_id].comments    += row.comments || 0
+      analyticsMap[row.post_id].shares      += row.shares || 0
+      analyticsMap[row.post_id].impressions += row.impressions || 0
+      analyticsMap[row.post_id].reach       += row.reach || 0
+    }
+  }
+
+  const enriched = (posts || []).map((p: any) => ({
+    ...p,
+    analytics: analyticsMap[p.id] || null,
+  }))
+
+  return NextResponse.json({ posts: enriched, total: count })
 }
 
 export async function POST(req: NextRequest) {

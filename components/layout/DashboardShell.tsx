@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import { useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { TopNav } from './TopNav'
+import { Sidebar } from './Sidebar'
 import type { User } from '@/types'
 
 function MobileNav({ pathname }: { pathname: string }) {
@@ -53,11 +54,12 @@ export function DashboardShell({ user, topbar, children }: {
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#09090B' }}>
-      <TopNav user={user} />
-      <main className="v2-main">
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#09090B' }}>
+      <Sidebar user={user} collapsed={collapsed} onToggle={() => setCollapsed(c => !c)} />
+      <main className="main">
         {children}
       </main>
       <MobileNav pathname={pathname} />

@@ -153,6 +153,91 @@ export async function publishInstagramPost(params: {
   return id
 }
 
+/** Récupère les stats d'une Page Facebook (fans, posts) */
+export async function getFacebookPageStats(pageId: string, pageToken: string): Promise<{ followers: number; posts: number }> {
+  const res = await fetch(`${GRAPH}/${pageId}?fields=fan_count,published_posts.limit(1).summary(true)&access_token=${pageToken}`)
+  if (!res.ok) return { followers: 0, posts: 0 }
+  const data = await res.json()
+  return {
+    followers: data.fan_count || 0,
+    posts: data.published_posts?.summary?.total_count || 0,
+  }
+}
+
+/** Récupère les stats d'un compte Instagram Business */
+export async function getInstagramStats(igUserId: string, token: string): Promise<{ followers: number; posts: number }> {
+  const res = await fetch(`${GRAPH}/${igUserId}?fields=followers_count,media_count&access_token=${token}`)
+  if (!res.ok) return { followers: 0, posts: 0 }
+  const data = await res.json()
+  return {
+    followers: data.followers_count || 0,
+    posts: data.media_count || 0,
+  }
+}
+
+export interface MetaComment {
+  id: string
+  message: string
+  from?: { id: string; name: string }
+  created_time: string
+  replies?: MetaComment[]
+}
+
+/** Récupère les commentaires d'un post Facebook */
+export async function getFacebookPostComments(fbPostId: string, pageToken: string): Promise<MetaComment[]> {
+  const res = await fetch(
+    `${GRAPH}/${fbPostId}/comments?fields=id,message,from,created_time&order=chronological&access_token=${pageToken}`
+  )
+  if (!res.ok) return []
+  const data = await res.json()
+  return (data.data || []) as MetaComment[]
+}
+
+/** Répond à un commentaire Facebook (Page token requis) */
+export async function replyToFacebookComment(commentId: string, message: string, pageToken: string): Promise<string> {
+  const res = await fetch(`${GRAPH}/${commentId}/comments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, access_token: pageToken }),
+  })
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}))
+    throw new Error(e?.error?.message || 'Réponse commentaire échouée')
+  }
+  const data = await res.json()
+  return data.id
+}
+
+/** Récupère les commentaires d'un média Instagram */
+export async function getInstagramComments(mediaId: string, token: string): Promise<MetaComment[]> {
+  const IG_GRAPH = 'https://graph.instagram.com/v19.0'
+  const res = await fetch(`${IG_GRAPH}/${mediaId}/comments?fields=id,text,username,timestamp&access_token=${token}`)
+  if (!res.ok) return []
+  const data = await res.json()
+  return (data.data || []).map((c: any) => ({
+    id: c.id,
+    message: c.text,
+    from: { id: '', name: c.username || 'Utilisateur' },
+    created_time: c.timestamp,
+  })) as MetaComment[]
+}
+
+/** Répond à un commentaire Instagram */
+export async function replyToInstagramComment(mediaId: string, message: string, token: string): Promise<string> {
+  const IG_GRAPH = 'https://graph.instagram.com/v19.0'
+  const res = await fetch(`${IG_GRAPH}/${mediaId}/replies`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, access_token: token }),
+  })
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}))
+    throw new Error(e?.error?.message || 'Réponse Instagram échouée')
+  }
+  const data = await res.json()
+  return data.id
+}
+
 /** Publie un post sur une Page Facebook */
 export async function publishFacebookPost(params: {
   pageId: string

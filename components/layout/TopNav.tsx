@@ -46,11 +46,6 @@ export function TopNav({ user }: { user: User }) {
       {/* Left — Logo */}
       <div className="tnav-left">
         <Link href="/dashboard" className="tnav-logo">
-          <div className="logo-mark" style={{ width: 26, height: 26, borderRadius: 6 }}>
-            <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
-              <path d="M18 13a2 2 0 0 1-2 2H6l-4 4V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8z" fill="white" fillOpacity=".9"/>
-            </svg>
-          </div>
           <span className="logo-name" style={{ fontSize: '.9rem' }}>Social <span>IA</span></span>
         </Link>
       </div>
@@ -78,6 +73,13 @@ export function TopNav({ user }: { user: User }) {
           </svg>
           Créer
         </Link>
+
+        {/* WhatsApp */}
+        <button className="tnav-icon" title="WhatsApp">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M20.52 3.48A11.84 11.84 0 0 0 12 0C5.37 0 0 5.37 0 12c0 2.11.55 4.16 1.6 5.97L0 24l6.18-1.62A11.93 11.93 0 0 0 12 24c6.63 0 12-5.37 12-12 0-3.21-1.25-6.22-3.48-8.52zM12 22c-1.85 0-3.66-.5-5.24-1.44l-.37-.22-3.87 1.02 1.03-3.77-.24-.38A9.96 9.96 0 0 1 2 12C2 6.48 6.48 2 12 2c2.67 0 5.18 1.04 7.07 2.93A9.94 9.94 0 0 1 22 12c0 5.52-4.48 10-10 10zm5.47-7.4c-.3-.15-1.77-.87-2.04-.97-.28-.1-.48-.15-.68.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.27-.47-2.42-1.5-.9-.8-1.5-1.78-1.68-2.08-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.68-1.63-.93-2.23-.24-.59-.49-.51-.68-.52h-.58c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.22 3.08c.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.69.63.71.22 1.36.19 1.87.12.57-.09 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35z" fill="currentColor" fillOpacity=".7"/>
+          </svg>
+        </button>
 
         {/* Notifications */}
         <button className="tnav-icon" title="Notifications">

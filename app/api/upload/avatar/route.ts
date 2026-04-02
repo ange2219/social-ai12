@@ -19,11 +19,15 @@ export async function POST(req: NextRequest) {
   const buffer = Buffer.from(await file.arrayBuffer())
 
   const admin = createAdminClient()
+
+  // Créer le bucket s'il n'existe pas encore
+  await admin.storage.createBucket('avatars', { public: true }).catch(() => {})
+
   const { error } = await admin.storage
     .from('avatars')
     .upload(path, buffer, { contentType: file.type, upsert: true })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: `Upload échoué : ${error.message}` }, { status: 500 })
 
   const { data: { publicUrl } } = admin.storage.from('avatars').getPublicUrl(path)
 

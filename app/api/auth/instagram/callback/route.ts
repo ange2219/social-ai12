@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { exchangeInstagramCode, getInstagramLongLivedToken, getInstagramUser } from '@/lib/instagram'
+import { getInstagramStats } from '@/lib/meta'
 import { encryptToken } from '@/lib/utils'
 
 export async function GET(req: NextRequest) {
@@ -34,6 +35,20 @@ export async function GET(req: NextRequest) {
       is_active: true,
     })
     if (error) throw new Error(`Sauvegarde Instagram échouée : ${error.message}`)
+
+    // Auto-fetch baseline au moment de la connexion
+    try {
+      const stats = await getInstagramStats(igUser.id, longToken)
+      await admin.from('social_baselines').upsert({
+        user_id: user.id,
+        platform: 'instagram',
+        baseline_followers: stats.followers,
+        current_followers: stats.followers,
+        posts_count: stats.posts,
+        baseline_at: new Date().toISOString(),
+        refreshed_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,platform' })
+    } catch { /* baseline non critique */ }
 
     return popupResponse({ success: 'instagram', username: igUser.username })
   } catch (err) {

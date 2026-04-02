@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
 import {
@@ -80,7 +80,7 @@ const OBJECTIVES = [
   { value: 'expertise', label: 'Montrer l\'expertise', icon: Trophy },
 ]
 
-const STEPS = ['Compte & Marque', 'Audience & Contenu', 'Objectifs']
+const STEPS = ['Compte & Marque', 'Audience & Contenu', 'Objectifs', 'Connecter vos réseaux']
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(0)
@@ -108,11 +108,31 @@ export default function OnboardingPage() {
     update('content_pillars', pillars)
   }
 
+  const [connectedAccounts, setConnectedAccounts] = useState<string[]>([])
+
   function canNext(): boolean {
     if (step === 0) return !!data.account_type && !!data.brand_name && !!data.industry && !!data.description
     if (step === 1) return !!data.target_audience && !!data.audience_age && data.content_pillars.filter(Boolean).length >= 1 && !!data.tone
-    return data.objectives.length >= 1
+    if (step === 2) return data.objectives.length >= 1
+    return true // étape réseaux : optionnelle, toujours "Terminer"
   }
+
+  // Écouter les callbacks OAuth depuis les popups
+  useEffect(() => {
+    function handleMessage(e: MessageEvent) {
+      if (!e.data) return
+      if (e.data.type === 'meta_oauth' && e.data.success) {
+        setConnectedAccounts(prev => [...new Set([...prev, 'facebook'])])
+        toast(`Facebook connecté !`, 'success')
+      }
+      if (e.data.type === 'instagram_oauth' && e.data.success) {
+        setConnectedAccounts(prev => [...new Set([...prev, 'instagram'])])
+        toast(`Instagram connecté !`, 'success')
+      }
+    }
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [toast])
 
   async function handleFinish() {
     setSaving(true)
@@ -401,6 +421,84 @@ export default function OnboardingPage() {
           </div>
         )}
 
+        {/* ── Étape 4 : Connecter les réseaux sociaux ── */}
+        {step === 3 && (
+          <div className="animate-fadeUp space-y-5">
+            <div>
+              <h2 className="font-display text-2xl font-bold text-t1 mb-1">Connectez vos réseaux</h2>
+              <p className="text-t3 text-sm">Social IA publiera directement sur vos comptes. Vous pouvez aussi le faire plus tard.</p>
+            </div>
+
+            {/* Facebook */}
+            <div className={cn(
+              'flex items-center justify-between p-4 rounded-xl border transition-all',
+              connectedAccounts.includes('facebook') ? 'border-green-500/40 bg-green-500/5' : 'border-b1 bg-s2'
+            )}>
+              <div className="flex items-center gap-3">
+                <div style={{ width: 36, height: 36, borderRadius: 8, overflow: 'hidden', flexShrink: 0 }}>
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                    <rect width="24" height="24" rx="5" fill="#1877F2"/>
+                    <path d="M16 8h-2a1 1 0 0 0-1 1v2h3l-.5 3H13v7h-3v-7H8v-3h2V9a4 4 0 0 1 4-4h2v3z" fill="white"/>
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-t1">Facebook</div>
+                  <div className="text-xs text-t3">{connectedAccounts.includes('facebook') ? 'Connecté ✓' : 'Page professionnelle'}</div>
+                </div>
+              </div>
+              {!connectedAccounts.includes('facebook') && (
+                <button
+                  onClick={() => window.open('/api/auth/meta/start', 'meta_oauth', 'width=600,height=700')}
+                  className="text-xs font-medium text-accent border border-accent/30 bg-accent/10 px-3 py-1.5 rounded-lg hover:bg-accent/20 transition-colors"
+                >
+                  Connecter
+                </button>
+              )}
+            </div>
+
+            {/* Instagram */}
+            <div className={cn(
+              'flex items-center justify-between p-4 rounded-xl border transition-all',
+              connectedAccounts.includes('instagram') ? 'border-green-500/40 bg-green-500/5' : 'border-b1 bg-s2'
+            )}>
+              <div className="flex items-center gap-3">
+                <div style={{ width: 36, height: 36, borderRadius: 8, overflow: 'hidden', flexShrink: 0 }}>
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                    <defs>
+                      <radialGradient id="ig-ob" cx="30%" cy="107%" r="150%">
+                        <stop offset="0%" stopColor="#fdf497"/>
+                        <stop offset="45%" stopColor="#fd5949"/>
+                        <stop offset="60%" stopColor="#d6249f"/>
+                        <stop offset="90%" stopColor="#285AEB"/>
+                      </radialGradient>
+                    </defs>
+                    <rect x="0" y="0" width="24" height="24" rx="5.5" fill="url(#ig-ob)"/>
+                    <circle cx="12" cy="12" r="4.5" stroke="white" strokeWidth="1.8" fill="none"/>
+                    <circle cx="17.2" cy="6.8" r="1.2" fill="white"/>
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-t1">Instagram</div>
+                  <div className="text-xs text-t3">{connectedAccounts.includes('instagram') ? 'Connecté ✓' : 'Compte professionnel requis'}</div>
+                </div>
+              </div>
+              {!connectedAccounts.includes('instagram') && (
+                <button
+                  onClick={() => window.open('/api/auth/instagram/start', 'instagram_oauth', 'width=600,height=700')}
+                  className="text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors"
+                  style={{ color: '#E1306C', borderColor: 'rgba(225,48,108,.3)', background: 'rgba(225,48,108,.08)' }}
+                >
+                  Connecter
+                </button>
+              )}
+            </div>
+
+            <p className="text-t3 text-xs text-center">
+              Vous pouvez connecter d'autres réseaux depuis votre profil à tout moment.
+            </p>
+          </div>
+        )}
+
         {/* Navigation */}
         <div className="flex items-center justify-between mt-8 pt-6 border-t border-b1">
           <button
@@ -424,8 +522,8 @@ export default function OnboardingPage() {
           ) : (
             <button
               onClick={handleFinish}
-              disabled={!canNext() || saving}
-              className={cn('btn-primary flex items-center gap-2', (!canNext() || saving) && 'opacity-40 cursor-not-allowed')}
+              disabled={saving}
+              className={cn('btn-primary flex items-center gap-2', saving && 'opacity-40 cursor-not-allowed')}
             >
               {saving ? 'Finalisation...' : <><Check size={15} /> Accéder au dashboard</>}
             </button>

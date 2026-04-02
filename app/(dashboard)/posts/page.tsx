@@ -4,6 +4,20 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Grid3X3, List, Send, Trash2, Eye, EyeOff, X, Save, Pencil, RotateCcw, RefreshCw, Upload, CheckSquare, Square } from 'lucide-react'
 import { useToast } from '@/components/ui/Toast'
+import { IconInstagram, IconFacebook, IconTikTok, IconTwitterX, IconLinkedIn, IconYouTube, IconPinterest } from '@/components/icons/BrandIcons'
+
+function PlatformIcon({ platform, size = 18 }: { platform: string; size?: number }) {
+  switch (platform) {
+    case 'instagram': return <IconInstagram size={size} />
+    case 'facebook': return <IconFacebook size={size} />
+    case 'tiktok': return <IconTikTok size={size} />
+    case 'twitter': return <IconTwitterX size={size} />
+    case 'linkedin': return <IconLinkedIn size={size} />
+    case 'youtube': return <IconYouTube size={size} />
+    case 'pinterest': return <IconPinterest size={size} />
+    default: return <span style={{ width: size, height: size, borderRadius: '4px', background: PLATFORM_COLORS[platform] || '#333', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '.5rem', fontWeight: 700, color: '#fff' }}>{platform.slice(0, 2).toUpperCase()}</span>
+  }
+}
 
 const DELETE_COOLDOWN_MS = 5 * 60 * 1000
 
@@ -32,6 +46,14 @@ function stLabel(s: string) {
   return 'Rejeté'
 }
 
+interface PostAnalytics {
+  likes: number
+  comments: number
+  shares: number
+  impressions: number
+  reach: number
+}
+
 interface Post {
   id: string
   content: string
@@ -40,6 +62,44 @@ interface Post {
   media_urls: string[]
   created_at: string
   scheduled_at: string | null
+  analytics: PostAnalytics | null
+  meta_post_ids?: Record<string, string> | null
+}
+
+function InsightsBadge({ a }: { a: PostAnalytics | null }) {
+  const fmt = (n: number) => n > 1000 ? (n / 1000).toFixed(1) + 'K' : String(n)
+  return (
+    <div style={{
+      position: 'absolute', inset: 0,
+      background: 'rgba(0,0,0,.82)', backdropFilter: 'blur(4px)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      justifyContent: 'center', gap: '.5rem', padding: '.75rem',
+      opacity: 0, transition: 'opacity .18s ease',
+      zIndex: 5,
+    }} className="insights-overlay">
+      {a ? (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.4rem .8rem', width: '100%' }}>
+          {[
+            { icon: '❤️', label: 'Likes',       val: fmt(a.likes) },
+            { icon: '💬', label: 'Commentaires', val: fmt(a.comments) },
+            { icon: '↗️', label: 'Partages',     val: fmt(a.shares) },
+            { icon: '👁️', label: 'Impressions',  val: fmt(a.impressions) },
+          ].map(item => (
+            <div key={item.label} style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '.95rem' }}>{item.icon}</div>
+              <div style={{ fontSize: '.78rem', fontWeight: 700, color: '#F4F4F6', lineHeight: 1 }}>{item.val}</div>
+              <div style={{ fontSize: '.58rem', color: '#8E8E98' }}>{item.label}</div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '.75rem', color: '#8E8E98', marginBottom: '.2rem' }}>📊</div>
+          <div style={{ fontSize: '.68rem', color: '#52525C' }}>Pas encore de données</div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function PostsPage() {
@@ -68,6 +128,17 @@ export default function PostsPage() {
   const [editMediaUrl, setEditMediaUrl] = useState<string | null>(null)
   const [uploadingMedia, setUploadingMedia] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  // Édition post publié (Facebook)
+  const [fbEditMode, setFbEditMode] = useState(false)
+  const [fbSaving, setFbSaving] = useState(false)
+
+  // Commentaires
+  const [showComments, setShowComments] = useState(false)
+  const [commentsData, setCommentsData] = useState<Array<{ platform: string; comments: any[] }>>([])
+  const [commentsLoading, setCommentsLoading] = useState(false)
+  const [replyTexts, setReplyTexts] = useState<Record<string, string>>({})
+  const [replying, setReplying] = useState<string | null>(null)
 
   // Multi-sélection
   const [selectMode, setSelectMode] = useState(false)
@@ -212,6 +283,10 @@ export default function PostsPage() {
     setEditContent('')
     setEditPlatforms([])
     setEditMediaUrl(null)
+    setFbEditMode(false)
+    setShowComments(false)
+    setCommentsData([])
+    setReplyTexts({})
   }
 
   async function handleMediaUpload(file: File) {
@@ -248,6 +323,64 @@ export default function PostsPage() {
       toast(err instanceof Error ? err.message : 'Erreur', 'error')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function loadComments(postId: string) {
+    setCommentsLoading(true)
+    try {
+      const res = await fetch(`/api/posts/${postId}/comments`)
+      const d = await res.json()
+      setCommentsData(d.results || [])
+    } catch {
+      toast('Impossible de charger les commentaires', 'error')
+    } finally {
+      setCommentsLoading(false)
+    }
+  }
+
+  async function sendReply(platform: string, commentId: string) {
+    const msg = replyTexts[commentId]?.trim()
+    if (!msg || !selectedPost) return
+    setReplying(commentId)
+    try {
+      const res = await fetch(`/api/posts/${selectedPost.id}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ platform, commentId, message: msg }),
+      })
+      if (!res.ok) {
+        const d = await res.json()
+        throw new Error(d.error)
+      }
+      toast('Réponse envoyée', 'success')
+      setReplyTexts(prev => { const n = { ...prev }; delete n[commentId]; return n })
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : 'Erreur', 'error')
+    } finally {
+      setReplying(null)
+    }
+  }
+
+  async function editFbPost() {
+    if (!selectedPost) return
+    setFbSaving(true)
+    try {
+      const res = await fetch(`/api/posts/${selectedPost.id}/edit-published`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: editContent }),
+      })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d.error)
+      toast('Post modifié sur Facebook', 'success')
+      setPosts(prev => prev.map(p => p.id === selectedPost.id ? { ...p, content: editContent } : p))
+      setSelectedPost(prev => prev ? { ...prev, content: editContent } : null)
+      setFbEditMode(false)
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : 'Erreur', 'error')
+    } finally {
+      setFbSaving(false)
     }
   }
 
@@ -383,7 +516,7 @@ export default function PostsPage() {
               {/* Contenu */}
               <div>
                 <label className="label" style={{ marginBottom: '.4rem', display: 'block' }}>Contenu</label>
-                {isDraft ? (
+                {isDraft || fbEditMode ? (
                   <textarea
                     className="input resize-none"
                     rows={5}
@@ -422,7 +555,8 @@ export default function PostsPage() {
                           transition: '.12s', position: 'relative',
                         }}
                       >
-                        {PLATFORM_SHORT[p]}
+                        <PlatformIcon platform={p} size={14} />
+                        <span style={{ marginLeft: '.25rem' }}>{PLATFORM_SHORT[p]}</span>
                         {isPlanLocked && <span style={{ fontSize: '.5rem', marginLeft: '.2rem', opacity: .6 }}>Pro</span>}
                       </button>
                     )
@@ -468,6 +602,33 @@ export default function PostsPage() {
                           : <Send size={14} />} Publier
                       </button>
                     )}
+                    {/* Boutons modification pour posts publiés */}
+                    {!isDraft && selectedPost.status === 'published' && (
+                      selectedPost.platforms.includes('facebook') ? (
+                        fbEditMode ? (
+                          <>
+                            <button onClick={editFbPost} disabled={fbSaving}
+                              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem', padding: '.6rem', borderRadius: '8px', border: 'none', background: '#1877F2', color: '#fff', cursor: 'pointer', fontSize: '.83rem', fontWeight: 600, opacity: fbSaving ? .6 : 1 }}>
+                              <Save size={14} /> {fbSaving ? 'Sauvegarde...' : 'Sauvegarder sur Facebook'}
+                            </button>
+                            <button onClick={() => { setFbEditMode(false); setEditContent(selectedPost.content) }}
+                              style={{ padding: '.6rem .8rem', borderRadius: '8px', border: '1px solid #27272D', background: 'transparent', color: '#8E8E98', cursor: 'pointer', fontSize: '.8rem' }}>
+                              Annuler
+                            </button>
+                          </>
+                        ) : (
+                          <button onClick={() => setFbEditMode(true)}
+                            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem', padding: '.6rem', borderRadius: '8px', border: '1px solid rgba(24,119,242,.4)', background: 'rgba(24,119,242,.1)', color: '#1877F2', cursor: 'pointer', fontSize: '.83rem', fontWeight: 600 }}>
+                            <Pencil size={14} /> Modifier sur Facebook
+                          </button>
+                        )
+                      ) : (
+                        <div style={{ flex: 1, fontSize: '.74rem', color: '#52525C', display: 'flex', alignItems: 'center', gap: '.4rem', padding: '.5rem .75rem', background: '#0D0D0F', borderRadius: '8px', border: '1px solid #1C1C21', lineHeight: 1.4 }}>
+                          <IconInstagram size={13} />
+                          <span>Instagram ne permet pas la modification après publication.</span>
+                        </div>
+                      )
+                    )}
                     <button onClick={() => askDelete(selectedPost.id)} disabled={deleting === selectedPost.id}
                       style={{ padding: '.6rem .8rem', borderRadius: '8px', border: '1px solid rgba(239,68,68,.3)', background: 'rgba(239,68,68,.08)', color: '#EF4444', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                       <Trash2 size={15} />
@@ -475,6 +636,75 @@ export default function PostsPage() {
                   </>
                 )}
               </div>
+
+              {/* ── Commentaires (posts publiés avec Meta IDs) ── */}
+              {!isDraft && !isDeleted && selectedPost.status === 'published' && selectedPost.meta_post_ids && Object.keys(selectedPost.meta_post_ids).length > 0 && (
+                <div style={{ borderTop: '1px solid #1C1C21', paddingTop: '.85rem' }}>
+                  <button
+                    onClick={() => {
+                      const next = !showComments
+                      setShowComments(next)
+                      if (next && commentsData.length === 0) loadComments(selectedPost.id)
+                    }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#52525C', fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem', padding: 0, marginBottom: showComments ? '.75rem' : 0 }}
+                  >
+                    <span style={{ fontSize: '.9rem' }}>💬</span>
+                    {showComments ? 'Masquer les commentaires' : 'Voir les commentaires'}
+                  </button>
+
+                  {showComments && (
+                    <div>
+                      {commentsLoading ? (
+                        <div style={{ textAlign: 'center', padding: '1rem 0', color: '#52525C', fontSize: '.78rem' }}>Chargement...</div>
+                      ) : commentsData.length === 0 || commentsData.every(p => p.comments.length === 0) ? (
+                        <div style={{ textAlign: 'center', padding: '.75rem 0', color: '#3f3f46', fontSize: '.75rem' }}>Aucun commentaire pour le moment.</div>
+                      ) : (
+                        commentsData.map(({ platform, comments }) => (
+                          <div key={platform} style={{ marginBottom: '.75rem' }}>
+                            {commentsData.length > 1 && (
+                              <div style={{ fontSize: '.65rem', fontWeight: 600, color: '#52525C', marginBottom: '.4rem', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                                {platform === 'facebook' ? '📘 Facebook' : '📸 Instagram'}
+                              </div>
+                            )}
+                            {comments.map((c: any) => (
+                              <div key={c.id} style={{ background: '#0D0D0F', border: '1px solid #1C1C21', borderRadius: '8px', padding: '.6rem .75rem', marginBottom: '.4rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '.3rem' }}>
+                                  <span style={{ fontSize: '.72rem', fontWeight: 600, color: '#8E8E98' }}>
+                                    {c.from?.name || 'Utilisateur'}
+                                  </span>
+                                  <span style={{ fontSize: '.62rem', color: '#3f3f46' }}>
+                                    {new Date(c.created_time).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                </div>
+                                <p style={{ fontSize: '.78rem', color: '#E4E4E7', margin: 0, lineHeight: 1.5 }}>{c.message}</p>
+                                {/* Zone de réponse */}
+                                <div style={{ marginTop: '.5rem', display: 'flex', gap: '.35rem' }}>
+                                  <input
+                                    type="text"
+                                    placeholder="Répondre..."
+                                    value={replyTexts[c.id] || ''}
+                                    onChange={e => setReplyTexts(prev => ({ ...prev, [c.id]: e.target.value }))}
+                                    onKeyDown={e => { if (e.key === 'Enter') sendReply(platform, c.id) }}
+                                    className="input"
+                                    style={{ flex: 1, padding: '.3rem .6rem', fontSize: '.73rem' }}
+                                  />
+                                  <button
+                                    onClick={() => sendReply(platform, c.id)}
+                                    disabled={!replyTexts[c.id]?.trim() || replying === c.id}
+                                    style={{ padding: '.3rem .6rem', borderRadius: '6px', border: 'none', background: '#4646FF', color: '#fff', cursor: 'pointer', fontSize: '.72rem', fontWeight: 600, opacity: !replyTexts[c.id]?.trim() ? .4 : 1, flexShrink: 0 }}
+                                  >
+                                    {replying === c.id ? '...' : 'Envoyer'}
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -632,8 +862,16 @@ export default function PostsPage() {
             <div key={post.id}
               onClick={() => selectMode ? toggleSelect(post.id) : openPost(post)}
               style={{ background: '#111113', border: `1px solid ${isSelected ? '#4646FF' : '#27272D'}`, borderRadius: '10px', overflow: 'hidden', transition: '.15s', cursor: 'pointer', position: 'relative' }}
-              onMouseEnter={e => { if (!isSelected) e.currentTarget.style.borderColor = '#4646FF' }}
-              onMouseLeave={e => { if (!isSelected) e.currentTarget.style.borderColor = '#27272D' }}
+              onMouseEnter={e => {
+                if (!isSelected) e.currentTarget.style.borderColor = '#4646FF'
+                const overlay = e.currentTarget.querySelector('.insights-overlay') as HTMLElement | null
+                if (overlay) overlay.style.opacity = '1'
+              }}
+              onMouseLeave={e => {
+                if (!isSelected) e.currentTarget.style.borderColor = '#27272D'
+                const overlay = e.currentTarget.querySelector('.insights-overlay') as HTMLElement | null
+                if (overlay) overlay.style.opacity = '0'
+              }}
             >
               {selectMode && (
                 <div style={{ position: 'absolute', top: '6px', left: '6px', zIndex: 10 }}>
@@ -646,13 +884,18 @@ export default function PostsPage() {
               <div style={{ aspectRatio: '1', background: '#18181C', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {post.media_urls?.[0]
                   ? <img src={post.media_urls[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                  : <span style={{ fontSize: '1.8rem', opacity: .4 }}>📝</span>
+                  : <svg width="36" height="36" viewBox="0 0 36 36" fill="none" style={{ opacity: .25 }}>
+                      <rect x="4" y="6" width="28" height="24" rx="3" stroke="#E4E4E7" strokeWidth="1.8"/>
+                      <circle cx="13" cy="15" r="3" stroke="#E4E4E7" strokeWidth="1.5"/>
+                      <path d="M4 24l7-7 5 5 4-4 8 7" stroke="#E4E4E7" strokeWidth="1.5" strokeLinejoin="round"/>
+                    </svg>
                 }
-                <div style={{ position: 'absolute', top: '5px', right: '5px', display: 'flex', gap: '3px' }}>
+                {post.status === 'published' && <InsightsBadge a={post.analytics} />}
+                <div style={{ position: 'absolute', top: '5px', right: '5px', display: 'flex', gap: '3px', zIndex: 6 }}>
                   {post.platforms.slice(0, 3).map(p => (
-                    <span key={p} style={{ width: '18px', height: '18px', borderRadius: '4px', background: PLATFORM_COLORS[p] || '#333', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '.5rem', fontWeight: 700, color: '#fff' }}>
-                      {PLATFORM_SHORT[p] || '?'}
-                    </span>
+                    <div key={p} style={{ width: '18px', height: '18px', borderRadius: '4px', overflow: 'hidden', flexShrink: 0 }}>
+                      <PlatformIcon platform={p} size={18} />
+                    </div>
                   ))}
                 </div>
               </div>
@@ -700,16 +943,20 @@ export default function PostsPage() {
               <div style={{ width: '44px', height: '44px', borderRadius: '6px', background: '#18181C', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {post.media_urls?.[0]
                   ? <img src={post.media_urls[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <span style={{ fontSize: '1.2rem', opacity: .4 }}>📝</span>
+                  : <svg width="22" height="22" viewBox="0 0 36 36" fill="none" style={{ opacity: .25 }}>
+                      <rect x="4" y="6" width="28" height="24" rx="3" stroke="#E4E4E7" strokeWidth="1.8"/>
+                      <circle cx="13" cy="15" r="3" stroke="#E4E4E7" strokeWidth="1.5"/>
+                      <path d="M4 24l7-7 5 5 4-4 8 7" stroke="#E4E4E7" strokeWidth="1.5" strokeLinejoin="round"/>
+                    </svg>
                 }
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: '.8rem', color: '#E4E4E7', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{post.content}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginTop: '.3rem' }}>
                   {post.platforms.map(p => (
-                    <span key={p} style={{ width: '16px', height: '16px', borderRadius: '3px', background: PLATFORM_COLORS[p] || '#333', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '.45rem', fontWeight: 700, color: '#fff' }}>
-                      {PLATFORM_SHORT[p] || '?'}
-                    </span>
+                    <div key={p} style={{ width: '16px', height: '16px', borderRadius: '3px', overflow: 'hidden', flexShrink: 0 }}>
+                      <PlatformIcon platform={p} size={16} />
+                    </div>
                   ))}
                   <span style={{ fontSize: '.7rem', color: '#3f3f46' }}>
                     {new Date(post.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
@@ -717,6 +964,13 @@ export default function PostsPage() {
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                {post.analytics && post.status === 'published' && (
+                  <div style={{ display: 'flex', gap: '.6rem', fontSize: '.7rem', color: '#52525C' }}>
+                    <span title="Likes">❤️ {post.analytics.likes}</span>
+                    <span title="Commentaires">💬 {post.analytics.comments}</span>
+                    <span title="Impressions">👁️ {post.analytics.impressions > 1000 ? (post.analytics.impressions/1000).toFixed(1)+'K' : post.analytics.impressions}</span>
+                  </div>
+                )}
                 <span className={stClass(post.status)} style={{ fontSize: '.68rem' }}>{stLabel(post.status)}</span>
                 {(post.status === 'draft' || post.status === 'failed') && (
                   <>
