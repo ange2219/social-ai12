@@ -329,7 +329,7 @@ body {
 }
 
 /* ── How it works ── */
-.l-how { background: var(--s1); border-radius: 20px; margin: 0 1.5rem; }
+.l-how { background: var(--s1); border-radius: 20px; max-width: none; margin: 0 1.5rem; }
 .l-steps { display: flex; align-items: flex-start; gap: 1.5rem; max-width: 900px; margin: 0 auto; }
 .l-step { flex: 1; text-align: center; }
 .l-step-n {
@@ -380,7 +380,7 @@ body {
 .l-plan-outline:hover { background: rgba(255,255,255,.05); color: var(--t1); }
 
 /* ── Testimonials ── */
-.l-testi-sec { background: var(--s1); border-radius: 20px; margin: 0 1.5rem; }
+.l-testi-sec { background: var(--s1); border-radius: 20px; max-width: none; margin: 0 1.5rem; }
 .l-testi-g { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
 .l-testi {
   background: var(--s2); border: 1px solid var(--b1);
