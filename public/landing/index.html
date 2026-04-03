@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Social IA — Votre assistant Community Manager intelligent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="landing.css">
+</head>
+<body>
+
+<!-- ══ LANDING ══ -->
+<div id="v-landing" class="view active">
+
+  <!-- NAV -->
+  <nav class="ln">
+    <div class="ln-in">
+      <div class="ln-logo">
+        <div class="logo-mark">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+            <path d="M18 13a2 2 0 0 1-2 2H6l-4 4V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8z" fill="white" fill-opacity=".9"/>
+          </svg>
+        </div>
+        <span class="logo-name">Social <span>IA</span></span>
+      </div>
+      <div class="ln-links" id="mob-menu">
+        <a class="ln-link" href="#l-features">Fonctionnalités</a>
+        <a class="ln-link" href="#l-pricing">Tarifs</a>
+        <a class="ln-link" href="#l-faq">FAQ</a>
+        <!-- mobile-only CTA inside menu -->
+        <a class="ln-link mob-only" href="/login" style="color:var(--acc);font-weight:500">Commencer →</a>
+      </div>
+      <div class="ln-actions">
+        <button class="btn-outline ln-outline" onclick="window.location.href='/login'">Connexion</button>
+        <button class="btn-cta" onclick="window.location.href='/login'">Commencer gratuitement</button>
+      </div>
+      <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="l-hero">
+    <div class="l-hero-bg">
+      <div class="l-hero-grad"></div>
+      <div class="l-hero-grid"></div>
+    </div>
+    <div class="l-hero-in">
+      <div class="l-hero-l">
+        <div class="l-badge">
+          <span class="l-badge-dot"></span>
+          <span>+2 000 Community Managers l'utilisent</span>
+        </div>
+        <h1 class="l-h1">Votre assistant<br><em>Community Manager</em><br>intelligent</h1>
+        <p class="l-sub">Configurez votre profil de marque une fois. L'IA génère vos posts, répond à vos commentaires et publie automatiquement sur toutes vos plateformes.</p>
+        <div class="l-ctas">
+          <button class="btn-cta l-btn-big" onclick="window.location.href='/login'">Commencer gratuitement →</button>
+          <button class="btn-outline l-btn-big" onclick="showView('v-app')">Voir la démo</button>
+        </div>
+        <div class="l-avatars">
+          <div class="l-av-stack">
+            <div class="l-av" style="background:#E1306C">ML</div>
+            <div class="l-av" style="background:#3B7BF6">TC</div>
+            <div class="l-av" style="background:#22C55E">SA</div>
+            <div class="l-av" style="background:#F59E0B">RD</div>
+          </div>
+          <span class="l-av-text">Rejoignez <strong>2 000+</strong> professionnels</span>
+        </div>
+      </div>
+      <div class="l-hero-r">
+        <!-- App Preview -->
+        <div class="l-app-preview">
+          <div class="l-ap-bar">
+            <div class="l-ap-dots"><span></span><span></span><span></span></div>
+            <div class="l-ap-title">Social IA — Tableau de bord</div>
+          </div>
+          <div class="l-ap-body">
+            <div class="l-ap-stats">
+              <div class="l-ap-sc">
+                <div class="l-ap-sl">Impressions</div>
+                <div class="l-ap-sv">48 291</div>
+                <div class="l-ap-sd up">↑ +12.4%</div>
+              </div>
+              <div class="l-ap-sc">
+                <div class="l-ap-sl">Engagement</div>
+                <div class="l-ap-sv">6 837</div>
+                <div class="l-ap-sd up">↑ +8.1%</div>
+              </div>
+              <div class="l-ap-sc">
+                <div class="l-ap-sl">Posts publiés</div>
+                <div class="l-ap-sv">21</div>
+                <div class="l-ap-sd up">↑ ce mois</div>
+              </div>
+            </div>
+            <div class="l-ap-label">Posts récents</div>
+            <div class="l-ap-posts">
+              <div class="l-ap-post">
+                <div class="l-ap-pi">🌿</div>
+                <div class="l-ap-pc">
+                  <div class="l-ap-pt">La nature nous rappelle que la croissance…</div>
+                  <div class="l-ap-pm">
+                    <span class="pd ig" style="width:15px;height:15px;border-radius:4px;font-size:.45rem">IG</span>
+                    <span class="pd fb" style="width:15px;height:15px;border-radius:4px;font-size:.45rem">FB</span>
+                  </div>
+                </div>
+                <span class="st st-a" style="font-size:.62rem">Publié</span>
+              </div>
+              <div class="l-ap-post">
+                <div class="l-ap-pi">🚀</div>
+                <div class="l-ap-pc">
+                  <div class="l-ap-pt">5 stratégies pour dominer les réseaux…</div>
+                  <div class="l-ap-pm">
+                    <span class="pd li" style="width:15px;height:15px;border-radius:4px;font-size:.45rem">IN</span>
+                  </div>
+                </div>
+                <span class="st st-p" style="font-size:.62rem">En attente</span>
+              </div>
+              <div class="l-ap-post">
+                <div class="l-ap-pi">💡</div>
+                <div class="l-ap-pc">
+                  <div class="l-ap-pt">3 erreurs que font 90% des entrepreneurs…</div>
+                  <div class="l-ap-pm">
+                    <span class="pd ig" style="width:15px;height:15px;border-radius:4px;font-size:.45rem">IG</span>
+                    <span class="pd li" style="width:15px;height:15px;border-radius:4px;font-size:.45rem">IN</span>
+                  </div>
+                </div>
+                <span class="st st-pub" style="font-size:.62rem">Programmé</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Floating badges -->
+        <div class="l-float l-float-1">
+          <div class="l-fl-i">✨</div>
+          <div>
+            <div class="l-fl-t">Post généré</div>
+            <div class="l-fl-s">En 8 secondes</div>
+          </div>
+        </div>
+        <div class="l-float l-float-2">
+          <div class="l-fl-i" style="background:rgba(34,197,94,.15);color:var(--ok)">📈</div>
+          <div>
+            <div class="l-fl-t">Engagement +31%</div>
+            <div class="l-fl-s">ce mois-ci</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLATFORMS STRIP -->
+  <div class="l-plat-strip">
+    <p class="l-plat-label">Publié automatiquement sur</p>
+    <div class="l-plat-row">
+      <div class="l-plat-pill">
+        <span class="pd ig" style="width:20px;height:20px;border-radius:5px;font-size:.55rem">IG</span> Instagram
+      </div>
+      <div class="l-plat-pill">
+        <span class="pd fb" style="width:20px;height:20px;border-radius:5px;font-size:.55rem">FB</span> Facebook
+      </div>
+      <div class="l-plat-pill">
+        <span class="pd li" style="width:20px;height:20px;border-radius:5px;font-size:.55rem">IN</span> LinkedIn
+      </div>
+      <div class="l-plat-pill" style="opacity:.5">
+        <span style="width:20px;height:20px;border-radius:5px;background:#000;display:inline-flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700;color:#fff">TK</span> TikTok
+      </div>
+      <div class="l-plat-pill l-plat-soon">Twitter/X <span class="l-soon-tag">Bientôt</span></div>
+      <div class="l-plat-pill l-plat-soon">Pinterest <span class="l-soon-tag">Bientôt</span></div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="l-stats-row">
+    <div class="l-stat"><div class="l-stat-n">2 000+</div><div class="l-stat-l">Utilisateurs actifs</div></div>
+    <div class="l-stat-sep"></div>
+    <div class="l-stat"><div class="l-stat-n">7/sem</div><div class="l-stat-l">Posts générés en moyenne</div></div>
+    <div class="l-stat-sep"></div>
+    <div class="l-stat"><div class="l-stat-n">24/7</div><div class="l-stat-l">Publication automatique</div></div>
+    <div class="l-stat-sep"></div>
+    <div class="l-stat"><div class="l-stat-n">98%</div><div class="l-stat-l">Taux de satisfaction</div></div>
+  </div>
+
+  <!-- FEATURES -->
+  <section class="l-section" id="l-features">
+    <div class="l-sec-head">
+      <div class="l-sec-tag">Fonctionnalités</div>
+      <h2 class="l-sec-h">Tout ce dont vous avez besoin,<br>dans un seul outil</h2>
+      <p class="l-sec-p">De la génération de contenu à l'analyse des performances, Social IA automatise chaque étape de votre présence en ligne.</p>
+    </div>
+    <div class="l-feat-g">
+      <div class="l-feat-card l-feat-big">
+        <div class="l-feat-ico" style="background:rgba(59,123,246,.12);color:var(--acc)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        </div>
+        <h3>Génération automatique de posts</h3>
+        <p>L'IA analyse votre secteur, votre ton et vos objectifs pour créer 7 posts optimisés par semaine — captions, hashtags et sélection d'images inclus. Zéro inspiration nécessaire.</p>
+        <div class="l-feat-tags">
+          <span>Instagram</span><span>Facebook</span><span>LinkedIn</span><span>TikTok</span>
+        </div>
+      </div>
+      <div class="l-feat-card">
+        <div class="l-feat-ico" style="background:rgba(34,197,94,.1);color:var(--ok)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <h3>Calendrier éditorial</h3>
+        <p>Planifiez et programmez vos posts sur un calendrier visuel. Publiez toujours au meilleur moment.</p>
+      </div>
+      <div class="l-feat-card">
+        <div class="l-feat-ico" style="background:rgba(245,158,11,.1);color:var(--warn)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        </div>
+        <h3>Analytiques avancées</h3>
+        <p>Suivez vos impressions, votre engagement et identifiez vos meilleurs contenus avec des graphiques clairs.</p>
+      </div>
+      <div class="l-feat-card">
+        <div class="l-feat-ico" style="background:rgba(225,48,108,.1);color:#E1306C">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3>Gestion multi-comptes</h3>
+        <p>Gérez plusieurs marques depuis un seul dashboard. Chaque profil garde son identité et son ton IA.</p>
+      </div>
+      <div class="l-feat-card">
+        <div class="l-feat-ico" style="background:rgba(59,123,246,.12);color:var(--acc)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+        </div>
+        <h3>Motion Studio</h3>
+        <p>Transformez vos posts en vidéos et reels automatiquement. Formats Reels, Stories et Shorts.</p>
+        <div class="l-feat-coming">Bientôt — V2</div>
+      </div>
+      <div class="l-feat-card">
+        <div class="l-feat-ico" style="background:rgba(18,140,126,.1);color:#25D366">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+        </div>
+        <h3>Alertes WhatsApp</h3>
+        <p>Recevez une notification WhatsApp dès que vos posts sont prêts. Approuvez ou ajustez en un clic.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="l-section l-how">
+    <div class="l-sec-head">
+      <div class="l-sec-tag">Comment ça marche</div>
+      <h2 class="l-sec-h">Opérationnel en<br>moins de 5 minutes</h2>
+    </div>
+    <div class="l-steps">
+      <div class="l-step">
+        <div class="l-step-n">01</div>
+        <h3>Configurez votre marque</h3>
+        <p>Renseignez votre secteur, votre ton et vos objectifs. L'IA comprend qui vous êtes en quelques questions simples.</p>
+      </div>
+      <div class="l-step-arrow">→</div>
+      <div class="l-step">
+        <div class="l-step-n">02</div>
+        <h3>L'IA génère votre contenu</h3>
+        <p>Chaque semaine, Social IA crée 7 posts optimisés pour chaque plateforme avec les captions, hashtags et visuels.</p>
+      </div>
+      <div class="l-step-arrow">→</div>
+      <div class="l-step">
+        <div class="l-step-n">03</div>
+        <h3>Validez et publiez</h3>
+        <p>Recevez une alerte WhatsApp, validez vos posts et laissez Social IA tout publier automatiquement au meilleur moment.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="l-section" id="l-pricing">
+    <div class="l-sec-head">
+      <div class="l-sec-tag">Tarifs</div>
+      <h2 class="l-sec-h">Simple, transparent,<br>sans surprise</h2>
+      <p class="l-sec-p">Commencez gratuitement. Évoluez quand vous êtes prêt.</p>
+    </div>
+    <div class="l-plans">
+      <div class="l-plan">
+        <div class="l-plan-name">Gratuit</div>
+        <div class="l-plan-price"><span class="l-plan-amt">0€</span><span class="l-plan-per">/mois</span></div>
+        <div class="l-plan-desc">Pour démarrer et tester</div>
+        <ul class="l-plan-feats">
+          <li class="lf-yes">3 posts générés / semaine</li>
+          <li class="lf-yes">2 plateformes connectées</li>
+          <li class="lf-yes">Calendrier éditorial</li>
+          <li class="lf-no">Analytiques avancées</li>
+          <li class="lf-no">Multi-comptes</li>
+          <li class="lf-no">Motion Studio</li>
+          <li class="lf-no">Alertes WhatsApp</li>
+        </ul>
+        <button class="l-plan-btn l-plan-outline" onclick="window.location.href='/login'">Commencer gratuitement</button>
+      </div>
+      <div class="l-plan l-plan-pro">
+        <div class="l-plan-badge">Le plus populaire</div>
+        <div class="l-plan-name">Pro</div>
+        <div class="l-plan-price"><span class="l-plan-amt">29€</span><span class="l-plan-per">/mois</span></div>
+        <div class="l-plan-desc">Pour les créateurs sérieux</div>
+        <ul class="l-plan-feats">
+          <li class="lf-yes">7 posts générés / semaine</li>
+          <li class="lf-yes">4 plateformes connectées</li>
+          <li class="lf-yes">Calendrier éditorial</li>
+          <li class="lf-yes">Analytiques avancées</li>
+          <li class="lf-yes">2 comptes marque</li>
+          <li class="lf-yes">Motion Studio (bêta)</li>
+          <li class="lf-yes">Alertes WhatsApp</li>
+        </ul>
+        <button class="l-plan-btn" onclick="window.location.href='/login'">Essayer 14 jours gratuit</button>
+      </div>
+      <div class="l-plan">
+        <div class="l-plan-name">Business</div>
+        <div class="l-plan-price"><span class="l-plan-amt">79€</span><span class="l-plan-per">/mois</span></div>
+        <div class="l-plan-desc">Pour les agences et équipes</div>
+        <ul class="l-plan-feats">
+          <li class="lf-yes">Posts illimités</li>
+          <li class="lf-yes">Plateformes illimitées</li>
+          <li class="lf-yes">Calendrier éditorial</li>
+          <li class="lf-yes">Analytiques avancées</li>
+          <li class="lf-yes">Comptes illimités</li>
+          <li class="lf-yes">Motion Studio complet</li>
+          <li class="lf-yes">WhatsApp + Slack</li>
+        </ul>
+        <button class="l-plan-btn l-plan-outline" onclick="window.location.href='/login'">Contacter l'équipe</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section class="l-section l-testi-sec">
+    <div class="l-sec-head">
+      <div class="l-sec-tag">Témoignages</div>
+      <h2 class="l-sec-h">Ce qu'ils en disent</h2>
+    </div>
+    <div class="l-testi-g">
+      <div class="l-testi">
+        <div class="l-testi-stars">★★★★★</div>
+        <p class="l-testi-q">"Social IA m'a sauvé 10 heures par semaine. Mes posts sont de meilleure qualité et mon engagement a doublé en 2 mois."</p>
+        <div class="l-testi-au">
+          <div class="l-av" style="background:#E1306C">ML</div>
+          <div>
+            <div class="l-testi-name">Marie L.</div>
+            <div class="l-testi-role">Coach bien-être · 12k abonnés</div>
+          </div>
+        </div>
+      </div>
+      <div class="l-testi">
+        <div class="l-testi-stars">★★★★★</div>
+        <p class="l-testi-q">"En tant qu'agence, on gère 8 clients avec Social IA. Ce qui prenait une journée entière se fait maintenant en 30 minutes."</p>
+        <div class="l-testi-au">
+          <div class="l-av" style="background:#3B7BF6">TC</div>
+          <div>
+            <div class="l-testi-name">Thomas C.</div>
+            <div class="l-testi-role">Directeur agence · 8 clients</div>
+          </div>
+        </div>
+      </div>
+      <div class="l-testi">
+        <div class="l-testi-stars">★★★★★</div>
+        <p class="l-testi-q">"L'IA comprend vraiment ma marque. Les posts générés semblent écrits par moi. Mes abonnés ne voient pas la différence."</p>
+        <div class="l-testi-au">
+          <div class="l-av" style="background:#22C55E">SA</div>
+          <div>
+            <div class="l-testi-name">Sophie A.</div>
+            <div class="l-testi-role">E-commerce · 45k abonnés</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="l-section" id="l-faq">
+    <div class="l-sec-head">
+      <div class="l-sec-tag">FAQ</div>
+      <h2 class="l-sec-h">Questions fréquentes</h2>
+    </div>
+    <div class="l-faq">
+      <div class="l-faq-item open" onclick="toggleFaq(this)">
+        <div class="l-faq-q">Comment l'IA apprend-elle ma marque ? <span class="l-faq-ic">↓</span></div>
+        <div class="l-faq-a">Lors de l'onboarding, vous renseignez votre secteur, votre ton (formel, décontracté, inspirant…), vos valeurs et vos objectifs. L'IA utilise ces informations pour générer des posts cohérents avec votre identité de marque.</div>
+      </div>
+      <div class="l-faq-item" onclick="toggleFaq(this)">
+        <div class="l-faq-q">Est-ce que je peux modifier les posts générés ? <span class="l-faq-ic">↓</span></div>
+        <div class="l-faq-a">Absolument. Chaque post passe par une étape de validation avant publication. Vous pouvez modifier la caption, les hashtags, changer l'image ou rejeter le post. Vous gardez le contrôle total.</div>
+      </div>
+      <div class="l-faq-item" onclick="toggleFaq(this)">
+        <div class="l-faq-q">Quelles plateformes sont supportées ? <span class="l-faq-ic">↓</span></div>
+        <div class="l-faq-a">Instagram, Facebook et LinkedIn sont entièrement supportés. TikTok est en bêta. Twitter/X et Pinterest arrivent bientôt. WhatsApp Business est disponible pour les notifications.</div>
+      </div>
+      <div class="l-faq-item" onclick="toggleFaq(this)">
+        <div class="l-faq-q">Puis-je annuler à tout moment ? <span class="l-faq-ic">↓</span></div>
+        <div class="l-faq-a">Oui, sans condition ni frais. Vous pouvez annuler votre abonnement depuis vos paramètres à tout moment. Vos données restent accessibles jusqu'à la fin de la période payée.</div>
+      </div>
+      <div class="l-faq-item" onclick="toggleFaq(this)">
+        <div class="l-faq-q">Comment fonctionne l'essai Pro de 14 jours ? <span class="l-faq-ic">↓</span></div>
+        <div class="l-faq-a">L'essai est entièrement gratuit, sans carte bancaire requise. Vous avez accès à toutes les fonctionnalités Pro pendant 14 jours. À la fin de l'essai, vous choisissez librement si vous souhaitez continuer.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="l-cta-fin">
+    <div class="l-cta-glow"></div>
+    <div class="l-cta-fin-in">
+      <h2 class="l-cta-h">Prêt à automatiser<br>votre présence en ligne ?</h2>
+      <p class="l-cta-p">Rejoignez 2 000+ professionnels qui font confiance à Social IA pour leur stratégie réseaux sociaux.</p>
+      <div class="l-ctas">
+        <button class="btn-cta l-btn-big" onclick="window.location.href='/login'">Commencer gratuitement →</button>
+        <button class="btn-outline l-btn-big" onclick="showView('v-app')">Voir la démo</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="l-foot">
+    <div class="l-foot-in">
+      <div class="l-foot-brand">
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.65rem">
+          <div class="logo-mark" style="width:24px;height:24px;border-radius:6px">
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
+              <path d="M18 13a2 2 0 0 1-2 2H6l-4 4V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8z" fill="white" fill-opacity=".9"/>
+            </svg>
+          </div>
+          <span class="logo-name">Social <span>IA</span></span>
+        </div>
+        <p class="l-foot-desc">L'assistant IA pour les Community Managers modernes.</p>
+      </div>
+      <div class="l-foot-links">
+        <div class="l-foot-col">
+          <div class="l-foot-col-t">Produit</div>
+          <a class="l-foot-l" href="#l-features">Fonctionnalités</a>
+          <a class="l-foot-l" href="#l-pricing">Tarifs</a>
+          <a class="l-foot-l" href="#">Roadmap</a>
+        </div>
+        <div class="l-foot-col">
+          <div class="l-foot-col-t">Ressources</div>
+          <a class="l-foot-l" href="#">Documentation</a>
+          <a class="l-foot-l" href="#">Blog</a>
+          <a class="l-foot-l" href="#">Support</a>
+        </div>
+        <div class="l-foot-col">
+          <div class="l-foot-col-t">Légal</div>
+          <a class="l-foot-l" href="#">Conditions d'utilisation</a>
+          <a class="l-foot-l" href="#">Confidentialité</a>
+          <a class="l-foot-l" href="#">Mentions légales</a>
+        </div>
+      </div>
+    </div>
+    <div class="l-foot-bot">
+      <span>© 2026 Social IA. Tous droits réservés.</span>
+    </div>
+  </footer>
+
+</div>
+
+
+<!-- ══ AUTH (Demo only) ══ -->
+<div id="v-auth" class="view" style="position:relative">
+  <button class="back-btn" onclick="showView('v-landing')">← Retour</button>
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="logo-mark">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+          <path d="M18 13a2 2 0 0 1-2 2H6l-4 4V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8z" fill="white" fill-opacity=".9"/>
+        </svg>
+      </div>
+      <span class="logo-name">Social <span>IA</span></span>
+    </div>
+    <div class="auth-head">
+      <h2 id="auth-h">Bon retour</h2>
+      <p id="auth-p">Connectez-vous à votre espace</p>
+    </div>
+    <div class="tabs">
+      <div class="tab on" onclick="authTab(this,'login')">Connexion</div>
+      <div class="tab"    onclick="authTab(this,'register')">Inscription</div>
+    </div>
+    <div id="f-login">
+      <div class="fg"><label class="fl">Email</label><input class="fi" type="email" placeholder="vous@exemple.com"></div>
+      <div class="fg"><label class="fl">Mot de passe</label><input class="fi" type="password" placeholder="••••••••"></div>
+      <button class="btn-full" onclick="showView('v-app')">Se connecter</button>
+      <div class="divider">ou</div>
+      <div class="soc-row">
+        <button class="soc-btn" onclick="showView('v-app')">🔵 Google</button>
+        <button class="soc-btn" onclick="showView('v-app')">⬛ Apple</button>
+      </div>
+    </div>
+    <div id="f-register" style="display:none">
+      <div class="fg"><label class="fl">Prénom</label><input class="fi" placeholder="Alex"></div>
+      <div class="fg"><label class="fl">Email</label><input class="fi" type="email" placeholder="vous@exemple.com"></div>
+      <div class="fg"><label class="fl">Mot de passe</label><input class="fi" type="password" placeholder="••••••••"></div>
+      <button class="btn-full" onclick="showView('v-onboard')">Créer mon compte →</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ ONBOARDING ══ -->
+<div id="v-onboard" class="view" style="position:relative">
+  <button class="back-btn" onclick="showView('v-auth')">← Retour</button>
+  <div class="ob-wrap">
+    <div class="ob-top">
+      <div class="ob-dots">
+        <div class="dot on" id="d0"></div>
+        <div class="dot"    id="d1"></div>
+        <div class="dot"    id="d2"></div>
+        <div class="dot"    id="d3"></div>
+      </div>
+      <h2 id="ob-h">Votre marque</h2>
+      <p  id="ob-p">Dites-nous qui vous êtes — l'IA s'adapte</p>
+    </div>
+    <div class="ob-card" id="ob-body"></div>
+    <div class="ob-nav">
+      <button class="btn-back" id="ob-back" onclick="obGo(-1)">← Retour</button>
+      <button class="btn-next" id="ob-next" onclick="obGo(1)">Continuer →</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ APP (Demo) ══ -->
+<div id="v-app" class="view" style="min-height:100vh">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="logo-mark">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+          <path d="M18 13a2 2 0 0 1-2 2H6l-4 4V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8z" fill="white" fill-opacity=".9"/>
+        </svg>
+      </div>
+      <span class="logo-name">Social <span>IA</span></span>
+    </div>
+
+    <nav class="sb-nav">
+      <div class="ns">Principal</div>
+      <div class="ni on" onclick="go('dashboard', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        Tableau de bord
+      </div>
+      <div class="ni" onclick="go('posts', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Mes Posts
+        <span class="nbadge">3</span>
+      </div>
+      <div class="ni" onclick="go('calendar', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Calendrier
+      </div>
+      <div class="ni" onclick="go('analytics', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Analytiques
+      </div>
+
+      <div class="ns">Contenu</div>
+      <div class="ni" onclick="go('motion', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+        Motion Studio
+        <span class="v2tag">V2</span>
+      </div>
+
+      <div class="ns">Compte</div>
+      <div class="ni" onclick="go('settings', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        Paramètres
+      </div>
+      <div class="ni" onclick="go('profile', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Mon Profil
+      </div>
+    </nav>
+
+    <div class="sb-foot">
+      <div class="plan-box">
+        <div class="plan-label">Plan Gratuit</div>
+        <div class="plan-bar-wrap"><div class="plan-bar"></div></div>
+        <div class="plan-desc">3 posts générés · 1 plateforme</div>
+        <button class="btn-upgrade">Passer au Pro →</button>
+      </div>
+      <div class="user-row" onclick="go('profile', null)">
+        <div class="av">AM</div>
+        <div>
+          <div class="u-name">Alex Martin</div>
+          <div class="u-role">Plan Gratuit</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="topbar">
+      <button class="mob-sidebar-btn" onclick="toggleSidebar()" aria-label="Menu">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div class="tb-title" id="tb-t">Tableau de bord</div>
+      <div class="tb-right">
+        <div class="ib" title="Notifications">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <div class="ndot"></div>
+        </div>
+        <div class="ib" title="WhatsApp">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+        </div>
+        <div class="av" style="width:28px;height:28px;font-size:.68rem;cursor:pointer;border-radius:50%" onclick="go('profile', null)">AM</div>
+        <button class="back-landing-btn" onclick="showView('v-landing')" title="Retour à l'accueil">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="pc" id="sc"></div>
+  </main>
+
+  <!-- Mobile Bottom Nav -->
+  <nav class="mob-nav">
+    <div class="mob-nav-item on" onclick="go('dashboard', null); setMobNav(this)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      <span>Dashboard</span>
+    </div>
+    <div class="mob-nav-item" onclick="go('posts', null); setMobNav(this)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span>Posts</span>
+    </div>
+    <div class="mob-nav-item" onclick="go('calendar', null); setMobNav(this)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span>Calendrier</span>
+    </div>
+    <div class="mob-nav-item" onclick="go('analytics', null); setMobNav(this)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span>Stats</span>
+    </div>
+    <div class="mob-nav-item" onclick="go('profile', null); setMobNav(this)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Profil</span>
+    </div>
+  </nav>
+</div>
+
+<!-- Sidebar overlay for mobile -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+
+<!-- ══ MODAL ══ -->
+<div class="modal-ov" id="modal">
+  <div class="modal">
+    <div class="mh">
+      <div class="mh-t">Détail du post</div>
+      <button class="mh-x" onclick="closeModal()">✕</button>
+    </div>
+    <div class="mb">
+      <div class="m-img">🌿<span class="img-rep">Remplacer l'image</span></div>
+      <div class="fg">
+        <label class="fl">Caption</label>
+        <textarea class="fi" rows="3" style="resize:none;line-height:1.6;font-size:.84rem">🌱 La nature nous rappelle que la croissance prend du temps. Avec la bonne stratégie, chaque graine devient une forêt. #Growth #Mindset</textarea>
+      </div>
+      <div class="fg" style="margin-top:.75rem">
+        <label class="fl">Hashtags</label>
+        <input class="fi" value="#Growth #Mindset #Entrepreneur #Success" style="font-size:.82rem">
+      </div>
+      <div style="display:flex;align-items:center;gap:.4rem;margin-top:.75rem">
+        <span class="pd ig" style="width:22px;height:22px;border-radius:6px;font-size:.6rem">IG</span>
+        <span class="pd fb" style="width:22px;height:22px;border-radius:6px;font-size:.6rem">FB</span>
+        <span class="pd li" style="width:22px;height:22px;border-radius:6px;font-size:.6rem">IN</span>
+        <span class="st st-p" style="margin-left:auto">En attente</span>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn-rej" onclick="closeModal()">Rejeter</button>
+      <button class="btn-sch" onclick="closeModal()">Programmer</button>
+      <button class="btn-app" onclick="approve()">Approuver</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ GENERATING OVERLAY ══ -->
+<div class="gen-ov" id="gen-ov">
+  <div class="spin"></div>
+  <div class="gen-label">Génération en cours…</div>
+  <div class="gen-steps">
+    <div class="gs on" id="gs0"><div class="gs-d"></div>Analyse du profil de marque</div>
+    <div class="gs"    id="gs1"><div class="gs-d"></div>Tendances du secteur</div>
+    <div class="gs"    id="gs2"><div class="gs-d"></div>Génération des sujets</div>
+    <div class="gs"    id="gs3"><div class="gs-d"></div>Rédaction captions &amp; hashtags</div>
+    <div class="gs"    id="gs4"><div class="gs-d"></div>Sélection des images</div>
+    <div class="gs"    id="gs5"><div class="gs-d"></div>Programmation automatique</div>
+  </div>
+</div>
+
+
+<!-- ══ WHATSAPP TOAST ══ -->
+<div class="wa" id="wa">
+  <div class="wa-i">💬</div>
+  <div>
+    <div class="wa-t">WhatsApp · Social IA</div>
+    <div class="wa-m">Vos 7 posts sont prêts. Validez-les dans l'application.</div>
+  </div>
+  <button class="wa-x" onclick="this.parentElement.classList.remove('on')">✕</button>
+</div>
+
+
+<script src="landing.js"></script>
+</body>
+</html>
