@@ -40,6 +40,16 @@ body {
 .view { display: none; }
 .view.active { display: block; }
 
+/* Demo views never take space in document flow */
+#v-auth, #v-onboard, #v-app {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  z-index: 999;
+  overflow-y: auto;
+  background: var(--bg);
+}
+
 /* ── Logo ── */
 .logo-mark {
   width: 30px; height: 30px;
