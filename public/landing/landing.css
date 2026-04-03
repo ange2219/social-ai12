@@ -154,7 +154,7 @@ body {
 }
 .l-h1 em { color: var(--acc); font-style: normal; }
 .l-sub { font-size: 1.05rem; color: var(--t2); line-height: 1.65; max-width: 480px; margin-bottom: 2rem; }
-.l-ctas { display: flex; gap: .75rem; flex-wrap: wrap; margin-bottom: 2rem; }
+.l-ctas { display: flex; gap: .75rem; flex-wrap: wrap; margin-bottom: 2rem; justify-content: center; }
 
 .l-avatars { display: flex; align-items: center; gap: .75rem; }
 .l-av-stack { display: flex; }
@@ -933,6 +933,9 @@ textarea.fi { resize: none; }
 @media (max-width: 900px) {
   .l-hero-in { grid-template-columns: 1fr; }
   .l-hero-r { display: none; }
+  .l-hero-l { text-align: center; }
+  .l-sub { margin-left: auto; margin-right: auto; }
+  .l-avatars { justify-content: center; }
   .l-feat-g { grid-template-columns: 1fr 1fr; }
   .l-feat-big { grid-column: span 2; grid-row: span 1; }
   .l-plans { grid-template-columns: 1fr; max-width: 420px; }
