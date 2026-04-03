@@ -36,19 +36,9 @@ body {
   overflow-x: hidden;
 }
 
-/* ── Views ── */
-.view { display: none; }
-.view.active { display: block; }
-
-/* Demo views never take space in document flow */
-#v-auth, #v-onboard, #v-app {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100vw; height: 100vh;
-  z-index: 999;
-  overflow-y: auto;
-  background: var(--bg);
-}
+/* ── Views — managed entirely by JS inline styles ── */
+#v-landing { display: block; }
+#v-auth, #v-onboard, #v-app { display: none; }
 
 /* ── Logo ── */
 .logo-mark {

@@ -3,15 +3,15 @@
    ═══════════════════════════════════════════ */
 
 /* ── View navigation ── */
+const ALL_VIEWS = ['v-landing', 'v-auth', 'v-onboard', 'v-app']
 function showView(id) {
-  document.querySelectorAll('.view').forEach(v => {
-    v.classList.remove('active')
-    v.style.display = 'none'
+  ALL_VIEWS.forEach(vid => {
+    const el = document.getElementById(vid)
+    if (el) el.style.display = 'none'
   })
   const target = document.getElementById(id)
   if (!target) return
   target.style.display = id === 'v-app' ? 'flex' : 'block'
-  target.classList.add('active')
   window.scrollTo(0, 0)
   if (id === 'v-app') {
     go('dashboard', null)
@@ -428,7 +428,5 @@ function renderMotion() {
 
 /* ── Init ── */
 document.addEventListener('DOMContentLoaded', () => {
-  // Show landing by default
-  const landing = document.getElementById('v-landing')
-  if (landing) { landing.style.display = 'block'; landing.classList.add('active') }
+  showView('v-landing')
 })
