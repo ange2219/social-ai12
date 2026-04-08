@@ -147,8 +147,7 @@ function ChipGrid({ options, selected, onToggle, max }: {
 export default function OnboardingPage() {
   const [step, setStep] = useState(0)
   const [data, setData] = useState<OnboardingData>(INITIAL)
-  const [selectedAudience, setSelectedAudience] = useState<string[]>([])
-  const [selectedInterests, setSelectedInterests] = useState<string[]>([])
+  const [selectedPillars, setSelectedPillars] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
   const [connectedAccounts, setConnectedAccounts] = useState<Record<string, string>>({})
   const [connecting, setConnecting] = useState<string | null>(null)
@@ -181,27 +180,16 @@ export default function OnboardingPage() {
     }))
   }
 
-  function toggleAudience(val: string) {
-    const next = selectedAudience.includes(val)
-      ? selectedAudience.filter(v => v !== val)
-      : [...selectedAudience, val]
-    setSelectedAudience(next)
-    update('target_audience', next.join(', '))
+  function addPillar(val: string) {
+    if (!val || selectedPillars.includes(val) || selectedPillars.length >= 5) return
+    const next = [...selectedPillars, val]
+    setSelectedPillars(next)
+    update('content_pillars', next)
   }
 
-  function toggleInterest(val: string) {
-    const next = selectedInterests.includes(val)
-      ? selectedInterests.filter(v => v !== val)
-      : [...selectedInterests, val]
-    setSelectedInterests(next)
-    update('audience_interests', next.join(', '))
-  }
-
-  function togglePillar(val: string) {
-    const pillars = data.content_pillars
-    const next = pillars.includes(val)
-      ? pillars.filter(v => v !== val)
-      : pillars.length < 5 ? [...pillars, val] : pillars
+  function removePillar(val: string) {
+    const next = selectedPillars.filter(v => v !== val)
+    setSelectedPillars(next)
     update('content_pillars', next)
   }
 
@@ -243,7 +231,7 @@ export default function OnboardingPage() {
 
   function canNext(): boolean {
     if (step === 0) return !!data.account_type && !!data.brand_name && !!data.industry && !!data.description
-    if (step === 1) return selectedAudience.length > 0 && !!data.audience_age && data.content_pillars.length >= 1 && !!data.tone
+    if (step === 1) return !!data.target_audience && !!data.audience_age && selectedPillars.length >= 1 && !!data.tone
     if (step === 2) return data.objectives.length >= 1
     return true
   }
@@ -363,49 +351,54 @@ export default function OnboardingPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
 
               <div>
-                <label style={labelStyle}>Qui sont vos clients / abonnés ? * <span style={{ fontWeight: 400, color: 'var(--t3)' }}>(plusieurs choix)</span></label>
-                <ChipGrid options={TARGET_AUDIENCE_OPTIONS} selected={selectedAudience} onToggle={toggleAudience} />
+                <label style={labelStyle}>Qui sont vos clients / abonnés ? *</label>
+                <select style={{ ...fieldStyle, cursor: 'pointer' }} value={data.target_audience} onChange={e => update('target_audience', e.target.value)}>
+                  <option value="">Choisir un profil...</option>
+                  {TARGET_AUDIENCE_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
               </div>
 
               <div>
                 <label style={labelStyle}>Tranche d&apos;âge principale *</label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem' }}>
-                  {AGE_RANGES.map(age => {
-                    const sel = data.audience_age === age
-                    return (
-                      <button key={age} type="button" onClick={() => update('audience_age', age)} style={{ padding: '.4rem .85rem', borderRadius: '20px', fontSize: '.825rem', border: sel ? '1.5px solid #7B5CF5' : '1px solid var(--b1)', background: sel ? 'rgba(123,92,245,0.1)' : 'var(--s2)', color: sel ? '#7B5CF5' : 'var(--t2)', cursor: 'pointer', transition: 'all 0.2s' }}>
-                        {age}
-                      </button>
-                    )
-                  })}
-                </div>
+                <select style={{ ...fieldStyle, cursor: 'pointer' }} value={data.audience_age} onChange={e => update('audience_age', e.target.value)}>
+                  <option value="">Choisir une tranche d&apos;âge...</option>
+                  {AGE_RANGES.map(age => <option key={age} value={age}>{age}</option>)}
+                </select>
               </div>
 
               <div>
                 <label style={labelStyle}>Centres d&apos;intérêt <span style={{ fontWeight: 400, color: 'var(--t3)' }}>(optionnel)</span></label>
-                <ChipGrid options={INTERESTS_OPTIONS} selected={selectedInterests} onToggle={toggleInterest} />
+                <select style={{ ...fieldStyle, cursor: 'pointer' }} value={data.audience_interests} onChange={e => update('audience_interests', e.target.value)}>
+                  <option value="">Choisir un centre d&apos;intérêt...</option>
+                  {INTERESTS_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
               </div>
 
               <div>
                 <label style={labelStyle}>Portée géographique</label>
-                <div style={{ display: 'flex', gap: '.5rem' }}>
-                  {LOCATIONS.map(loc => {
-                    const sel = data.audience_location === loc.value
-                    return (
-                      <button key={loc.value} type="button" onClick={() => update('audience_location', loc.value)} style={{ flex: 1, padding: '.5rem', borderRadius: '8px', fontSize: '.825rem', border: sel ? '1.5px solid #7B5CF5' : '1px solid var(--b1)', background: sel ? 'rgba(123,92,245,0.1)' : 'var(--s2)', color: sel ? '#7B5CF5' : 'var(--t2)', cursor: 'pointer', transition: 'all 0.2s' }}>
-                        {loc.label}
-                      </button>
-                    )
-                  })}
-                </div>
+                <select style={{ ...fieldStyle, cursor: 'pointer' }} value={data.audience_location} onChange={e => update('audience_location', e.target.value)}>
+                  {LOCATIONS.map(loc => <option key={loc.value} value={loc.value}>{loc.label}</option>)}
+                </select>
               </div>
 
-              <div style={{ paddingTop: '.75rem', borderTop: '1px solid var(--b1)' }}>
+              <div>
                 <label style={labelStyle}>
-                  Vos piliers de contenu * <span style={{ fontWeight: 400, color: 'var(--t3)' }}>({data.content_pillars.length}/5 sélectionnés)</span>
+                  Vos piliers de contenu * <span style={{ fontWeight: 400, color: 'var(--t3)' }}>({selectedPillars.length}/5 max)</span>
                 </label>
-                <p style={{ fontSize: '.72rem', color: 'var(--t3)', marginBottom: '.6rem' }}>Les grands thèmes sur lesquels vous communiquez</p>
-                <ChipGrid options={CONTENT_PILLARS_OPTIONS} selected={data.content_pillars} onToggle={togglePillar} max={5} />
+                <select style={{ ...fieldStyle, cursor: 'pointer' }} value="" onChange={e => addPillar(e.target.value)}>
+                  <option value="">Ajouter un pilier...</option>
+                  {CONTENT_PILLARS_OPTIONS.filter(o => !selectedPillars.includes(o)).map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+                {selectedPillars.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.4rem', marginTop: '.5rem' }}>
+                    {selectedPillars.map(p => (
+                      <span key={p} style={{ display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.3rem .7rem', borderRadius: '20px', background: 'rgba(123,92,245,0.12)', border: '1px solid rgba(123,92,245,0.3)', fontSize: '.8rem', color: '#7B5CF5' }}>
+                        {p}
+                        <button type="button" onClick={() => removePillar(p)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7B5CF5', padding: 0, lineHeight: 1, fontSize: '.9rem' }}>×</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div>
