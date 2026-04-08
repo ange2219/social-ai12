@@ -6,7 +6,6 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import OpenAI from 'openai'
 import type { Platform, Plan } from '@/types'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -40,7 +39,7 @@ export interface ImagePromptContext {
 
 export interface ImageResult {
   url: string
-  provider: 'imagen3' | 'dalle3'
+  provider: 'imagen3'
   imageType: ImageType
 }
 
@@ -182,51 +181,26 @@ export function buildImagePrompt(ctx: ImagePromptContext): string {
 
 // ─── Couche 3 : Providers ─────────────────────────────────────────────────────
 
-const PLAN_PROVIDERS: Record<Plan, ('imagen3' | 'dalle3')[]> = {
-  free:     [],
-  premium:  ['imagen3', 'dalle3'],
-  business: ['imagen3', 'dalle3'],
-}
-
-async function generateWithImagen3(prompt: string): Promise<string | null> {
+async function generateWithImagen3(prompt: string): Promise<string> {
   const apiKey = process.env.GOOGLE_AI_API_KEY
   if (!apiKey) throw new Error('GOOGLE_AI_API_KEY non configurée')
 
   const genAI = new GoogleGenerativeAI(apiKey)
+  // Imagen 3 via l'API Gemini — modèle de génération d'images Google
   const model = genAI.getGenerativeModel({ model: 'imagen-3.0-generate-002' } as any)
 
   const result = await (model as any).generateImages({
     prompt,
     numberOfImages: 1,
     aspectRatio: '1:1',
+    personGeneration: 'dont_allow',
   })
 
-  const imageData = result?.generatedImages?.[0]?.image?.imageBytes
-  if (!imageData) return null
+  const imageBytes = result?.generatedImages?.[0]?.image?.imageBytes
+  if (!imageBytes) throw new Error('Imagen 3 : aucune image retournée')
 
-  // Retourne base64 — sera uploadé vers Storage par l'appelant
-  return `data:image/png;base64,${imageData}`
-}
-
-async function generateWithDalle3(prompt: string): Promise<string | null> {
-  const apiKey = process.env.OPENAI_API_KEY
-  if (!apiKey) throw new Error('OPENAI_API_KEY non configurée')
-
-  const openai = new OpenAI({ apiKey })
-  const response = await openai.images.generate({
-    model: 'dall-e-3',
-    prompt: prompt.slice(0, 4000),
-    size: '1024x1024',
-    quality: 'standard',
-    n: 1,
-  })
-
-  return response.data[0]?.url || null
-}
-
-const PROVIDER_FN: Record<'imagen3' | 'dalle3', (prompt: string) => Promise<string | null>> = {
-  imagen3: generateWithImagen3,
-  dalle3:  generateWithDalle3,
+  // Retourne data URL base64 — uploadé vers Supabase Storage par l'appelant
+  return `data:image/png;base64,${imageBytes}`
 }
 
 // ─── Export principal ─────────────────────────────────────────────────────────
@@ -235,24 +209,13 @@ export async function generateBrandedImage(
   ctx: ImagePromptContext,
   plan: Plan
 ): Promise<ImageResult> {
-  const providers = PLAN_PROVIDERS[plan]
-  if (providers.length === 0) {
+  if (plan === 'free') {
     throw new Error('Génération d\'image non disponible sur le plan gratuit')
   }
 
   const prompt = buildImagePrompt(ctx)
+  console.log(`[image-generation] type=${ctx.imageType} platform=${ctx.platform}`)
 
-  for (const provider of providers) {
-    try {
-      const url = await PROVIDER_FN[provider](prompt)
-      if (url) {
-        console.log(`[image-generation] Provider ${provider} OK pour type ${ctx.imageType}`)
-        return { url, provider, imageType: ctx.imageType }
-      }
-    } catch (err) {
-      console.warn(`[image-generation] Provider ${provider} failed:`, err instanceof Error ? err.message : err)
-    }
-  }
-
-  throw new Error('Tous les providers d\'image ont échoué')
+  const url = await generateWithImagen3(prompt)
+  return { url, provider: 'imagen3', imageType: ctx.imageType }
 }
