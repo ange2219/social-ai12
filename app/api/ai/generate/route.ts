@@ -43,16 +43,24 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Enrichir avec le profil de marque
+  // Enrichir avec le profil de marque complet
   const { data: brandProfile } = await admin
     .from('brand_profiles')
-    .select('brand_name, description')
+    .select('brand_name, description, industry, tone, target_audience, content_pillars, avoid_words')
     .eq('user_id', user.id)
     .single()
 
   if (brandProfile) {
-    body.brand_name = brandProfile.brand_name || undefined
-    body.brand_description = brandProfile.description || undefined
+    body.brand_name        = brandProfile.brand_name        || undefined
+    body.brand_description = brandProfile.description       || undefined
+    body.brand_industry    = brandProfile.industry          || undefined
+    body.brand_audience    = brandProfile.target_audience   || undefined
+    body.brand_pillars     = Array.isArray(brandProfile.content_pillars) && brandProfile.content_pillars.length
+                               ? brandProfile.content_pillars
+                               : undefined
+    body.brand_avoid       = brandProfile.avoid_words       || undefined
+    // Utiliser le ton du profil si non fourni par le frontend
+    if (!body.tone && brandProfile.tone) body.tone = brandProfile.tone
   }
 
   try {

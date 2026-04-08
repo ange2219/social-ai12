@@ -145,6 +145,10 @@ export interface GenerateRequest {
   platforms: Platform[]
   brand_name?: string
   brand_description?: string
+  brand_industry?: string
+  brand_audience?: string
+  brand_pillars?: string[]
+  brand_avoid?: string
 }
 
 export interface GenerateResponse {
