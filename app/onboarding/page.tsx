@@ -339,16 +339,10 @@ export default function OnboardingPage() {
 
               <div>
                 <label style={labelStyle}>Secteur d&apos;activité *</label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.4rem' }}>
-                  {INDUSTRIES.map(ind => {
-                    const sel = data.industry === ind
-                    return (
-                      <button key={ind} type="button" onClick={() => update('industry', ind)} style={{ padding: '.38rem .85rem', borderRadius: '20px', fontSize: '.82rem', fontWeight: 500, border: sel ? '1.5px solid #7B5CF5' : '1px solid var(--b1)', background: sel ? 'rgba(123,92,245,0.12)' : 'var(--s2)', color: sel ? '#7B5CF5' : 'var(--t2)', cursor: 'pointer', transition: 'all 0.15s' }}>
-                        {sel && <Check size={11} style={{ marginRight: 4, verticalAlign: 'middle' }} />}{ind}
-                      </button>
-                    )
-                  })}
-                </div>
+                <select style={{ ...fieldStyle, cursor: 'pointer' }} value={data.industry} onChange={e => update('industry', e.target.value)}>
+                  <option value="">Choisir un secteur...</option>
+                  {INDUSTRIES.map(ind => <option key={ind} value={ind}>{ind}</option>)}
+                </select>
               </div>
 
               <div>
