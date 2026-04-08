@@ -35,27 +35,40 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  // /register redirige vers /login (les deux forms sont sur la même page)
   if (!user && path === '/register') {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Rediriger vers onboarding si user non onboardé
+  // Vérification onboarding — utilise un cookie pour éviter une DB query par request
   if (user && !isPublic && !path.startsWith('/onboarding') && !path.startsWith('/api')) {
-    const { createServerClient: createAdmin } = await import('@supabase/ssr')
-    const adminSupabase = createAdmin(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_KEY!,
-      { cookies: { getAll() { return request.cookies.getAll() }, setAll() {} } }
-    )
-    const { data: profile } = await adminSupabase
-      .from('users')
-      .select('onboarded')
-      .eq('id', user.id)
-      .single()
+    const onboardedCookie = request.cookies.get('onboarded')?.value
 
-    if (!profile || !profile.onboarded) {
-      return NextResponse.redirect(new URL('/onboarding', request.url))
+    if (onboardedCookie !== '1') {
+      // Cookie absent ou expiré → vérifier en DB une seule fois
+      const { createServerClient: createAdmin } = await import('@supabase/ssr')
+      const adminSupabase = createAdmin(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_KEY!,
+        { cookies: { getAll() { return request.cookies.getAll() }, setAll() {} } }
+      )
+      const { data: profile } = await adminSupabase
+        .from('users')
+        .select('onboarded')
+        .eq('id', user.id)
+        .single()
+
+      if (!profile?.onboarded) {
+        return NextResponse.redirect(new URL('/onboarding', request.url))
+      }
+
+      // User onboardé : poser le cookie (7 jours) pour éviter future DB query
+      supabaseResponse.cookies.set('onboarded', '1', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7,
+        path: '/',
+      })
     }
   }
 

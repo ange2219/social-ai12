@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { generatePosts } from '@/lib/ai'
-import { checkGenerationLimit } from '@/lib/server-utils'
+import { checkGenerationLimit, recordGeneration } from '@/lib/server-utils'
 import type { GenerateRequest, Plan } from '@/types'
 
 export async function POST(req: NextRequest) {
@@ -57,6 +57,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const result = await generatePosts(body, plan)
+    await recordGeneration(user.id)
     return NextResponse.json({ ...result, used: used + 1, limit })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Generation failed'

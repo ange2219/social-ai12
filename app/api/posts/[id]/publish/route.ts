@@ -3,19 +3,44 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { publishPost as ayrsharePublish } from '@/lib/ayrshare'
 import { publishInstagramPost, publishFacebookPost } from '@/lib/meta'
 import { decryptToken } from '@/lib/utils'
+import { timingSafeEqual } from 'crypto'
 import type { Platform } from '@/types'
 
-export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+const CRON_SECRET = process.env.CRON_SECRET!
 
+function verifyCronSecret(secret: string): boolean {
+  try {
+    return timingSafeEqual(Buffer.from(secret), Buffer.from(CRON_SECRET))
+  } catch { return false }
+}
+
+export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const admin = createAdminClient()
+
+  // Authentification : soit session utilisateur, soit secret interne (cron)
+  const internalSecret = req.headers.get('x-internal-secret') || ''
+  let userId: string
+
+  if (internalSecret && verifyCronSecret(internalSecret)) {
+    // Appel interne depuis le cron — récupérer le user_id depuis le post
+    const { data: postOwner } = await admin
+      .from('posts')
+      .select('user_id')
+      .eq('id', params.id)
+      .single()
+    if (!postOwner) return NextResponse.json({ error: 'Post not found' }, { status: 404 })
+    userId = postOwner.user_id
+  } else {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    userId = user.id
+  }
 
   // Récupère le post et le profil user
   const [postResult, userResult] = await Promise.all([
-    admin.from('posts').select('*').eq('id', params.id).eq('user_id', user.id).single(),
-    admin.from('users').select('plan, ayrshare_profile_key').eq('id', user.id).single(),
+    admin.from('posts').select('*').eq('id', params.id).eq('user_id', userId).single(),
+    admin.from('users').select('plan, ayrshare_profile_key').eq('id', userId).single(),
   ])
 
   const post = postResult.data
@@ -30,7 +55,7 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
       const accounts = await admin
         .from('social_accounts')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .in('platform', post.platforms as Platform[])
         .eq('is_active', true)
 

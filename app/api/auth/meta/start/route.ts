@@ -12,6 +12,6 @@ export async function GET() {
   const state = randomBytes(16).toString('hex')
 
   const response = NextResponse.redirect(getMetaOAuthUrl(state))
-  response.cookies.set('meta_oauth_state', state, { httpOnly: true, maxAge: 600, path: '/' })
+  response.cookies.set('meta_oauth_state', state, { httpOnly: true, secure: true, sameSite: 'lax', maxAge: 600, path: '/' })
   return response
 }

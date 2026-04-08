@@ -8,8 +8,8 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url)
   const status = searchParams.get('status')
-  const limit = parseInt(searchParams.get('limit') || '20')
-  const offset = parseInt(searchParams.get('offset') || '0')
+  const limit = Math.min(Math.max(1, parseInt(searchParams.get('limit') || '20')), 100)
+  const offset = Math.max(0, parseInt(searchParams.get('offset') || '0'))
 
   const includeDeleted = searchParams.get('includeDeleted') === 'true'
 

@@ -6,7 +6,9 @@ export async function GET(req: NextRequest) {
   const { searchParams, origin } = req.nextUrl
   const token_hash = searchParams.get('token_hash')
   const type = searchParams.get('type') as 'email' | 'recovery' | null
-  const next = searchParams.get('next') ?? '/dashboard'
+  const rawNext = searchParams.get('next') ?? '/dashboard'
+  // Valider pour éviter un open redirect
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/dashboard'
 
   if (token_hash && type) {
     const cookieStore = cookies()

@@ -1,7 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
-import OpenAI from 'openai'
-
-const openaiForImages = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null
+import OpenAI from 'openai' // utilisé pour GitHub Models (GPT-4o-mini)
+import { GoogleGenerativeAI } from '@google/generative-ai'
 import type { GenerateRequest, GenerateResponse, Platform, Plan } from '@/types'
 
 // ─── Clients ──────────────────────────────────────────────────────────────────
@@ -12,6 +11,10 @@ const githubAI = new OpenAI({
   baseURL: 'https://models.inference.ai.azure.com',
   apiKey: process.env.GITHUB_TOKEN,
 })
+
+const gemini = process.env.GEMINI_API_KEY
+  ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+  : null
 
 // ─── Contraintes par plateforme ────────────────────────────────────────────────
 
@@ -185,20 +188,36 @@ Réponds UNIQUEMENT en JSON : {"hashtags": ["#tag1", "#tag2", ...]}`
   return JSON.parse(text.trim()).hashtags || []
 }
 
-// ─── Génération d'image via DALL-E 3 ──────────────────────────────────────────
+// ─── Génération d'image via Gemini 2.0 Flash (Imagen 3 / "Nano Banana 2") ─────
 
 export async function generateImage(prompt: string): Promise<string | null> {
   try {
-    if (!openaiForImages) return null
-    const response = await openaiForImages.images.generate({
-      model: 'dall-e-3',
-      prompt: `Image professionnelle pour un post social media : ${prompt.slice(0, 800)}`,
-      size: '1024x1024',
-      quality: 'standard',
-      n: 1,
+    if (!gemini) return null
+
+    const model = gemini.getGenerativeModel({
+      model: 'gemini-2.0-flash-exp-image-generation',
     })
-    return response.data[0]?.url || null
-  } catch {
+
+    const result = await model.generateContent({
+      contents: [{ role: 'user', parts: [{ text: `Image professionnelle pour un post social media : ${prompt.slice(0, 800)}` }] }],
+      generationConfig: {
+        // @ts-expect-error responseModalities est un param Gemini image non encore typé dans le SDK
+        responseModalities: ['image', 'text'],
+      },
+    })
+
+    const parts = result.response.candidates?.[0]?.content?.parts || []
+    for (const part of parts) {
+      // @ts-expect-error inlineData non typé dans la version courante du SDK
+      if (part.inlineData?.mimeType?.startsWith('image/')) {
+        // Retourner data URL base64
+        // @ts-expect-error
+        return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`
+      }
+    }
+    return null
+  } catch (err) {
+    console.error('[generateImage] Gemini error:', err)
     return null
   }
 }

@@ -59,9 +59,10 @@ export async function GET(req: NextRequest) {
 }
 
 function popupResponse(data: Record<string, string>) {
+  const origin = process.env.NEXT_PUBLIC_APP_URL || ''
   const payload = JSON.stringify({ type: 'instagram_oauth', ...data })
   const html = `<!DOCTYPE html><html><body><script>
-    try { window.opener.postMessage(${payload}, '*') } catch(e) {}
+    try { window.opener.postMessage(${payload}, ${JSON.stringify(origin)}) } catch(e) {}
     window.close()
   </script><p style="font-family:sans-serif;color:#aaa;text-align:center;margin-top:40px">Connexion en cours...</p></body></html>`
   return new Response(html, { headers: { 'Content-Type': 'text/html' } })

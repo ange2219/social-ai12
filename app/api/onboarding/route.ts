@@ -41,5 +41,13 @@ export async function POST(req: NextRequest) {
 
   if (userError) return NextResponse.json({ error: userError.message }, { status: 500 })
 
-  return NextResponse.json({ success: true })
+  const res = NextResponse.json({ success: true })
+  res.cookies.set('onboarded', '1', {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24 * 7,
+    path: '/',
+  })
+  return res
 }

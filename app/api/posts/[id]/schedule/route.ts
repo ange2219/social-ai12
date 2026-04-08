@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { schedulePost } from '@/lib/n8n'
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const supabase = createClient()
@@ -22,6 +21,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (!scheduledAt) return NextResponse.json({ error: 'scheduledAt requis' }, { status: 400 })
 
   const scheduledDate = new Date(scheduledAt)
+  if (isNaN(scheduledDate.getTime())) {
+    return NextResponse.json({ error: 'Format de date invalide' }, { status: 400 })
+  }
   if (scheduledDate <= new Date()) {
     return NextResponse.json({ error: 'La date doit être dans le futur' }, { status: 400 })
   }
@@ -31,13 +33,13 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     .update({ status: 'scheduled', scheduled_at: scheduledDate.toISOString() })
     .eq('id', params.id)
     .eq('user_id', user.id)
+    .in('status', ['draft', 'failed'])
     .select()
     .single()
 
-  if (error || !post) return NextResponse.json({ error: 'Post not found' }, { status: 404 })
+  if (error || !post) return NextResponse.json({ error: 'Post introuvable ou non modifiable' }, { status: 404 })
 
-  // Notifie n8n pour exécuter la publication à l'heure prévue
-  await schedulePost({ postId: post.id, userId: user.id, scheduledAt: scheduledDate.toISOString() })
-
+  // Le cron Vercel (/api/cron/publish) se déclenche chaque minute
+  // et publie automatiquement tous les posts dont scheduled_at <= NOW()
   return NextResponse.json({ success: true, scheduled_at: post.scheduled_at })
 }

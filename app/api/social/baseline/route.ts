@@ -29,7 +29,10 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { platform, mode = 'refresh' } = await req.json()
-  if (!platform) return NextResponse.json({ error: 'platform requis' }, { status: 400 })
+  const ALLOWED_PLATFORMS = ['instagram', 'facebook', 'tiktok', 'twitter', 'linkedin', 'youtube', 'pinterest']
+  if (!platform || !ALLOWED_PLATFORMS.includes(platform)) {
+    return NextResponse.json({ error: 'platform invalide' }, { status: 400 })
+  }
 
   const admin = createAdminClient()
 

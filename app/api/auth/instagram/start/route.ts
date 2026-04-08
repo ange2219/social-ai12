@@ -10,8 +10,7 @@ export async function GET() {
 
   const state = randomBytes(16).toString('hex')
   const oauthUrl = getInstagramOAuthUrl(state)
-  console.log('[Instagram start] OAuth URL:', oauthUrl)
   const response = NextResponse.redirect(oauthUrl)
-  response.cookies.set('instagram_oauth_state', state, { httpOnly: true, maxAge: 600, path: '/' })
+  response.cookies.set('instagram_oauth_state', state, { httpOnly: true, secure: true, sameSite: 'lax', maxAge: 600, path: '/' })
   return response
 }

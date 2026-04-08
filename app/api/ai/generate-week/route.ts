@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { generateWeekPosts } from '@/lib/ai'
+import { checkGenerationLimit, recordGeneration } from '@/lib/server-utils'
 import type { GenerateRequest, Plan } from '@/types'
 
 export async function POST(req: NextRequest) {
@@ -27,11 +28,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'platforms et tone requis' }, { status: 400 })
   }
 
-  if (plan === 'free') {
-    body.platforms = body.platforms.filter(p => ['instagram', 'facebook'].includes(p))
-    if (!body.platforms.length) {
-      return NextResponse.json({ error: 'Plateforme non disponible sur le plan gratuit' }, { status: 403 })
-    }
+  // Vérifier la limite journalière (génération semaine = 1 appel)
+  const { allowed, used, limit } = await checkGenerationLimit(user.id, plan)
+  if (!allowed) {
+    return NextResponse.json({
+      error: `Limite journalière atteinte (${used}/${limit})`,
+      code: 'DAILY_LIMIT_REACHED',
+      used,
+      limit,
+    }, { status: 429 })
   }
 
   const { data: brandProfile } = await admin
@@ -49,6 +54,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const result = await generateWeekPosts(body, postsCount, plan)
+    await recordGeneration(user.id)
     return NextResponse.json(result)
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Generation failed'

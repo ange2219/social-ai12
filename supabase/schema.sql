@@ -17,6 +17,8 @@ CREATE TABLE public.users (
   created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS onboarded BOOLEAN NOT NULL DEFAULT false;
+
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "users: own row" ON public.users
   FOR ALL USING (auth.uid() = id);
@@ -67,11 +69,12 @@ CREATE TABLE public.posts (
   content             TEXT NOT NULL,
   media_urls          TEXT[] DEFAULT '{}',
   platforms           TEXT[] NOT NULL DEFAULT '{}',
-  status              TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','scheduled','published','failed')),
+  status              TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','scheduled','published','failed','deleted')),
   scheduled_at        TIMESTAMPTZ,
   published_at        TIMESTAMPTZ,
   ayrshare_post_id    TEXT,
   meta_post_ids       JSONB DEFAULT '{}',
+  content_variants    JSONB DEFAULT '{}',
   ai_generated        BOOLEAN NOT NULL DEFAULT false,
   error_message       TEXT,
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -121,17 +124,60 @@ CREATE POLICY "subscriptions: own rows" ON public.subscriptions
 
 -- ─── BRAND PROFILES ──────────────────────────────────────
 CREATE TABLE public.brand_profiles (
-  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id      UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE UNIQUE,
-  brand_name   TEXT,
-  description  TEXT,
-  tone         TEXT DEFAULT 'professionnel',
-  industry     TEXT,
-  website      TEXT,
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id             UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE UNIQUE,
+  brand_name          TEXT,
+  description         TEXT,
+  tone                TEXT DEFAULT 'professionnel',
+  industry            TEXT,
+  website             TEXT,
+  account_type        TEXT DEFAULT 'business',
+  target_audience     TEXT,
+  audience_age        TEXT,
+  audience_interests  TEXT,
+  audience_location   TEXT,
+  content_pillars     TEXT[] DEFAULT '{}',
+  avoid_words         TEXT,
+  objectives          TEXT[] DEFAULT '{}',
+  posts_per_week      INTEGER DEFAULT 5,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 ALTER TABLE public.brand_profiles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "brand_profiles: own row" ON public.brand_profiles
   FOR ALL USING (auth.uid() = user_id);
+
+-- ─── SOCIAL BASELINES ────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.social_baselines (
+  id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id             UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  platform            TEXT NOT NULL,
+  baseline_followers  INTEGER DEFAULT 0,
+  current_followers   INTEGER DEFAULT 0,
+  posts_count         INTEGER DEFAULT 0,
+  baseline_at         TIMESTAMPTZ DEFAULT NOW(),
+  refreshed_at        TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, platform)
+);
+
+ALTER TABLE public.social_baselines ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "social_baselines: own rows" ON public.social_baselines
+  FOR ALL USING (auth.uid() = user_id);
+
+-- ─── AI GENERATION LOG ───────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.ai_generation_log (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.ai_generation_log ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "ai_generation_log: own rows" ON public.ai_generation_log
+  FOR ALL USING (auth.uid() = user_id);
+
+CREATE INDEX ai_generation_log_user_day ON public.ai_generation_log (user_id, created_at);
+
+-- ─── CONTRAINTE UNIQUE analytics ─────────────────────────
+ALTER TABLE public.analytics
+  ADD CONSTRAINT IF NOT EXISTS analytics_post_platform_unique UNIQUE (post_id, platform);

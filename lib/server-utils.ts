@@ -2,7 +2,7 @@ import { createAdminClient } from './supabase/server'
 import type { Plan } from '@/types'
 import { PLAN_LIMITS } from '@/types'
 
-/** Vérifie si un user a atteint sa limite de générations journalières — SERVER ONLY */
+/** Vérifie + enregistre un appel IA — SERVER ONLY */
 export async function checkGenerationLimit(userId: string, plan: Plan): Promise<{
   allowed: boolean
   used: number
@@ -19,10 +19,9 @@ export async function checkGenerationLimit(userId: string, plan: Plan): Promise<
   startOfDay.setHours(0, 0, 0, 0)
 
   const { count } = await supabase
-    .from('posts')
+    .from('ai_generation_log')
     .select('id', { count: 'exact', head: true })
     .eq('user_id', userId)
-    .eq('ai_generated', true)
     .gte('created_at', startOfDay.toISOString())
 
   const used = count ?? 0
@@ -31,4 +30,10 @@ export async function checkGenerationLimit(userId: string, plan: Plan): Promise<
     used,
     limit: limits.generationsPerDay,
   }
+}
+
+/** Enregistre un appel IA réussi — à appeler après génération */
+export async function recordGeneration(userId: string): Promise<void> {
+  const supabase = createAdminClient()
+  await supabase.from('ai_generation_log').insert({ user_id: userId })
 }
