@@ -1,17 +1,24 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
 import { createClient } from '@/lib/supabase/client'
 import { PLATFORM_NAMES, PLATFORM_COLORS, FREE_PLATFORMS } from '@/types'
 import type { Platform, SocialAccount } from '@/types'
-import { User, Sparkles, Link2, Unlink, Save, Camera, CheckCircle2, RefreshCw } from 'lucide-react'
+import { User, Sparkles, Link2, Unlink, Save, Camera, CheckCircle2, RefreshCw, LogOut } from 'lucide-react'
 
 const ALL_PLATFORMS: Platform[] = ['instagram', 'facebook', 'tiktok', 'twitter', 'linkedin']
 
 export default function ProfilePage() {
   const { toast } = useToast()
+  const router = useRouter()
   const supabase = createClient()
+
+  async function handleLogout() {
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
 
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -129,10 +136,10 @@ export default function ProfilePage() {
   return (
     <div style={{ padding: '2rem 2rem 3rem' }}>
       <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1.4rem', fontWeight: 700, color: '#F4F4F6', letterSpacing: '-.02em' }}>
+        <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1.4rem', fontWeight: 700, color: 'var(--t1)', letterSpacing: '-.02em' }}>
           Mon Profil
         </h1>
-        <p style={{ color: '#52525C', fontSize: '.83rem', marginTop: '.2rem' }}>Informations personnelles et profil de votre marque</p>
+        <p style={{ color: 'var(--t3)', fontSize: '.83rem', marginTop: '.2rem' }}>Informations personnelles et profil de votre marque</p>
       </div>
 
       {/* Ligne 1 : Infos perso (gauche) + Réseaux sociaux (droite) */}
@@ -142,10 +149,10 @@ export default function ProfilePage() {
         <section className="card p-5">
           <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '1rem' }}>
             <User size={16} style={{ color: '#4646FF' }} />
-            <span style={{ fontSize: '.9rem', fontWeight: 600, color: '#F4F4F6' }}>Informations personnelles</span>
+            <span style={{ fontSize: '.9rem', fontWeight: 600, color: 'var(--t1)' }}>Informations personnelles</span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', padding: '.65rem', background: '#09090B', borderRadius: '8px', border: '1px solid #1E1E24', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', padding: '.65rem', background: 'var(--bg)', borderRadius: '8px', border: '1px solid var(--b1)', marginBottom: '1rem' }}>
             <label style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
               {avatarUrl
                 ? <img src={avatarUrl} alt="" style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', display: 'block' }} />
@@ -163,8 +170,8 @@ export default function ProfilePage() {
               <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadAvatar(f) }} />
             </label>
             <div>
-              <div style={{ fontSize: '.85rem', fontWeight: 500, color: '#E4E4E7' }}>{fullName || 'Sans nom'}</div>
-              <div style={{ fontSize: '.75rem', color: '#52525C' }}>{uploadingAvatar ? 'Upload en cours...' : 'Cliquez sur la photo pour changer'}</div>
+              <div style={{ fontSize: '.85rem', fontWeight: 500, color: 'var(--t1)' }}>{fullName || 'Sans nom'}</div>
+              <div style={{ fontSize: '.75rem', color: 'var(--t3)' }}>{uploadingAvatar ? 'Upload en cours...' : 'Cliquez sur la photo pour changer'}</div>
             </div>
           </div>
 
@@ -187,22 +194,22 @@ export default function ProfilePage() {
         <section className="card p-5">
           <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.75rem' }}>
             <Link2 size={16} style={{ color: '#4646FF' }} />
-            <span style={{ fontSize: '.9rem', fontWeight: 600, color: '#F4F4F6' }}>Réseaux sociaux</span>
+            <span style={{ fontSize: '.9rem', fontWeight: 600, color: 'var(--t1)' }}>Réseaux sociaux</span>
           </div>
 
           {/* Facebook */}
           {(() => {
             const acc = accounts.find(a => a.platform === 'facebook')
             return (
-              <div style={{ background: '#09090B', border: `1px solid ${acc ? 'rgba(34,197,94,.2)' : '#1E1E24'}`, borderRadius: '10px', padding: '.75rem', marginBottom: '.5rem' }}>
+              <div style={{ background: 'var(--bg)', border: `1px solid ${acc ? 'rgba(34,197,94,.2)' : 'var(--b1)'}`, borderRadius: '10px', padding: '.75rem', marginBottom: '.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem' }}>
                     <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: acc ? PLATFORM_COLORS['facebook'] : '#3f3f46' }} />
-                    <span style={{ fontSize: '.82rem', fontWeight: 500, color: acc ? '#E4E4E7' : '#52525C' }}>{PLATFORM_NAMES['facebook']}</span>
+                    <span style={{ fontSize: '.82rem', fontWeight: 500, color: acc ? 'var(--t1)' : 'var(--t3)' }}>{PLATFORM_NAMES['facebook']}</span>
                     {acc && <span style={{ fontSize: '.75rem', color: '#22C55E', display: 'flex', alignItems: 'center', gap: '.25rem' }}><CheckCircle2 size={11} /> @{acc.platform_username}</span>}
                   </div>
                   <div style={{ display: 'flex', gap: '.4rem', alignItems: 'center' }}>
-                    <button onClick={loadAccounts} title="Rafraîchir" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#52525C', padding: '2px', display: 'flex' }}><RefreshCw size={12} /></button>
+                    <button onClick={loadAccounts} title="Rafraîchir" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', padding: '2px', display: 'flex' }}><RefreshCw size={12} /></button>
                     {acc ? (
                       <button onClick={() => disconnect(acc.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '.3rem' }}>
                         <Unlink size={12} /> Déconnecter
@@ -225,11 +232,11 @@ export default function ProfilePage() {
           {(() => {
             const acc = accounts.find(a => a.platform === 'instagram')
             return (
-              <div style={{ background: '#09090B', border: `1px solid ${acc ? 'rgba(34,197,94,.2)' : '#1E1E24'}`, borderRadius: '10px', padding: '.75rem', marginBottom: '.5rem' }}>
+              <div style={{ background: 'var(--bg)', border: `1px solid ${acc ? 'rgba(34,197,94,.2)' : 'var(--b1)'}`, borderRadius: '10px', padding: '.75rem', marginBottom: '.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem' }}>
                     <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: acc ? PLATFORM_COLORS['instagram'] : '#3f3f46' }} />
-                    <span style={{ fontSize: '.82rem', fontWeight: 500, color: acc ? '#E4E4E7' : '#52525C' }}>{PLATFORM_NAMES['instagram']}</span>
+                    <span style={{ fontSize: '.82rem', fontWeight: 500, color: acc ? 'var(--t1)' : 'var(--t3)' }}>{PLATFORM_NAMES['instagram']}</span>
                     {acc && <span style={{ fontSize: '.75rem', color: '#22C55E', display: 'flex', alignItems: 'center', gap: '.25rem' }}><CheckCircle2 size={11} /> @{acc.platform_username}</span>}
                   </div>
                   <div style={{ display: 'flex', gap: '.4rem', alignItems: 'center' }}>
@@ -258,12 +265,12 @@ export default function ProfilePage() {
               return (
                 <div key={p} style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '.5rem .75rem', background: '#09090B', borderRadius: '8px', border: '1px solid #1E1E24',
+                  padding: '.5rem .75rem', background: 'var(--bg)', borderRadius: '8px', border: '1px solid var(--b1)',
                   opacity: isPaid ? 1 : .5,
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem' }}>
                     <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: isPaid ? PLATFORM_COLORS[p] : '#3f3f46' }} />
-                    <span style={{ fontSize: '.82rem', fontWeight: 500, color: isPaid ? '#E4E4E7' : '#52525C' }}>{PLATFORM_NAMES[p]}</span>
+                    <span style={{ fontSize: '.82rem', fontWeight: 500, color: isPaid ? 'var(--t1)' : 'var(--t3)' }}>{PLATFORM_NAMES[p]}</span>
                     {!isPaid && <span style={{ fontSize: '.68rem', fontWeight: 600, background: 'rgba(251,191,36,.1)', color: '#FBBF24', border: '1px solid rgba(251,191,36,.2)', padding: '.1rem .4rem', borderRadius: '4px' }}>Pro</span>}
                   </div>
                   <span style={{ fontSize: '.73rem', color: '#3f3f46' }}>Non disponible</span>
@@ -278,8 +285,8 @@ export default function ProfilePage() {
       <section className="card p-5">
         <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '1rem' }}>
           <Sparkles size={16} style={{ color: '#4646FF' }} />
-          <span style={{ fontSize: '.9rem', fontWeight: 600, color: '#F4F4F6' }}>Profil de marque</span>
-          <span style={{ marginLeft: 'auto', fontSize: '.75rem', color: '#52525C' }}>Utilisé par l'IA pour personnaliser vos posts</span>
+          <span style={{ fontSize: '.9rem', fontWeight: 600, color: 'var(--t1)' }}>Profil de marque</span>
+          <span style={{ marginLeft: 'auto', fontSize: '.75rem', color: 'var(--t3)' }}>Utilisé par l'IA pour personnaliser vos posts</span>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -329,6 +336,27 @@ export default function ProfilePage() {
         <div style={{ marginTop: '1rem' }}>
           <button onClick={saveBrand} disabled={savingBrand} className="btn-primary flex items-center gap-2">
             <Save size={14} /> {savingBrand ? 'Sauvegarde...' : 'Sauvegarder le profil de marque'}
+          </button>
+        </div>
+      </section>
+
+      {/* Déconnexion */}
+      <section className="card p-5">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontSize: '.9rem', fontWeight: 600, color: 'var(--t1)', marginBottom: '.2rem' }}>Session</div>
+            <div style={{ fontSize: '.8rem', color: 'var(--t3)' }}>Déconnectez-vous de votre compte Social IA</div>
+          </div>
+          <button
+            onClick={handleLogout}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '.5rem',
+              padding: '.5rem 1rem', borderRadius: '8px', border: '1px solid rgba(239,68,68,.3)',
+              background: 'rgba(239,68,68,.06)', color: '#ef4444',
+              cursor: 'pointer', fontSize: '.85rem', fontWeight: 600,
+            }}
+          >
+            <LogOut size={15} /> Se déconnecter
           </button>
         </div>
       </section>

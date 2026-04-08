@@ -7,16 +7,30 @@ export async function DELETE() {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const admin = createAdminClient()
+  const errors: string[] = []
 
-  // Supprimer les données liées
-  await admin.from('posts').delete().eq('user_id', user.id)
-  await admin.from('social_accounts').delete().eq('user_id', user.id)
-  await admin.from('brand_profiles').delete().eq('user_id', user.id)
-  await admin.from('users').delete().eq('id', user.id)
+  // Supprimer les données liées (erreurs loggées mais non bloquantes)
+  const tables = [
+    { name: 'posts', col: 'user_id' },
+    { name: 'social_accounts', col: 'user_id' },
+    { name: 'brand_profiles', col: 'user_id' },
+    { name: 'users', col: 'id' },
+  ]
 
-  // Supprimer le compte auth
-  const { error } = await admin.auth.admin.deleteUser(user.id)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  for (const { name, col } of tables) {
+    const { error } = await admin.from(name).delete().eq(col, user.id)
+    if (error) {
+      console.error(`[delete-account] Erreur suppression ${name}:`, error.message)
+      errors.push(`${name}: ${error.message}`)
+    }
+  }
 
-  return NextResponse.json({ success: true })
+  // Supprimer le compte auth Supabase (opération critique)
+  const { error: authError } = await admin.auth.admin.deleteUser(user.id)
+  if (authError) {
+    console.error('[delete-account] Erreur suppression auth:', authError.message)
+    return NextResponse.json({ error: authError.message, dataErrors: errors }, { status: 500 })
+  }
+
+  return NextResponse.json({ success: true, dataErrors: errors.length > 0 ? errors : undefined })
 }

@@ -87,15 +87,15 @@ function InsightsBadge({ a }: { a: PostAnalytics | null }) {
           ].map(item => (
             <div key={item.label} style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '.95rem' }}>{item.icon}</div>
-              <div style={{ fontSize: '.78rem', fontWeight: 700, color: '#F4F4F6', lineHeight: 1 }}>{item.val}</div>
-              <div style={{ fontSize: '.58rem', color: '#8E8E98' }}>{item.label}</div>
+              <div style={{ fontSize: '.78rem', fontWeight: 700, color: 'var(--t1)', lineHeight: 1 }}>{item.val}</div>
+              <div style={{ fontSize: '.58rem', color: 'var(--t3)' }}>{item.label}</div>
             </div>
           ))}
         </div>
       ) : (
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '.75rem', color: '#8E8E98', marginBottom: '.2rem' }}>📊</div>
-          <div style={{ fontSize: '.68rem', color: '#52525C' }}>Pas encore de données</div>
+          <div style={{ fontSize: '.75rem', color: 'var(--t3)', marginBottom: '.2rem' }}>📊</div>
+          <div style={{ fontSize: '.68rem', color: 'var(--t3)' }}>Pas encore de données</div>
         </div>
       )}
     </div>
@@ -466,29 +466,29 @@ export default function PostsPage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.8)', backdropFilter: 'blur(8px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
           onClick={e => { if (e.target === e.currentTarget) closePost() }}
         >
-          <div style={{ background: '#111113', border: '1px solid #27272D', borderRadius: '16px', width: '100%', maxWidth: '560px', maxHeight: '90vh', overflow: 'auto' }}>
+          <div style={{ background: 'var(--card)', border: '1px solid var(--b1)', borderRadius: '16px', width: '100%', maxWidth: '560px', maxHeight: '90vh', overflow: 'auto' }}>
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.25rem 1.5rem', borderBottom: '1px solid #1C1C21' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
                 <span className={stClass(selectedPost.status)} style={{ fontSize: '.72rem' }}>{stLabel(selectedPost.status)}</span>
                 {isDraft && (
-                  <span style={{ fontSize: '.72rem', color: '#52525C', display: 'flex', alignItems: 'center', gap: '.3rem' }}>
+                  <span style={{ fontSize: '.72rem', color: 'var(--t3)', display: 'flex', alignItems: 'center', gap: '.3rem' }}>
                     <Pencil size={11} /> Modifiable
                   </span>
                 )}
               </div>
-              <button onClick={closePost} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#52525C', display: 'flex', padding: '4px' }}>
+              <button onClick={closePost} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', display: 'flex', padding: '4px' }}>
                 <X size={18} />
               </button>
             </div>
 
             {/* Image */}
             {editMediaUrl ? (
-              <div style={{ background: '#0A0A0C', position: 'relative' }}>
+              <div style={{ background: 'var(--bg)', position: 'relative' }}>
                 <img src={editMediaUrl} alt="" style={{ width: '100%', maxHeight: '280px', objectFit: 'contain', display: 'block' }} />
                 {isDraft && (
                   <div style={{ position: 'absolute', bottom: '8px', right: '8px', display: 'flex', gap: '.4rem' }}>
-                    <label style={{ cursor: 'pointer', background: 'rgba(0,0,0,.7)', border: '1px solid rgba(255,255,255,.15)', borderRadius: '6px', padding: '.35rem .6rem', display: 'flex', alignItems: 'center', gap: '.35rem', fontSize: '.72rem', color: '#E4E4E7' }}>
+                    <label style={{ cursor: 'pointer', background: 'rgba(0,0,0,.7)', border: '1px solid rgba(255,255,255,.15)', borderRadius: '6px', padding: '.35rem .6rem', display: 'flex', alignItems: 'center', gap: '.35rem', fontSize: '.72rem', color: 'var(--t1)' }}>
                       <Upload size={12} /> {uploadingMedia ? 'Upload...' : 'Changer'}
                       <input type="file" accept="image/*,video/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handleMediaUpload(f) }} />
                     </label>
@@ -499,15 +499,15 @@ export default function PostsPage() {
                 )}
               </div>
             ) : isDraft ? (
-              <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '.5rem', padding: '1.5rem', background: '#0D0D0F', border: '1px dashed #27272D', cursor: 'pointer', transition: '.15s' }}
+              <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '.5rem', padding: '1.5rem', background: 'var(--bg)', border: '1px dashed var(--b1)', cursor: 'pointer', transition: '.15s' }}
                 onMouseEnter={e => (e.currentTarget.style.borderColor = '#4646FF')}
-                onMouseLeave={e => (e.currentTarget.style.borderColor = '#27272D')}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--b1)')}
               >
                 {uploadingMedia
                   ? <div style={{ width: '20px', height: '20px', border: '2px solid rgba(59,123,246,.3)', borderTopColor: '#4646FF', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
                   : <Upload size={20} color="#3f3f46" />
                 }
-                <span style={{ fontSize: '.78rem', color: '#52525C' }}>{uploadingMedia ? 'Upload en cours...' : 'Ajouter une image ou vidéo'}</span>
+                <span style={{ fontSize: '.78rem', color: 'var(--t3)' }}>{uploadingMedia ? 'Upload en cours...' : 'Ajouter une image ou vidéo'}</span>
                 <input type="file" accept="image/*,video/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handleMediaUpload(f) }} />
               </label>
             ) : null}
@@ -525,7 +525,7 @@ export default function PostsPage() {
                     style={{ width: '100%', lineHeight: 1.6 }}
                   />
                 ) : (
-                  <div style={{ fontSize: '.85rem', color: '#E4E4E7', lineHeight: 1.7, background: '#0D0D0F', border: '1px solid #1C1C21', borderRadius: '8px', padding: '.75rem 1rem', whiteSpace: 'pre-wrap' }}>
+                  <div style={{ fontSize: '.85rem', color: 'var(--t1)', lineHeight: 1.7, background: 'var(--bg)', border: '1px solid #1C1C21', borderRadius: '8px', padding: '.75rem 1rem', whiteSpace: 'pre-wrap' }}>
                     {selectedPost.content}
                   </div>
                 )}
@@ -548,7 +548,7 @@ export default function PostsPage() {
                         title={isPlanLocked ? 'Plan Pro requis' : undefined}
                         style={{
                           padding: '.25rem .65rem', borderRadius: '6px', fontSize: '.73rem', fontWeight: 600,
-                          border: `1px solid ${isPlanLocked ? '#1E1E24' : active ? PLATFORM_COLORS[p] + '60' : '#27272D'}`,
+                          border: `1px solid ${isPlanLocked ? '#1E1E24' : active ? PLATFORM_COLORS[p] + '60' : 'var(--b1)'}`,
                           background: isPlanLocked ? 'transparent' : active ? PLATFORM_COLORS[p] + '18' : 'transparent',
                           color: isPlanLocked ? '#2a2a30' : active ? PLATFORM_COLORS[p] : '#3f3f46',
                           cursor: isPlanLocked ? 'not-allowed' : isDraft ? 'pointer' : 'default',
@@ -612,7 +612,7 @@ export default function PostsPage() {
                               <Save size={14} /> {fbSaving ? 'Sauvegarde...' : 'Sauvegarder sur Facebook'}
                             </button>
                             <button onClick={() => { setFbEditMode(false); setEditContent(selectedPost.content) }}
-                              style={{ padding: '.6rem .8rem', borderRadius: '8px', border: '1px solid #27272D', background: 'transparent', color: '#8E8E98', cursor: 'pointer', fontSize: '.8rem' }}>
+                              style={{ padding: '.6rem .8rem', borderRadius: '8px', border: '1px solid var(--b1)', background: 'transparent', color: 'var(--t3)', cursor: 'pointer', fontSize: '.8rem' }}>
                               Annuler
                             </button>
                           </>
@@ -623,7 +623,7 @@ export default function PostsPage() {
                           </button>
                         )
                       ) : (
-                        <div style={{ flex: 1, fontSize: '.74rem', color: '#52525C', display: 'flex', alignItems: 'center', gap: '.4rem', padding: '.5rem .75rem', background: '#0D0D0F', borderRadius: '8px', border: '1px solid #1C1C21', lineHeight: 1.4 }}>
+                        <div style={{ flex: 1, fontSize: '.74rem', color: 'var(--t3)', display: 'flex', alignItems: 'center', gap: '.4rem', padding: '.5rem .75rem', background: 'var(--bg)', borderRadius: '8px', border: '1px solid #1C1C21', lineHeight: 1.4 }}>
                           <IconInstagram size={13} />
                           <span>Instagram ne permet pas la modification après publication.</span>
                         </div>
@@ -646,7 +646,7 @@ export default function PostsPage() {
                       setShowComments(next)
                       if (next && commentsData.length === 0) loadComments(selectedPost.id)
                     }}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#52525C', fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem', padding: 0, marginBottom: showComments ? '.75rem' : 0 }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem', padding: 0, marginBottom: showComments ? '.75rem' : 0 }}
                   >
                     <span style={{ fontSize: '.9rem' }}>💬</span>
                     {showComments ? 'Masquer les commentaires' : 'Voir les commentaires'}
@@ -655,28 +655,28 @@ export default function PostsPage() {
                   {showComments && (
                     <div>
                       {commentsLoading ? (
-                        <div style={{ textAlign: 'center', padding: '1rem 0', color: '#52525C', fontSize: '.78rem' }}>Chargement...</div>
+                        <div style={{ textAlign: 'center', padding: '1rem 0', color: 'var(--t3)', fontSize: '.78rem' }}>Chargement...</div>
                       ) : commentsData.length === 0 || commentsData.every(p => p.comments.length === 0) ? (
                         <div style={{ textAlign: 'center', padding: '.75rem 0', color: '#3f3f46', fontSize: '.75rem' }}>Aucun commentaire pour le moment.</div>
                       ) : (
                         commentsData.map(({ platform, comments }) => (
                           <div key={platform} style={{ marginBottom: '.75rem' }}>
                             {commentsData.length > 1 && (
-                              <div style={{ fontSize: '.65rem', fontWeight: 600, color: '#52525C', marginBottom: '.4rem', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                              <div style={{ fontSize: '.65rem', fontWeight: 600, color: 'var(--t3)', marginBottom: '.4rem', textTransform: 'uppercase', letterSpacing: '.05em' }}>
                                 {platform === 'facebook' ? '📘 Facebook' : '📸 Instagram'}
                               </div>
                             )}
                             {comments.map((c: any) => (
-                              <div key={c.id} style={{ background: '#0D0D0F', border: '1px solid #1C1C21', borderRadius: '8px', padding: '.6rem .75rem', marginBottom: '.4rem' }}>
+                              <div key={c.id} style={{ background: 'var(--bg)', border: '1px solid #1C1C21', borderRadius: '8px', padding: '.6rem .75rem', marginBottom: '.4rem' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '.3rem' }}>
-                                  <span style={{ fontSize: '.72rem', fontWeight: 600, color: '#8E8E98' }}>
+                                  <span style={{ fontSize: '.72rem', fontWeight: 600, color: 'var(--t3)' }}>
                                     {c.from?.name || 'Utilisateur'}
                                   </span>
                                   <span style={{ fontSize: '.62rem', color: '#3f3f46' }}>
                                     {new Date(c.created_time).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                   </span>
                                 </div>
-                                <p style={{ fontSize: '.78rem', color: '#E4E4E7', margin: 0, lineHeight: 1.5 }}>{c.message}</p>
+                                <p style={{ fontSize: '.78rem', color: 'var(--t1)', margin: 0, lineHeight: 1.5 }}>{c.message}</p>
                                 {/* Zone de réponse */}
                                 <div style={{ marginTop: '.5rem', display: 'flex', gap: '.35rem' }}>
                                   <input
@@ -715,19 +715,19 @@ export default function PostsPage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.75)', backdropFilter: 'blur(6px)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           onClick={e => { if (e.target === e.currentTarget) { setConfirmId(null); setPassword('') } }}
         >
-          <div style={{ background: '#111113', border: '1px solid #27272D', borderRadius: '14px', padding: '1.75rem', width: '100%', maxWidth: '360px' }}>
-            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#F4F4F6', fontFamily: "'Bricolage Grotesque', sans-serif", marginBottom: '.4rem' }}>Confirmer la suppression</div>
-            <div style={{ fontSize: '.82rem', color: '#8E8E98', marginBottom: '1.25rem', lineHeight: 1.5 }}>Cette action est irréversible. Entrez votre mot de passe pour confirmer.</div>
+          <div style={{ background: 'var(--card)', border: '1px solid var(--b1)', borderRadius: '14px', padding: '1.75rem', width: '100%', maxWidth: '360px' }}>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--t1)', fontFamily: "'Bricolage Grotesque', sans-serif", marginBottom: '.4rem' }}>Confirmer la suppression</div>
+            <div style={{ fontSize: '.82rem', color: 'var(--t3)', marginBottom: '1.25rem', lineHeight: 1.5 }}>Cette action est irréversible. Entrez votre mot de passe pour confirmer.</div>
             <div style={{ position: 'relative', marginBottom: '1rem' }}>
               <input type={showPw ? 'text' : 'password'} placeholder="Mot de passe" value={password}
                 onChange={e => setPassword(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') confirmDelete() }}
                 autoFocus className="input" style={{ width: '100%', paddingRight: '2.5rem' }} />
-              <button onClick={() => setShowPw(p => !p)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#52525C', display: 'flex' }}>
+              <button onClick={() => setShowPw(p => !p)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', display: 'flex' }}>
                 {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
             </div>
             <div style={{ display: 'flex', gap: '.6rem' }}>
-              <button onClick={() => { setConfirmId(null); setPassword('') }} style={{ flex: 1, padding: '.6rem', borderRadius: '8px', border: '1px solid #27272D', background: 'transparent', color: '#8E8E98', cursor: 'pointer', fontSize: '.83rem' }}>Annuler</button>
+              <button onClick={() => { setConfirmId(null); setPassword('') }} style={{ flex: 1, padding: '.6rem', borderRadius: '8px', border: '1px solid var(--b1)', background: 'transparent', color: 'var(--t3)', cursor: 'pointer', fontSize: '.83rem' }}>Annuler</button>
               <button onClick={confirmDelete} disabled={!password || pwLoading} style={{ flex: 1, padding: '.6rem', borderRadius: '8px', border: 'none', background: '#EF4444', color: '#fff', cursor: 'pointer', fontSize: '.83rem', fontWeight: 600, opacity: !password || pwLoading ? .5 : 1 }}>
                 {pwLoading ? 'Vérification...' : 'Supprimer'}
               </button>
@@ -741,19 +741,19 @@ export default function PostsPage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.75)', backdropFilter: 'blur(6px)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           onClick={e => { if (e.target === e.currentTarget) { setBulkConfirm(false); setPassword('') } }}
         >
-          <div style={{ background: '#111113', border: '1px solid #27272D', borderRadius: '14px', padding: '1.75rem', width: '100%', maxWidth: '360px' }}>
-            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#F4F4F6', fontFamily: "'Bricolage Grotesque', sans-serif", marginBottom: '.4rem' }}>Supprimer {selectedIds.size} post{selectedIds.size > 1 ? 's' : ''}</div>
-            <div style={{ fontSize: '.82rem', color: '#8E8E98', marginBottom: '1.25rem', lineHeight: 1.5 }}>Entrez votre mot de passe pour confirmer la suppression.</div>
+          <div style={{ background: 'var(--card)', border: '1px solid var(--b1)', borderRadius: '14px', padding: '1.75rem', width: '100%', maxWidth: '360px' }}>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--t1)', fontFamily: "'Bricolage Grotesque', sans-serif", marginBottom: '.4rem' }}>Supprimer {selectedIds.size} post{selectedIds.size > 1 ? 's' : ''}</div>
+            <div style={{ fontSize: '.82rem', color: 'var(--t3)', marginBottom: '1.25rem', lineHeight: 1.5 }}>Entrez votre mot de passe pour confirmer la suppression.</div>
             <div style={{ position: 'relative', marginBottom: '1rem' }}>
               <input type={showPw ? 'text' : 'password'} placeholder="Mot de passe" value={password}
                 onChange={e => setPassword(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') confirmBulkDelete() }}
                 autoFocus className="input" style={{ width: '100%', paddingRight: '2.5rem' }} />
-              <button onClick={() => setShowPw(p => !p)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#52525C', display: 'flex' }}>
+              <button onClick={() => setShowPw(p => !p)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', display: 'flex' }}>
                 {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
             </div>
             <div style={{ display: 'flex', gap: '.6rem' }}>
-              <button onClick={() => { setBulkConfirm(false); setPassword('') }} style={{ flex: 1, padding: '.6rem', borderRadius: '8px', border: '1px solid #27272D', background: 'transparent', color: '#8E8E98', cursor: 'pointer', fontSize: '.83rem' }}>Annuler</button>
+              <button onClick={() => { setBulkConfirm(false); setPassword('') }} style={{ flex: 1, padding: '.6rem', borderRadius: '8px', border: '1px solid var(--b1)', background: 'transparent', color: 'var(--t3)', cursor: 'pointer', fontSize: '.83rem' }}>Annuler</button>
               <button onClick={confirmBulkDelete} disabled={!password || pwLoading} style={{ flex: 1, padding: '.6rem', borderRadius: '8px', border: 'none', background: '#EF4444', color: '#fff', cursor: 'pointer', fontSize: '.83rem', fontWeight: 600, opacity: !password || pwLoading ? .5 : 1 }}>
                 {pwLoading ? 'Vérification...' : 'Supprimer'}
               </button>
@@ -764,13 +764,13 @@ export default function PostsPage() {
 
       {/* ── Barre de sélection flottante ── */}
       {selectMode && selectedIds.size > 0 && (
-        <div style={{ position: 'fixed', bottom: '1.5rem', left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#18181C', border: '1px solid #27272D', borderRadius: '12px', padding: '.75rem 1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', boxShadow: '0 8px 32px rgba(0,0,0,.6)', backdropFilter: 'blur(8px)' }}>
-          <span style={{ fontSize: '.82rem', color: '#8E8E98' }}>{selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}</span>
+        <div style={{ position: 'fixed', bottom: '1.5rem', left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: 'var(--s2)', border: '1px solid var(--b1)', borderRadius: '12px', padding: '.75rem 1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', boxShadow: '0 8px 32px rgba(0,0,0,.6)', backdropFilter: 'blur(8px)' }}>
+          <span style={{ fontSize: '.82rem', color: 'var(--t3)' }}>{selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}</span>
           <button onClick={bulkDelete} disabled={bulkDeleting}
             style={{ display: 'flex', alignItems: 'center', gap: '.4rem', padding: '.45rem .9rem', borderRadius: '8px', border: 'none', background: '#EF4444', color: '#fff', cursor: 'pointer', fontSize: '.8rem', fontWeight: 600, opacity: bulkDeleting ? .6 : 1 }}>
             <Trash2 size={13} /> {bulkDeleting ? 'Suppression...' : 'Supprimer'}
           </button>
-          <button onClick={exitSelectMode} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#52525C', display: 'flex', padding: '4px' }}>
+          <button onClick={exitSelectMode} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', display: 'flex', padding: '4px' }}>
             <X size={16} />
           </button>
         </div>
@@ -779,23 +779,23 @@ export default function PostsPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '.75rem' }}>
         <div>
-          <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1.3rem', fontWeight: 700, color: '#F4F4F6', letterSpacing: '-.02em' }}>Mes Posts</h1>
-          <p style={{ color: '#52525C', fontSize: '.8rem', marginTop: '.15rem' }}>{total} post{total !== 1 ? 's' : ''} au total</p>
+          <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1.3rem', fontWeight: 700, color: 'var(--t1)', letterSpacing: '-.02em' }}>Mes Posts</h1>
+          <p style={{ color: 'var(--t3)', fontSize: '.8rem', marginTop: '.15rem' }}>{total} post{total !== 1 ? 's' : ''} au total</p>
         </div>
         <div style={{ display: 'flex', gap: '.5rem' }}>
           {selectMode ? (
             <button onClick={exitSelectMode}
-              style={{ padding: '.5rem .75rem', borderRadius: '8px', border: '1px solid #27272D', background: '#111113', color: '#8E8E98', cursor: 'pointer', fontSize: '.78rem' }}>
+              style={{ padding: '.5rem .75rem', borderRadius: '8px', border: '1px solid var(--b1)', background: 'var(--card)', color: 'var(--t3)', cursor: 'pointer', fontSize: '.78rem' }}>
               Annuler
             </button>
           ) : (
             <button onClick={() => setSelectMode(true)}
-              style={{ padding: '.5rem .75rem', borderRadius: '8px', border: '1px solid #27272D', background: '#111113', color: '#52525C', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.78rem' }}>
+              style={{ padding: '.5rem .75rem', borderRadius: '8px', border: '1px solid var(--b1)', background: 'var(--card)', color: 'var(--t3)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.78rem' }}>
               <CheckSquare size={13} /> Sélectionner
             </button>
           )}
           <button onClick={syncPlatforms} disabled={syncing} title="Vérifier si des posts ont été supprimés sur les plateformes"
-            style={{ padding: '.5rem .75rem', borderRadius: '8px', border: '1px solid #27272D', background: '#111113', color: '#52525C', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.78rem' }}>
+            style={{ padding: '.5rem .75rem', borderRadius: '8px', border: '1px solid var(--b1)', background: 'var(--card)', color: 'var(--t3)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.78rem' }}>
             <RefreshCw size={13} style={{ animation: syncing ? 'rot .7s linear infinite' : 'none' }} />
             {syncing ? 'Sync...' : 'Synchroniser'}
           </button>
@@ -811,9 +811,9 @@ export default function PostsPage() {
           {(['all', 'published', 'draft', 'scheduled', 'failed', 'deleted'] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)} style={{
               padding: '.3rem .75rem', borderRadius: '6px', fontSize: '.75rem', fontWeight: 500, cursor: 'pointer',
-              border: filter === f ? (f === 'deleted' ? '1px solid rgba(239,68,68,.5)' : '1px solid #4646FF') : '1px solid #27272D',
-              background: filter === f ? (f === 'deleted' ? 'rgba(239,68,68,.1)' : 'rgba(59,123,246,.12)') : '#111113',
-              color: filter === f ? (f === 'deleted' ? '#EF4444' : '#4646FF') : '#8E8E98', transition: '.15s',
+              border: filter === f ? (f === 'deleted' ? '1px solid rgba(239,68,68,.5)' : '1px solid #4646FF') : '1px solid var(--b1)',
+              background: filter === f ? (f === 'deleted' ? 'rgba(239,68,68,.1)' : 'rgba(59,123,246,.12)') : 'var(--card)',
+              color: filter === f ? (f === 'deleted' ? '#EF4444' : '#4646FF') : 'var(--t3)', transition: '.15s',
               display: 'flex', alignItems: 'center', gap: '.3rem',
             }}>
               {f === 'deleted' && <Trash2 size={11} />}
@@ -824,7 +824,7 @@ export default function PostsPage() {
         <div style={{ display: 'flex', gap: '.3rem', alignItems: 'center' }}>
           {selectMode && filtered.length > 0 && (
             <button onClick={toggleSelectAll}
-              style={{ padding: '.3rem .65rem', borderRadius: '6px', border: '1px solid #27272D', background: '#111113', color: '#8E8E98', cursor: 'pointer', fontSize: '.73rem', display: 'flex', alignItems: 'center', gap: '.3rem', marginRight: '.25rem' }}>
+              style={{ padding: '.3rem .65rem', borderRadius: '6px', border: '1px solid var(--b1)', background: 'var(--card)', color: 'var(--t3)', cursor: 'pointer', fontSize: '.73rem', display: 'flex', alignItems: 'center', gap: '.3rem', marginRight: '.25rem' }}>
               {selectedIds.size === filtered.length ? <CheckSquare size={12} color="#4646FF" /> : <Square size={12} />}
               {selectedIds.size === filtered.length ? 'Tout désélectionner' : 'Tout sélectionner'}
             </button>
@@ -832,9 +832,9 @@ export default function PostsPage() {
           {(['grid', 'list'] as const).map(v => (
             <button key={v} onClick={() => setView(v)} style={{
               padding: '.3rem .5rem', borderRadius: '6px',
-              border: view === v ? '1px solid #4646FF' : '1px solid #27272D',
-              background: view === v ? 'rgba(59,123,246,.12)' : '#111113',
-              color: view === v ? '#4646FF' : '#52525C', cursor: 'pointer', display: 'flex', alignItems: 'center',
+              border: view === v ? '1px solid #4646FF' : '1px solid var(--b1)',
+              background: view === v ? 'rgba(59,123,246,.12)' : 'var(--card)',
+              color: view === v ? '#4646FF' : 'var(--t3)', cursor: 'pointer', display: 'flex', alignItems: 'center',
             }}>
               {v === 'grid' ? <Grid3X3 size={14} /> : <List size={14} />}
             </button>
@@ -844,12 +844,12 @@ export default function PostsPage() {
 
       {/* Content */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '4rem', color: '#52525C', fontSize: '.85rem' }}>Chargement...</div>
+        <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--t3)', fontSize: '.85rem' }}>Chargement...</div>
       ) : filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '4rem', background: '#111113', border: '1px solid #27272D', borderRadius: '10px' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '.75rem' }}>✨</div>
-          <div style={{ color: '#F4F4F6', fontWeight: 600, marginBottom: '.4rem', fontSize: '.9rem' }}>Aucun post</div>
-          <div style={{ color: '#52525C', fontSize: '.8rem', marginBottom: '1.25rem' }}>Créez votre premier post en quelques secondes</div>
+        <div style={{ textAlign: 'center', padding: '4rem', background: 'var(--card)', border: '1px solid var(--b1)', borderRadius: '10px' }}>
+          <div style={{ marginBottom: '.75rem', display: 'flex', justifyContent: 'center' }}><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="1.5" strokeLinecap="round"><path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z"/></svg></div>
+          <div style={{ color: 'var(--t1)', fontWeight: 600, marginBottom: '.4rem', fontSize: '.9rem' }}>Aucun post</div>
+          <div style={{ color: 'var(--t3)', fontSize: '.8rem', marginBottom: '1.25rem' }}>Créez votre premier post en quelques secondes</div>
           <button onClick={() => router.push('/posts/create')} className="btn-primary flex items-center gap-2" style={{ margin: '0 auto', padding: '.5rem 1rem', fontSize: '.8rem' }}>
             <Plus size={14} /> Créer un post
           </button>
@@ -861,14 +861,14 @@ export default function PostsPage() {
             return (
             <div key={post.id}
               onClick={() => selectMode ? toggleSelect(post.id) : openPost(post)}
-              style={{ background: '#111113', border: `1px solid ${isSelected ? '#4646FF' : '#27272D'}`, borderRadius: '10px', overflow: 'hidden', transition: '.15s', cursor: 'pointer', position: 'relative' }}
+              style={{ background: 'var(--card)', border: `1px solid ${isSelected ? '#4646FF' : 'var(--b1)'}`, borderRadius: '10px', overflow: 'hidden', transition: '.15s', cursor: 'pointer', position: 'relative' }}
               onMouseEnter={e => {
                 if (!isSelected) e.currentTarget.style.borderColor = '#4646FF'
                 const overlay = e.currentTarget.querySelector('.insights-overlay') as HTMLElement | null
                 if (overlay) overlay.style.opacity = '1'
               }}
               onMouseLeave={e => {
-                if (!isSelected) e.currentTarget.style.borderColor = '#27272D'
+                if (!isSelected) e.currentTarget.style.borderColor = 'var(--b1)'
                 const overlay = e.currentTarget.querySelector('.insights-overlay') as HTMLElement | null
                 if (overlay) overlay.style.opacity = '0'
               }}
@@ -881,13 +881,13 @@ export default function PostsPage() {
                   }
                 </div>
               )}
-              <div style={{ aspectRatio: '1', background: '#18181C', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ aspectRatio: '1', background: 'var(--s2)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {post.media_urls?.[0]
                   ? <img src={post.media_urls[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   : <svg width="36" height="36" viewBox="0 0 36 36" fill="none" style={{ opacity: .25 }}>
-                      <rect x="4" y="6" width="28" height="24" rx="3" stroke="#E4E4E7" strokeWidth="1.8"/>
-                      <circle cx="13" cy="15" r="3" stroke="#E4E4E7" strokeWidth="1.5"/>
-                      <path d="M4 24l7-7 5 5 4-4 8 7" stroke="#E4E4E7" strokeWidth="1.5" strokeLinejoin="round"/>
+                      <rect x="4" y="6" width="28" height="24" rx="3" stroke="var(--t3)" strokeWidth="1.8"/>
+                      <circle cx="13" cy="15" r="3" stroke="var(--t3)" strokeWidth="1.5"/>
+                      <path d="M4 24l7-7 5 5 4-4 8 7" stroke="var(--t3)" strokeWidth="1.5" strokeLinejoin="round"/>
                     </svg>
                 }
                 {post.status === 'published' && <InsightsBadge a={post.analytics} />}
@@ -900,7 +900,7 @@ export default function PostsPage() {
                 </div>
               </div>
               <div style={{ padding: '.55rem .6rem' }}>
-                <div style={{ fontSize: '.72rem', color: '#8E8E98', lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', marginBottom: '.45rem' }}>
+                <div style={{ fontSize: '.72rem', color: 'var(--t3)', lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', marginBottom: '.45rem' }}>
                   {post.content}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -931,27 +931,27 @@ export default function PostsPage() {
             return (
             <div key={post.id}
               onClick={() => selectMode ? toggleSelect(post.id) : openPost(post)}
-              style={{ background: '#111113', border: `1px solid ${isSelected ? '#4646FF' : '#27272D'}`, borderRadius: '8px', padding: '.75rem 1rem', display: 'flex', alignItems: 'center', gap: '1rem', transition: '.15s', cursor: 'pointer' }}
+              style={{ background: 'var(--card)', border: `1px solid ${isSelected ? '#4646FF' : 'var(--b1)'}`, borderRadius: '8px', padding: '.75rem 1rem', display: 'flex', alignItems: 'center', gap: '1rem', transition: '.15s', cursor: 'pointer' }}
               onMouseEnter={e => { if (!isSelected) e.currentTarget.style.borderColor = '#4646FF' }}
-              onMouseLeave={e => { if (!isSelected) e.currentTarget.style.borderColor = '#27272D' }}
+              onMouseLeave={e => { if (!isSelected) e.currentTarget.style.borderColor = 'var(--b1)' }}
             >
               {selectMode && (
                 <div style={{ flexShrink: 0 }}>
                   {isSelected ? <CheckSquare size={17} color="#4646FF" /> : <Square size={17} color="#52525C" />}
                 </div>
               )}
-              <div style={{ width: '44px', height: '44px', borderRadius: '6px', background: '#18181C', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '6px', background: 'var(--s2)', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {post.media_urls?.[0]
                   ? <img src={post.media_urls[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   : <svg width="22" height="22" viewBox="0 0 36 36" fill="none" style={{ opacity: .25 }}>
-                      <rect x="4" y="6" width="28" height="24" rx="3" stroke="#E4E4E7" strokeWidth="1.8"/>
-                      <circle cx="13" cy="15" r="3" stroke="#E4E4E7" strokeWidth="1.5"/>
-                      <path d="M4 24l7-7 5 5 4-4 8 7" stroke="#E4E4E7" strokeWidth="1.5" strokeLinejoin="round"/>
+                      <rect x="4" y="6" width="28" height="24" rx="3" stroke="var(--t3)" strokeWidth="1.8"/>
+                      <circle cx="13" cy="15" r="3" stroke="var(--t3)" strokeWidth="1.5"/>
+                      <path d="M4 24l7-7 5 5 4-4 8 7" stroke="var(--t3)" strokeWidth="1.5" strokeLinejoin="round"/>
                     </svg>
                 }
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '.8rem', color: '#E4E4E7', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{post.content}</div>
+                <div style={{ fontSize: '.8rem', color: 'var(--t1)', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{post.content}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginTop: '.3rem' }}>
                   {post.platforms.map(p => (
                     <div key={p} style={{ width: '16px', height: '16px', borderRadius: '3px', overflow: 'hidden', flexShrink: 0 }}>
@@ -965,7 +965,7 @@ export default function PostsPage() {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
                 {post.analytics && post.status === 'published' && (
-                  <div style={{ display: 'flex', gap: '.6rem', fontSize: '.7rem', color: '#52525C' }}>
+                  <div style={{ display: 'flex', gap: '.6rem', fontSize: '.7rem', color: 'var(--t3)' }}>
                     <span title="Likes">❤️ {post.analytics.likes}</span>
                     <span title="Commentaires">💬 {post.analytics.comments}</span>
                     <span title="Impressions">👁️ {post.analytics.impressions > 1000 ? (post.analytics.impressions/1000).toFixed(1)+'K' : post.analytics.impressions}</span>

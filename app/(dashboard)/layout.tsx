@@ -21,7 +21,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <ToastProvider>
-      <DashboardShell user={user as User} topbar={null} key="shell">
+      <DashboardShell user={user as User} key="shell">
         {children}
       </DashboardShell>
     </ToastProvider>

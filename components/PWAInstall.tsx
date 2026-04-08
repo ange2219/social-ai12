@@ -20,8 +20,9 @@ export function PWAInstall() {
     // Capture install prompt (Android Chrome)
     const handler = (e: Event) => {
       e.preventDefault()
+      const dismissed = localStorage.getItem('pwa_dismissed')
+      if (dismissed && Date.now() - parseInt(dismissed) < 7 * 24 * 60 * 60 * 1000) return
       setPrompt(e as BeforeInstallPromptEvent)
-      // Only show banner if not already installed
       if (!window.matchMedia('(display-mode: standalone)').matches) {
         setShow(true)
       }
@@ -78,7 +79,7 @@ export function PWAInstall() {
         Installer
       </button>
       <button
-        onClick={() => setShow(false)}
+        onClick={() => { localStorage.setItem('pwa_dismissed', Date.now().toString()); setShow(false) }}
         style={{
           background: 'none',
           border: 'none',

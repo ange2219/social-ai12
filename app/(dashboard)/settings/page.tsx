@@ -78,10 +78,10 @@ export default function SettingsPage() {
   return (
     <div style={{ padding: '2rem 2rem 3rem' }}>
       <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1.4rem', fontWeight: 700, color: '#F4F4F6', letterSpacing: '-.02em' }}>
+        <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1.4rem', fontWeight: 700, color: 'var(--t1)', letterSpacing: '-.02em' }}>
           Paramètres
         </h1>
-        <p style={{ color: '#52525C', fontSize: '.83rem', marginTop: '.2rem' }}>Préférences de l'application et gestion du compte</p>
+        <p style={{ color: 'var(--t3)', fontSize: '.83rem', marginTop: '.2rem' }}>Préférences de l'application et gestion du compte</p>
       </div>
 
       {/* Grille principale 2 colonnes */}
@@ -91,7 +91,7 @@ export default function SettingsPage() {
         <section className="card p-5">
           <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '1rem' }}>
             <Moon size={16} style={{ color: '#4646FF' }} />
-            <span style={{ fontSize: '.9rem', fontWeight: 600, color: '#F4F4F6' }}>Apparence</span>
+            <span style={{ fontSize: '.9rem', fontWeight: 600, color: 'var(--t1)' }}>Apparence</span>
           </div>
           <div style={{ display: 'flex', gap: '.75rem' }}>
             {(['dark', 'light'] as const).map(t => (
@@ -100,9 +100,9 @@ export default function SettingsPage() {
                 onClick={() => { setTheme(t); localStorage.setItem('theme', t); toast('Bientôt disponible', 'success') }}
                 style={{
                   flex: 1, padding: '.85rem', borderRadius: '10px',
-                  border: `1px solid ${theme === t ? '#4646FF' : '#27272D'}`,
+                  border: `1px solid ${theme === t ? '#4646FF' : 'var(--b1)'}`,
                   background: theme === t ? 'rgba(59,123,246,.08)' : '#111113',
-                  color: theme === t ? '#4646FF' : '#52525C', cursor: 'pointer',
+                  color: theme === t ? '#4646FF' : 'var(--t3)', cursor: 'pointer',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.4rem', transition: '.15s',
                 }}
               >
@@ -120,7 +120,7 @@ export default function SettingsPage() {
           <section className="card p-5">
             <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '1rem' }}>
               <Globe size={16} style={{ color: '#4646FF' }} />
-              <span style={{ fontSize: '.9rem', fontWeight: 600, color: '#F4F4F6' }}>Langue</span>
+              <span style={{ fontSize: '.9rem', fontWeight: 600, color: 'var(--t1)' }}>Langue</span>
             </div>
             <div style={{ display: 'flex', gap: '.5rem' }}>
               {([['fr', '🇫🇷 Français'], ['en', '🇬🇧 English']] as const).map(([code, label]) => (
@@ -129,9 +129,9 @@ export default function SettingsPage() {
                   onClick={() => { setLang(code); toast('Bientôt disponible', 'success') }}
                   style={{
                     flex: 1, padding: '.6rem', borderRadius: '8px',
-                    border: `1px solid ${lang === code ? '#4646FF' : '#27272D'}`,
+                    border: `1px solid ${lang === code ? '#4646FF' : 'var(--b1)'}`,
                     background: lang === code ? 'rgba(59,123,246,.08)' : 'transparent',
-                    color: lang === code ? '#4646FF' : '#8E8E98', cursor: 'pointer',
+                    color: lang === code ? '#4646FF' : 'var(--t3)', cursor: 'pointer',
                     fontSize: '.8rem', fontWeight: 500, transition: '.15s',
                   }}
                 >
@@ -145,18 +145,18 @@ export default function SettingsPage() {
           <section className="card p-5" style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '1rem' }}>
               <Bell size={16} style={{ color: '#4646FF' }} />
-              <span style={{ fontSize: '.9rem', fontWeight: 600, color: '#F4F4F6' }}>Notifications</span>
+              <span style={{ fontSize: '.9rem', fontWeight: 600, color: 'var(--t1)' }}>Notifications</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.65rem .75rem', background: '#09090B', borderRadius: '8px', border: '1px solid #1E1E24' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.65rem .75rem', background: 'var(--bg)', borderRadius: '8px', border: '1px solid var(--b1)' }}>
               <div>
-                <div style={{ fontSize: '.83rem', fontWeight: 500, color: '#E4E4E7' }}>Notifications email</div>
-                <div style={{ fontSize: '.75rem', color: '#52525C', marginTop: '.15rem' }}>Résumés hebdomadaires, rappels</div>
+                <div style={{ fontSize: '.83rem', fontWeight: 500, color: 'var(--t1)' }}>Notifications email</div>
+                <div style={{ fontSize: '.75rem', color: 'var(--t3)', marginTop: '.15rem' }}>Résumés hebdomadaires, rappels</div>
               </div>
               <button
                 onClick={() => setEmailNotifs(p => !p)}
                 style={{
                   width: '42px', height: '22px', borderRadius: '999px', border: 'none', cursor: 'pointer',
-                  background: emailNotifs ? '#4646FF' : '#27272D', transition: '.2s', position: 'relative', flexShrink: 0,
+                  background: emailNotifs ? '#4646FF' : 'var(--b1)', transition: '.2s', position: 'relative', flexShrink: 0,
                 }}
               >
                 <div style={{
@@ -177,7 +177,7 @@ export default function SettingsPage() {
         <section className="card p-5">
           <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '1rem' }}>
             <Lock size={16} style={{ color: '#4646FF' }} />
-            <span style={{ fontSize: '.9rem', fontWeight: 600, color: '#F4F4F6' }}>Mot de passe</span>
+            <span style={{ fontSize: '.9rem', fontWeight: 600, color: 'var(--t1)' }}>Mot de passe</span>
             {pwdStep === 'verified' && (
               <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '.3rem', fontSize: '.75rem', color: '#22C55E' }}>
                 <CheckCircle size={13} /> Identité vérifiée
@@ -207,7 +207,7 @@ export default function SettingsPage() {
                 >
                   <Lock size={14} /> {savingPwd ? 'Vérification...' : 'Vérifier mon identité'}
                 </button>
-                <p style={{ fontSize: '.75rem', color: '#52525C' }}>
+                <p style={{ fontSize: '.75rem', color: 'var(--t3)' }}>
                   Vous devez d'abord confirmer votre identité avant de changer le mot de passe.
                 </p>
               </>
@@ -224,7 +224,7 @@ export default function SettingsPage() {
                   />
                   {newPassword.length > 0 && (
                     <div style={{ marginTop: '.4rem', display: 'flex', alignItems: 'center', gap: '.5rem' }}>
-                      <div style={{ flex: 1, height: '3px', borderRadius: '999px', background: '#27272D', overflow: 'hidden' }}>
+                      <div style={{ flex: 1, height: '3px', borderRadius: '999px', background: 'var(--b1)', overflow: 'hidden' }}>
                         <div style={{ height: '100%', width: `${(strength / 3) * 100}%`, background: strengthColor[strength], transition: '.3s', borderRadius: '999px' }} />
                       </div>
                       <span style={{ fontSize: '.72rem', color: strengthColor[strength], fontWeight: 500, flexShrink: 0 }}>{strengthLabel[strength]}</span>
@@ -250,7 +250,7 @@ export default function SettingsPage() {
                     <Lock size={14} /> {savingPwd ? 'Modification...' : 'Modifier'}
                   </button>
                   <button onClick={() => { setPwdStep('idle'); setCurrentPassword(''); setNewPassword(''); setConfirmPassword('') }}
-                    style={{ padding: '.6rem .9rem', borderRadius: '8px', border: '1px solid #27272D', background: 'transparent', color: '#52525C', cursor: 'pointer', fontSize: '.82rem' }}>
+                    style={{ padding: '.6rem .9rem', borderRadius: '8px', border: '1px solid var(--b1)', background: 'transparent', color: 'var(--t3)', cursor: 'pointer', fontSize: '.82rem' }}>
                     Annuler
                   </button>
                 </div>
@@ -263,20 +263,20 @@ export default function SettingsPage() {
         <section className="card p-5">
           <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '1rem' }}>
             <CreditCard size={16} style={{ color: '#4646FF' }} />
-            <span style={{ fontSize: '.9rem', fontWeight: 600, color: '#F4F4F6' }}>Abonnement</span>
+            <span style={{ fontSize: '.9rem', fontWeight: 600, color: 'var(--t1)' }}>Abonnement</span>
           </div>
 
-          <div style={{ padding: '.75rem', background: '#09090B', borderRadius: '8px', border: '1px solid #1E1E24', marginBottom: '1rem' }}>
+          <div style={{ padding: '.75rem', background: 'var(--bg)', borderRadius: '8px', border: '1px solid var(--b1)', marginBottom: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem', marginBottom: '.4rem' }}>
               <div style={{
                 padding: '.2rem .6rem', borderRadius: '999px', fontSize: '.72rem', fontWeight: 600,
-                background: userPlan === 'free' ? '#27272D' : userPlan === 'premium' ? 'rgba(59,123,246,.15)' : 'rgba(251,191,36,.12)',
-                color: userPlan === 'free' ? '#8E8E98' : userPlan === 'premium' ? '#4646FF' : '#FBBF24',
+                background: userPlan === 'free' ? 'var(--b1)' : userPlan === 'premium' ? 'rgba(59,123,246,.15)' : 'rgba(251,191,36,.12)',
+                color: userPlan === 'free' ? 'var(--t3)' : userPlan === 'premium' ? '#4646FF' : '#FBBF24',
               }}>
                 {userPlan === 'free' ? 'Gratuit' : userPlan === 'premium' ? 'Premium' : 'Business'}
               </div>
             </div>
-            <div style={{ fontSize: '.8rem', color: '#8E8E98' }}>
+            <div style={{ fontSize: '.8rem', color: 'var(--t3)' }}>
               {userPlan === 'free' ? '3 générations/jour · Instagram & Facebook' :
                userPlan === 'premium' ? '10 générations/jour · 5 plateformes · Posts de la semaine' :
                'Illimité · Toutes plateformes · Workspaces'}
@@ -309,8 +309,8 @@ export default function SettingsPage() {
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '1rem', alignItems: 'flex-end' }}>
           <div>
-            <p style={{ fontSize: '.82rem', color: '#52525C', marginBottom: '.75rem' }}>
-              La suppression est <strong style={{ color: '#8E8E98' }}>définitive et irréversible</strong>. Tous vos posts, données et connexions seront effacés.
+            <p style={{ fontSize: '.82rem', color: 'var(--t3)', marginBottom: '.75rem' }}>
+              La suppression est <strong style={{ color: 'var(--t3)' }}>définitive et irréversible</strong>. Tous vos posts, données et connexions seront effacés.
             </p>
             <label className="label">
               Tapez <span style={{ color: '#EF4444', fontFamily: 'monospace' }}>supprimer</span> pour activer le bouton

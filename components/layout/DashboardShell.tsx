@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { Sidebar } from './Sidebar'
+import { TopNav } from './TopNav'
 import type { User } from '@/types'
 
 function MobileNav({ pathname }: { pathname: string }) {
@@ -48,20 +49,27 @@ function MobileNav({ pathname }: { pathname: string }) {
   )
 }
 
-export function DashboardShell({ user, topbar, children }: {
+export function DashboardShell({ user, children }: {
   user: User
-  topbar: React.ReactNode
   children: React.ReactNode
 }) {
   const pathname = usePathname()
-  const [collapsed, setCollapsed] = useState(false)
+  const [open, setOpen] = useState(false)
+
+  // L'onboarding s'affiche sans shell (pas de sidebar/topnav)
+  if (pathname === '/onboarding') {
+    return <>{children}</>
+  }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#09090B' }}>
-      <Sidebar user={user} collapsed={collapsed} onToggle={() => setCollapsed(c => !c)} />
-      <main className="main">
-        {children}
-      </main>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
+      <Sidebar user={user} open={open} />
+      <div className="main">
+        <TopNav user={user} sidebarOpen={open} onToggleSidebar={() => setOpen(o => !o)} />
+        <div className="content">
+          {children}
+        </div>
+      </div>
       <MobileNav pathname={pathname} />
     </div>
   )

@@ -97,7 +97,7 @@ function PostActionModal({ content, imageUrl, onClose }: {
           <img src={imageUrl} alt="" style={{ width: '100%', borderRadius: '10px', marginBottom: '1.25rem', maxHeight: '200px', objectFit: 'cover' }} />
         )}
         <div style={{
-          background: '#18181C', borderRadius: '8px', padding: '.75rem', marginBottom: '1.25rem',
+          background: 'var(--s2)', borderRadius: '8px', padding: '.75rem', marginBottom: '1.25rem',
           fontSize: '.83rem', color: '#C4C4CC', lineHeight: 1.6,
           maxHeight: '120px', overflow: 'hidden',
           overflowY: 'auto',
@@ -144,7 +144,7 @@ function PostActionModal({ content, imageUrl, onClose }: {
   )
 }
 
-export function GenerateButton() {
+export function GenerateButton({ compact }: { compact?: boolean } = {}) {
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
   const [stepStates, setStepStates] = useState<string[]>(STEPS.map(() => ''))
@@ -192,10 +192,24 @@ export function GenerateButton() {
 
   return (
     <>
-      <button className="btn-gen" onClick={startGen}>
-        <div className="btn-gen-dot" />
-        Générer maintenant
-      </button>
+      {compact ? (
+        <button
+          onClick={startGen}
+          className="upgrade-btn"
+          title="Générer des posts IA"
+          style={{ background: 'linear-gradient(135deg,#8b5cf6,#6366f1)' }}
+        >
+          <svg viewBox="0 0 24 24" style={{ width: 10, height: 10, stroke: '#fff', fill: 'none', strokeWidth: 2.5, strokeLinecap: 'round' }}>
+            <path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z"/>
+          </svg>
+          Générer
+        </button>
+      ) : (
+        <button className="btn-gen" onClick={startGen}>
+          <div className="btn-gen-dot" />
+          Générer maintenant
+        </button>
+      )}
 
       {open && (
         <div className="gen-ov on">

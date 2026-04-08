@@ -54,7 +54,7 @@ export async function middleware(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (profile && !profile.onboarded) {
+    if (!profile || !profile.onboarded) {
       return NextResponse.redirect(new URL('/onboarding', request.url))
     }
   }

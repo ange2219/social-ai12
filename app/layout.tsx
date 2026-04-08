@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { PWAInstall } from '@/components/PWAInstall'
+import { ThemeProvider } from '@/components/layout/ThemeProvider'
 
 export const metadata: Metadata = {
   title: 'Social IA — Assistant Community Manager',
@@ -29,10 +30,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className="dark">
+    <html lang="fr" data-theme="light" suppressHydrationWarning>
       <body>
-        {children}
-        <PWAInstall />
+        <ThemeProvider>
+          {children}
+          <PWAInstall />
+        </ThemeProvider>
       </body>
     </html>
   )
