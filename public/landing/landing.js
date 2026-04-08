@@ -206,13 +206,13 @@ function renderDashboard() {
       <div class="sc">
         <div class="sc-top" style="margin-bottom:.75rem"><span class="sc-l">Activité — 4 semaines</span><span style="font-size:.72rem;color:var(--acc);font-weight:600">5.2 /sem</span></div>
         <svg width="100%" viewBox="0 0 200 48" preserveAspectRatio="none" style="height:48px;display:block">
-          <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4646ff" stop-opacity=".25"/><stop offset="100%" stop-color="#4646ff" stop-opacity="0"/></linearGradient></defs>
+          <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7B5CF5" stop-opacity=".25"/><stop offset="100%" stop-color="#7B5CF5" stop-opacity="0"/></linearGradient></defs>
           <path d="M 0,38 L 66,24 L 133,16 L 200,8 L 200,48 L 0,48 Z" fill="url(#sg)"/>
-          <path d="M 0,38 L 66,24 L 133,16 L 200,8" stroke="#4646ff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          ${[[0,38],[66,24],[133,16],[200,8]].map(([x,y],i) => `<circle cx="${x}" cy="${y}" r="3" fill="${i===3?'#4646ff':'#27272a'}" stroke="${i===3?'#fff':'#4646ff'}" stroke-width="1.5"/>`).join('')}
+          <path d="M 0,38 L 66,24 L 133,16 L 200,8" stroke="#7B5CF5" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          ${[[0,38],[66,24],[133,16],[200,8]].map(([x,y],i) => `<circle cx="${x}" cy="${y}" r="3" fill="${i===3?'#7B5CF5':'#27272a'}" stroke="${i===3?'#fff':'#7B5CF5'}" stroke-width="1.5"/>`).join('')}
         </svg>
         <div style="display:flex;justify-content:space-between;margin-top:.5rem">
-          ${['S-3','S-2','S-1','Cette sem.'].map((l,i) => `<div style="text-align:center"><div style="font-size:.72rem;font-weight:700;color:${i===3?'#4646ff':'#e4e4e7'}">${[3,4,6,8][i]}</div><div style="font-size:.58rem;color:#52525c">${l}</div></div>`).join('')}
+          ${['S-3','S-2','S-1','Cette sem.'].map((l,i) => `<div style="text-align:center"><div style="font-size:.72rem;font-weight:700;color:${i===3?'#7B5CF5':'#e4e4e7'}">${[3,4,6,8][i]}</div><div style="font-size:.58rem;color:#52525c">${l}</div></div>`).join('')}
         </div>
       </div>
       <div class="sc" style="display:flex;flex-direction:column;justify-content:space-between">
@@ -230,9 +230,9 @@ function renderDashboard() {
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;margin-bottom:1.5rem">
-      <div class="sc" style="background:linear-gradient(135deg,#0d0d1a,#111113);border-color:rgba(70,70,255,.25)">
+      <div class="sc" style="background:linear-gradient(135deg,#0d0d1a,#111113);border-color:rgba(123,92,245,.25)">
         <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.65rem">
-          <div style="width:24px;height:24px;border-radius:6px;background:rgba(70,70,255,.15);display:flex;align-items:center;justify-content:center">✨</div>
+          <div style="width:24px;height:24px;border-radius:6px;background:rgba(123,92,245,.15);display:flex;align-items:center;justify-content:center">✨</div>
           <span style="font-size:.72rem;color:var(--acc);font-weight:600;text-transform:uppercase;letter-spacing:.06em">Suggestion IA</span>
         </div>
         <p style="font-size:.8rem;color:#c4c4cc;line-height:1.55;margin:0">Publier au moins 3x/semaine double en moyenne le taux d'engagement. Vous y êtes presque !</p>
