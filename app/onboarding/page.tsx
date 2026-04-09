@@ -167,6 +167,35 @@ export default function OnboardingPage() {
       .catch(() => {})
   }, [])
 
+  // Écoute localStorage (fallback si postMessage bloqué)
+  useEffect(() => {
+    function onStorage(e: StorageEvent) {
+      if (e.key !== '_oauth_result' || !e.newValue) return
+      try {
+        const d = JSON.parse(e.newValue)
+        if (d.type === 'meta_oauth') {
+          if (d.success) {
+            setConnectedAccounts(prev => ({ ...prev, facebook: d.page || 'facebook' }))
+            toast(`Facebook connecté${d.page ? ` — ${d.page}` : ''} !`, 'success')
+          } else if (d.error) {
+            toast(`Erreur Facebook : ${d.error}`, 'error')
+          }
+          setConnecting(null)
+        } else if (d.type === 'instagram_oauth') {
+          if (d.success) {
+            setConnectedAccounts(prev => ({ ...prev, instagram: d.username || 'instagram' }))
+            toast(`Instagram${d.username ? ` @${d.username}` : ''} connecté !`, 'success')
+          } else if (d.error) {
+            toast(`Erreur Instagram : ${d.error}`, 'error')
+          }
+          setConnecting(null)
+        }
+      } catch {}
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [toast])
+
   function update(key: keyof OnboardingData, value: unknown) {
     setData(prev => ({ ...prev, [key]: value }))
   }
@@ -215,9 +244,13 @@ export default function OnboardingPage() {
     const onMessage = (e: MessageEvent) => {
       if (!e.data) return
       const type = platform === 'facebook' ? 'meta_oauth' : 'instagram_oauth'
-      if (e.data.type === type && e.data.success) {
-        window.removeEventListener('message', onMessage)
+      if (e.data.type !== type) return
+      window.removeEventListener('message', onMessage)
+      if (e.data.success) {
         handleSuccess(e.data.page || e.data.username || platform)
+      } else if (e.data.error) {
+        toast(`Erreur : ${e.data.error}`, 'error')
+        setConnecting(null)
       }
     }
     window.addEventListener('message', onMessage)

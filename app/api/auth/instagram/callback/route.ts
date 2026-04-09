@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { exchangeInstagramCode, getInstagramLongLivedToken, getInstagramUser } from '@/lib/instagram'
 import { getInstagramStats } from '@/lib/meta'
 import { encryptToken } from '@/lib/utils'
@@ -14,9 +14,9 @@ export async function GET(req: NextRequest) {
     return popupResponse({ error: 'oauth_invalid' })
   }
 
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return popupResponse({ error: 'Non authentifié' })
+  // Extraire l'userId depuis le state vérifié (state = userId.nonce)
+  const userId = storedState.split('.')[0]
+  if (!userId) return popupResponse({ error: 'State invalide' })
 
   try {
     const tokenData = await exchangeInstagramCode(code)
@@ -26,9 +26,9 @@ export async function GET(req: NextRequest) {
     const admin = createAdminClient()
     // Les long-lived tokens Instagram expirent en ~60 jours
     const tokenExpiresAt = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000)
-    await admin.from('social_accounts').delete().eq('user_id', user.id).eq('platform', 'instagram')
+    await admin.from('social_accounts').delete().eq('user_id', userId).eq('platform', 'instagram')
     const { error } = await admin.from('social_accounts').insert({
-      user_id: user.id,
+      user_id: userId,
       platform: 'instagram',
       platform_user_id: igUser.id,
       platform_username: igUser.username,
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
     try {
       const stats = await getInstagramStats(igUser.id, longToken)
       await admin.from('social_baselines').upsert({
-        user_id: user.id,
+        user_id: userId,
         platform: 'instagram',
         baseline_followers: stats.followers,
         current_followers: stats.followers,
@@ -65,10 +65,11 @@ export async function GET(req: NextRequest) {
 }
 
 function popupResponse(data: Record<string, string>): NextResponse {
-  const origin = process.env.NEXT_PUBLIC_APP_URL || ''
   const payload = JSON.stringify({ type: 'instagram_oauth', ...data })
   const html = `<!DOCTYPE html><html><body><script>
-    try { window.opener.postMessage(${payload}, ${JSON.stringify(origin)}) } catch(e) {}
+    var d = ${payload};
+    try { window.opener.postMessage(d, "*") } catch(e) {}
+    try { localStorage.setItem("_oauth_result", JSON.stringify({...d, ts: Date.now()})) } catch(e) {}
     window.close()
   </script><p style="font-family:sans-serif;color:#aaa;text-align:center;margin-top:40px">Connexion en cours...</p></body></html>`
   return new NextResponse(html, { headers: { 'Content-Type': 'text/html' } })

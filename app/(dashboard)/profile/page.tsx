@@ -83,9 +83,29 @@ export default function ProfilePage() {
         loadAccounts()
       }
     }
+    // Fallback localStorage (si postMessage bloqué)
+    function handleStorage(e: StorageEvent) {
+      if (e.key !== '_oauth_result' || !e.newValue) return
+      try {
+        const d = JSON.parse(e.newValue)
+        if (d.type === 'meta_oauth') {
+          if (d.success) toast(`Facebook "${d.page}" connecté !`, 'success')
+          else if (d.error) toast(`Erreur Facebook : ${d.error}`, 'error')
+          loadAccounts()
+        } else if (d.type === 'instagram_oauth') {
+          if (d.success) toast(`Instagram @${d.username} connecté !`, 'success')
+          else if (d.error) toast(`Erreur Instagram : ${d.error}`, 'error')
+          loadAccounts()
+        }
+      } catch {}
+    }
     window.addEventListener('message', handleMessage)
-    return () => window.removeEventListener('message', handleMessage)
-  }, [loadAccounts])
+    window.addEventListener('storage', handleStorage)
+    return () => {
+      window.removeEventListener('message', handleMessage)
+      window.removeEventListener('storage', handleStorage)
+    }
+  }, [loadAccounts, toast])
 
   async function saveUserInfo() {
     setSavingUser(true)
