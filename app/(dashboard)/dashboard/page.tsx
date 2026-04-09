@@ -146,8 +146,7 @@ export default async function DashboardPage() {
                     <circle cx="24" cy="24" r="19" fill="none" stroke="url(#gradKpi1)" strokeWidth="4.5"
                       strokeDasharray="119.4"
                       strokeDashoffset={119.4 - (119.4 * Math.min(publishedCount / planLimit, 1))}
-                      style={{ '--dash-offset': `${119.4 - (119.4 * Math.min(publishedCount / planLimit, 1))}` } as React.CSSProperties}
-                      className="donut-arc"/>
+                      style={{ transition: 'stroke-dashoffset 0.9s cubic-bezier(.4,0,.2,1) 0.3s' }}/>
                   )}
                   <defs>
                     <linearGradient id="gradKpi1" x1="0" y1="0" x2="1" y2="0">

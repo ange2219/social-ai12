@@ -247,7 +247,7 @@ export default function CreatePage() {
 
   useEffect(() => {
     createClient().from('users').select('plan').single().then(({ data }) => {
-      if (data?.plan && data.plan !== 'free') setIsPro(true)
+      if (data?.plan) setIsPro(true)
     })
     // Charger le ton de marque enregistré dans le profil
     fetch('/api/brand').then(r => r.ok ? r.json() : null).then(b => {

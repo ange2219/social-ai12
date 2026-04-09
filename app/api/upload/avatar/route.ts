@@ -44,30 +44,25 @@ export async function POST(req: NextRequest) {
 
   const admin = createAdminClient()
 
-  // Créer le bucket si nécessaire — on ignore l'erreur "already exists" seulement
-  const { error: bucketError } = await admin.storage.createBucket('avatars', { public: true, fileSizeLimit: 5242880 })
-  if (bucketError && !bucketError.message.toLowerCase().includes('already exist')) {
-    // Bucket ne peut pas être créé — vérifier s'il existe quand même
-    const { data: bucketList } = await admin.storage.listBuckets()
-    if (!bucketList?.some(b => b.name === 'avatars')) {
-      return NextResponse.json({ error: `Storage inaccessible : ${bucketError.message}` }, { status: 500 })
-    }
-  }
-
-  const { error } = await admin.storage
+  const { error: uploadError } = await admin.storage
     .from('avatars')
     .upload(path, buffer, { contentType: file.type, upsert: true })
 
-  if (error) return NextResponse.json({ error: `Upload échoué : ${error.message}` }, { status: 500 })
+  if (uploadError) {
+    // Si le bucket n'existe pas, le créer puis réessayer
+    if (uploadError.message.toLowerCase().includes('bucket') || uploadError.message.includes('not found')) {
+      await admin.storage.createBucket('avatars', { public: true }).catch(() => {})
+      const { error: retry } = await admin.storage.from('avatars').upload(path, buffer, { contentType: file.type, upsert: true })
+      if (retry) return NextResponse.json({ error: `Upload échoué : ${retry.message}` }, { status: 500 })
+    } else {
+      return NextResponse.json({ error: `Upload échoué : ${uploadError.message}` }, { status: 500 })
+    }
+  }
 
   const { data: { publicUrl } } = admin.storage.from('avatars').getPublicUrl(path)
-
-  // Ajouter un timestamp pour invalider le cache
   const urlWithCache = `${publicUrl}?t=${Date.now()}`
 
-  // Sauvegarder dans le profil utilisateur
-  const { error: dbError } = await admin.from('users').update({ avatar_url: urlWithCache }).eq('id', user.id)
-  if (dbError) return NextResponse.json({ error: `Sauvegarde profil échouée : ${dbError.message}` }, { status: 500 })
+  await admin.from('users').update({ avatar_url: urlWithCache }).eq('id', user.id)
 
   return NextResponse.json({ url: urlWithCache })
 }
