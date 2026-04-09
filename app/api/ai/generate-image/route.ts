@@ -26,13 +26,6 @@ export async function POST(req: NextRequest) {
 
   const plan = (userProfile?.plan || 'free') as Plan
 
-  if (plan === 'free') {
-    return NextResponse.json(
-      { error: 'Génération d\'image réservée aux plans Premium et Business' },
-      { status: 403 }
-    )
-  }
-
   const parsed = GenerateImageSchema.safeParse(await req.json())
   if (!parsed.success) {
     return NextResponse.json({ error: 'Données invalides', details: parsed.error.flatten() }, { status: 400 })
