@@ -35,6 +35,7 @@ export interface ImagePromptContext {
   imageType: ImageType
   brand: BrandContext
   platform: Platform
+  tone?: string
 }
 
 export interface ImageResult {
@@ -160,7 +161,7 @@ const INDUSTRY_COLOR_HINTS: Record<string, string> = {
 export function buildImagePrompt(ctx: ImagePromptContext): string {
   const styleGuide = IMAGE_STYLE_GUIDES[ctx.imageType]
   const platformSpec = PLATFORM_SPECS[ctx.platform]
-  const toneStyle = TONE_VISUAL_STYLES[ctx.tone] || TONE_VISUAL_STYLES.professionnel
+  const toneStyle = (ctx.tone ? TONE_VISUAL_STYLES[ctx.tone] : undefined) || TONE_VISUAL_STYLES.professionnel
   const colorHint = ctx.brand.color_primary
     ? `Color palette: primary ${ctx.brand.color_primary}${ctx.brand.color_secondary ? `, secondary ${ctx.brand.color_secondary}` : ''}`
     : `Color palette: ${INDUSTRY_COLOR_HINTS[ctx.brand.industry] || 'clean professional palette'}`

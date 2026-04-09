@@ -11,7 +11,9 @@ const STATUS_CONFIG = {
   scheduled: { label: 'Programmé',  icon: Clock,       cls: 'badge-yellow' },
   published: { label: 'Publié',     icon: CheckCircle, cls: 'badge-green' },
   failed:    { label: 'Échec',      icon: XCircle,     cls: 'badge-red' },
-}
+  partial:   { label: 'Partiel',    icon: Clock,       cls: 'badge-yellow' },
+  deleted:   { label: 'Supprimé',   icon: Trash2,      cls: 'badge-gray' },
+} as const satisfies Record<import('@/types').PostStatus, { label: string; icon: typeof FileText; cls: string }>
 
 export function PostCard({ post, onDelete, onPublish }: {
   post: Post

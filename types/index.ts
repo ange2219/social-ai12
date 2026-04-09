@@ -89,7 +89,7 @@ export interface PlanLimits {
 export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
   free: {
     platforms: 2,
-    generationsPerDay: 20,
+    generationsPerDay: 5,
     accountsPerPlatform: 1,
     scheduling: false,
     advancedAnalytics: false,
@@ -98,7 +98,7 @@ export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
   },
   premium: {
     platforms: 5,
-    generationsPerDay: 10,
+    generationsPerDay: 20,
     accountsPerPlatform: 3,
     scheduling: true,
     advancedAnalytics: true,
@@ -141,7 +141,7 @@ export const PLATFORM_COLORS: Record<Platform, string> = {
 export type GenerateTone = 'professionnel' | 'decontracte' | 'inspirant' | 'humoristique'
 
 export interface GenerateRequest {
-  brief: string
+  brief?: string
   tone: GenerateTone
   platforms: Platform[]
   brand_name?: string

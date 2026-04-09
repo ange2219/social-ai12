@@ -217,11 +217,10 @@ export async function generateImage(prompt: string): Promise<string | null> {
 
     const parts = result.response.candidates?.[0]?.content?.parts || []
     for (const part of parts) {
-      // @ts-expect-error inlineData non typé dans la version courante du SDK
-      if (part.inlineData?.mimeType?.startsWith('image/')) {
-        // Retourner data URL base64
-        // @ts-expect-error
-        return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const p = part as any
+      if (p.inlineData?.mimeType?.startsWith('image/')) {
+        return `data:${p.inlineData.mimeType};base64,${p.inlineData.data}`
       }
     }
     return null
