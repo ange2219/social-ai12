@@ -254,8 +254,6 @@ body {
 .kpi-donut{position:relative;width:48px;height:48px;flex-shrink:0;}
 .kpi-donut svg{transform:rotate(-90deg);}
 .kpi-donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:9px;font-weight:700;color:var(--purple);}
-@keyframes donutSpin{from{stroke-dashoffset:119.4}to{stroke-dashoffset:var(--dash-offset,79.6)}}
-.donut-arc{animation:donutSpin .9s cubic-bezier(.4,0,.2,1) .3s both;}
 .kpi-bottom{margin-top:auto;padding-top:8px;}
 .kpi-score-label{font-size:11px;font-weight:500;color:var(--text2);padding-left:8px;border-left:3px solid;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .kpi-card.c-blue .kpi-score-label{border-left-color:var(--purple);}
