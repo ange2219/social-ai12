@@ -201,12 +201,23 @@ export default function OnboardingPage() {
     }
     setConnecting(platform)
 
+    let done = false
+
+    function handleSuccess(username: string) {
+      if (done) return
+      done = true
+      setConnectedAccounts(prev => ({ ...prev, [platform]: username }))
+      toast(`${platform === 'facebook' ? 'Facebook' : 'Instagram'} connecté${username !== platform ? ` — @${username}` : ''} !`, 'success')
+      setConnecting(null)
+    }
+
     // Écoute postMessage (chemin rapide)
     const onMessage = (e: MessageEvent) => {
       if (!e.data) return
       const type = platform === 'facebook' ? 'meta_oauth' : 'instagram_oauth'
       if (e.data.type === type && e.data.success) {
         window.removeEventListener('message', onMessage)
+        handleSuccess(e.data.page || e.data.username || platform)
       }
     }
     window.addEventListener('message', onMessage)
@@ -216,16 +227,16 @@ export default function OnboardingPage() {
       if (!popup.closed) return
       clearInterval(timer)
       window.removeEventListener('message', onMessage)
+      if (done) return
       try {
         const res = await fetch('/api/social/accounts')
         const accounts = await res.json()
         const found = Array.isArray(accounts) && accounts.find((a: { platform: string; platform_username?: string }) => a.platform === platform)
         if (found) {
-          setConnectedAccounts(prev => ({ ...prev, [platform]: found.platform_username || platform }))
-          toast(`${platform === 'facebook' ? 'Facebook' : 'Instagram'} connecté${found.platform_username ? ` — @${found.platform_username}` : ''} !`, 'success')
+          handleSuccess(found.platform_username || platform)
         }
       } catch {}
-      setConnecting(null)
+      if (!done) setConnecting(null)
     }, 600)
   }
 

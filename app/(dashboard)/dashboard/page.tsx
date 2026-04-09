@@ -146,6 +146,7 @@ export default async function DashboardPage() {
                     <circle cx="24" cy="24" r="19" fill="none" stroke="url(#gradKpi1)" strokeWidth="4.5"
                       strokeDasharray="119.4"
                       strokeDashoffset={119.4 - (119.4 * Math.min(publishedCount / planLimit, 1))}
+                      style={{ '--dash-offset': `${119.4 - (119.4 * Math.min(publishedCount / planLimit, 1))}` } as React.CSSProperties}
                       className="donut-arc"/>
                   )}
                   <defs>
