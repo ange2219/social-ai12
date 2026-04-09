@@ -9,7 +9,7 @@ export type Platform =
   | 'youtube'
   | 'pinterest'
 
-export type PostStatus = 'draft' | 'scheduled' | 'published' | 'failed' | 'deleted'
+export type PostStatus = 'draft' | 'scheduled' | 'published' | 'partial' | 'failed' | 'deleted'
 
 export type ConnectedVia = 'meta_direct' | 'ayrshare'
 
@@ -47,6 +47,7 @@ export interface Post {
   ayrshare_post_id: string | null
   meta_post_ids: Record<string, string> | null
   content_variants: Record<string, string> | null
+  platform_errors: Record<string, string> | null
   ai_generated: boolean
   error_message: string | null
   created_at: string

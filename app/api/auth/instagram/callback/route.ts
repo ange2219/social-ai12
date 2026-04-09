@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { exchangeInstagramCode, getInstagramLongLivedToken, getInstagramUser } from '@/lib/instagram'
 import { getInstagramStats } from '@/lib/meta'
@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   const state = url.searchParams.get('state')
   const storedState = req.cookies.get('instagram_oauth_state')?.value
 
-  if (!code || state !== storedState) {
+  if (!code || !storedState || state !== storedState) {
     return popupResponse({ error: 'oauth_invalid' })
   }
 
@@ -24,6 +24,8 @@ export async function GET(req: NextRequest) {
     const igUser = await getInstagramUser(longToken)
 
     const admin = createAdminClient()
+    // Les long-lived tokens Instagram expirent en ~60 jours
+    const tokenExpiresAt = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000)
     await admin.from('social_accounts').delete().eq('user_id', user.id).eq('platform', 'instagram')
     const { error } = await admin.from('social_accounts').insert({
       user_id: user.id,
@@ -31,6 +33,7 @@ export async function GET(req: NextRequest) {
       platform_user_id: igUser.id,
       platform_username: igUser.username,
       access_token: encryptToken(longToken),
+      token_expires_at: tokenExpiresAt.toISOString(),
       connected_via: 'meta_direct',
       is_active: true,
     })
@@ -50,7 +53,10 @@ export async function GET(req: NextRequest) {
       }, { onConflict: 'user_id,platform' })
     } catch { /* baseline non critique */ }
 
-    return popupResponse({ success: 'instagram', username: igUser.username })
+    const response = popupResponse({ success: 'instagram', username: igUser.username })
+    // Invalider le state cookie après usage pour éviter le replay
+    response.cookies.set('instagram_oauth_state', '', { maxAge: 0, path: '/' })
+    return response
   } catch (err) {
     console.error('Instagram OAuth error:', err)
     const msg = err instanceof Error ? err.message : 'Erreur inconnue'
@@ -58,12 +64,12 @@ export async function GET(req: NextRequest) {
   }
 }
 
-function popupResponse(data: Record<string, string>) {
+function popupResponse(data: Record<string, string>): NextResponse {
   const origin = process.env.NEXT_PUBLIC_APP_URL || ''
   const payload = JSON.stringify({ type: 'instagram_oauth', ...data })
   const html = `<!DOCTYPE html><html><body><script>
     try { window.opener.postMessage(${payload}, ${JSON.stringify(origin)}) } catch(e) {}
     window.close()
   </script><p style="font-family:sans-serif;color:#aaa;text-align:center;margin-top:40px">Connexion en cours...</p></body></html>`
-  return new Response(html, { headers: { 'Content-Type': 'text/html' } })
+  return new NextResponse(html, { headers: { 'Content-Type': 'text/html' } })
 }

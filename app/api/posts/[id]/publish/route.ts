@@ -3,7 +3,16 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { publishPost as ayrsharePublish } from '@/lib/ayrshare'
 import { publishInstagramPost, publishFacebookPost } from '@/lib/meta'
 import { decryptToken } from '@/lib/utils'
+import { timingSafeEqual } from 'crypto'
 import type { Platform } from '@/types'
+
+const INTERNAL_SECRET = process.env.CRON_SECRET!
+
+function verifyInternalSecret(secret: string): boolean {
+  try {
+    return timingSafeEqual(Buffer.from(secret), Buffer.from(INTERNAL_SECRET))
+  } catch { return false }
+}
 
 // Codes d'erreur Meta indiquant un token expiré
 function isMetaTokenExpiredError(err: unknown): boolean {
@@ -20,15 +29,33 @@ function isMetaTokenExpiredError(err: unknown): boolean {
 }
 
 export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
   const admin = createAdminClient()
 
+  // Appel interne depuis le cron (pas de session user)
+  const internalSecret = _req.headers.get('x-internal-secret') || ''
+  const isInternalCall = internalSecret && verifyInternalSecret(internalSecret)
+
+  let userId: string
+
+  if (isInternalCall) {
+    // Le cron n'a pas de session — on récupère le user_id depuis le post directement
+    const { data: postOwner } = await admin
+      .from('posts')
+      .select('user_id')
+      .eq('id', params.id)
+      .single()
+    if (!postOwner) return NextResponse.json({ error: 'Post introuvable' }, { status: 404 })
+    userId = postOwner.user_id
+  } else {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    userId = user.id
+  }
+
   const [postResult, userResult] = await Promise.all([
-    admin.from('posts').select('*').eq('id', params.id).eq('user_id', user.id).single(),
-    admin.from('users').select('plan, ayrshare_profile_key').eq('id', user.id).single(),
+    admin.from('posts').select('*').eq('id', params.id).eq('user_id', userId).single(),
+    admin.from('users').select('plan, ayrshare_profile_key').eq('id', userId).single(),
   ])
 
   const post = postResult.data
@@ -115,6 +142,15 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
           : null,
       }).eq('id', post.id)
 
+      if (hasErrors) {
+        return NextResponse.json({
+          success: true,
+          partial: true,
+          platformErrors,
+          message: `Publié partiellement — échec sur : ${Object.keys(platformErrors).join(', ')}`,
+        })
+      }
+
     } else {
       // ── Plans payants : Ayrshare ──────────────────────────────────────────
 
@@ -143,6 +179,15 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
           ? `Partiel — échec sur : ${result.errors?.map(e => e.platform).join(', ')}`
           : null,
       }).eq('id', post.id)
+
+      if (result.status === 'partial') {
+        return NextResponse.json({
+          success: true,
+          partial: true,
+          platformErrors,
+          message: `Publié partiellement — échec sur : ${Object.keys(platformErrors).join(', ')}`,
+        })
+      }
     }
 
     return NextResponse.json({ success: true })

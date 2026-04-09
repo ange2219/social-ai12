@@ -28,6 +28,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: 'La date doit être dans le futur' }, { status: 400 })
   }
 
+  const maxDate = new Date()
+  maxDate.setFullYear(maxDate.getFullYear() + 1)
+  if (scheduledDate > maxDate) {
+    return NextResponse.json({ error: 'La date ne peut pas dépasser 1 an dans le futur' }, { status: 400 })
+  }
+
   const { data: post, error } = await supabase
     .from('posts')
     .update({ status: 'scheduled', scheduled_at: scheduledDate.toISOString() })

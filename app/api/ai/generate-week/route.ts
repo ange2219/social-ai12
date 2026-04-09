@@ -3,6 +3,17 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { generateWeekPosts } from '@/lib/ai'
 import { checkGenerationLimit, recordGeneration } from '@/lib/server-utils'
 import type { GenerateRequest, Plan } from '@/types'
+import { z } from 'zod'
+
+const ALLOWED_PLATFORMS = ['instagram', 'facebook', 'twitter', 'linkedin', 'tiktok', 'youtube', 'pinterest'] as const
+const ALLOWED_TONES = ['professionnel', 'decontracte', 'inspirant', 'humoristique'] as const
+
+const GenerateWeekSchema = z.object({
+  platforms:   z.array(z.enum(ALLOWED_PLATFORMS)).min(1).max(7),
+  tone:        z.enum(ALLOWED_TONES),
+  brief:       z.string().max(2000).optional(),
+  posts_count: z.number().int().min(1).max(14).optional(),
+})
 
 export async function POST(req: NextRequest) {
   const supabase = createClient()
@@ -22,11 +33,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Fonctionnalité réservée aux plans Premium et Business' }, { status: 403 })
   }
 
-  const body: GenerateRequest & { posts_count?: number } = await req.json()
-
-  if (!body.platforms?.length || !body.tone) {
-    return NextResponse.json({ error: 'platforms et tone requis' }, { status: 400 })
+  const parsedBody = GenerateWeekSchema.safeParse(await req.json())
+  if (!parsedBody.success) {
+    return NextResponse.json({ error: 'Données invalides', details: parsedBody.error.flatten() }, { status: 400 })
   }
+  const body: GenerateRequest & { posts_count?: number } = parsedBody.data
 
   // Vérifier la limite journalière (génération semaine = 1 appel)
   const { allowed, used, limit } = await checkGenerationLimit(user.id, plan)

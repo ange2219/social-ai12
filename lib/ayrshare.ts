@@ -60,7 +60,7 @@ export async function createProfile(userId: string, title: string): Promise<stri
 
 /** Génère un lien de connexion JWT pour qu'un utilisateur connecte ses réseaux */
 export async function getConnectUrl(profileKey: string): Promise<string> {
-  const data = await ayrshareRequest(`/profiles/generateJWT?profileKey=${profileKey}`)
+  const data = await ayrshareRequest(`/profiles/generateJWT?profileKey=${encodeURIComponent(profileKey)}`)
   return data.url as string
 }
 
@@ -143,7 +143,7 @@ export async function publishPost(params: {
 
 /** Récupère les analytics d'un post Ayrshare */
 export async function getPostAnalytics(ayrsharePostId: string, profileKey: string) {
-  return ayrshareRequest(`/analytics/post?id=${ayrsharePostId}&profileKey=${profileKey}`)
+  return ayrshareRequest(`/analytics/post?id=${encodeURIComponent(ayrsharePostId)}&profileKey=${encodeURIComponent(profileKey)}`)
 }
 
 // ─── Suppression ──────────────────────────────────────────────────────────────

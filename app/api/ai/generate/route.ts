@@ -3,6 +3,16 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { generatePosts } from '@/lib/ai'
 import { checkGenerationLimit, recordGeneration } from '@/lib/server-utils'
 import type { GenerateRequest, Plan } from '@/types'
+import { z } from 'zod'
+
+const ALLOWED_PLATFORMS = ['instagram', 'facebook', 'twitter', 'linkedin', 'tiktok', 'youtube', 'pinterest'] as const
+const ALLOWED_TONES = ['professionnel', 'decontracte', 'inspirant', 'humoristique'] as const
+
+const GenerateSchema = z.object({
+  platforms: z.array(z.enum(ALLOWED_PLATFORMS)).min(1).max(7),
+  tone:      z.enum(ALLOWED_TONES),
+  brief:     z.string().max(2000).optional(),
+})
 
 export async function POST(req: NextRequest) {
   const supabase = createClient()
@@ -29,11 +39,11 @@ export async function POST(req: NextRequest) {
     }, { status: 429 })
   }
 
-  const body: GenerateRequest = await req.json()
-
-  if (!body.platforms?.length || !body.tone) {
-    return NextResponse.json({ error: 'platforms et tone requis' }, { status: 400 })
+  const parsed = GenerateSchema.safeParse(await req.json())
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Données invalides', details: parsed.error.flatten() }, { status: 400 })
   }
+  const body: GenerateRequest = parsed.data
 
   // Filtrer les plateformes selon le plan
   if (plan === 'free') {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { decryptToken } from '@/lib/utils'
+import { deletePostMediaFiles } from '@/lib/storage'
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const supabase = createClient()
@@ -50,10 +50,10 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
 
   const admin = createAdminClient()
 
-  // Récupère le post pour avoir les IDs des posts publiés
+  // Récupère le post pour avoir les IDs des posts publiés et les médias
   const { data: post } = await admin
     .from('posts')
-    .select('meta_post_ids, platforms, status')
+    .select('meta_post_ids, platforms, status, media_urls')
     .eq('id', params.id)
     .eq('user_id', user.id)
     .single()
@@ -94,6 +94,12 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     .eq('user_id', user.id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Nettoyage des fichiers médias en storage (non critique)
+  if (post?.media_urls?.length) {
+    deletePostMediaFiles(post.media_urls as string[]).catch(() => {})
+  }
+
   return NextResponse.json({ success: true })
 }
 

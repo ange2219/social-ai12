@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { z } from 'zod'
+
+const ALLOWED_PLATFORMS = ['instagram', 'facebook', 'twitter', 'linkedin', 'tiktok', 'youtube', 'pinterest'] as const
+
+const CreatePostSchema = z.object({
+  content:          z.string().min(1).max(10000),
+  platforms:        z.array(z.enum(ALLOWED_PLATFORMS)).min(1).max(7),
+  media_urls:       z.array(z.string().url()).max(10).optional(),
+  ai_generated:     z.boolean().optional(),
+  status:           z.enum(['draft', 'failed']).optional(),
+  content_variants: z.record(z.string()).optional(),
+})
 
 export async function GET(req: NextRequest) {
   const supabase = createClient()
@@ -62,15 +74,12 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await req.json()
-  const { content, platforms, media_urls, ai_generated, status, content_variants } = body
-
-  if (!content || !platforms?.length) {
-    return NextResponse.json({ error: 'content et platforms requis' }, { status: 400 })
+  const parsed = CreatePostSchema.safeParse(await req.json())
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Données invalides', details: parsed.error.flatten() }, { status: 400 })
   }
-
-  const allowedStatuses = ['draft', 'failed']
-  const insertStatus = allowedStatuses.includes(status) ? status : 'draft'
+  const { content, platforms, media_urls, ai_generated, status, content_variants } = parsed.data
+  const insertStatus = status ?? 'draft'
 
   const { data, error } = await supabase
     .from('posts')

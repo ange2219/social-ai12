@@ -103,17 +103,31 @@ function getPublicUrl(path: string): string {
 
 /**
  * Supprime un fichier du Storage (ex: quand un post est supprimé).
+ * Gère les deux buckets : post-media (images AI) et media (uploads utilisateur).
  */
 export async function deleteStorageFile(url: string): Promise<void> {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const prefix = `${supabaseUrl}/storage/v1/object/public/${BUCKET}/`
-    if (!url.startsWith(prefix)) return
+    const storageBase = `${supabaseUrl}/storage/v1/object/public/`
+    if (!url.startsWith(storageBase)) return
 
-    const path = url.slice(prefix.length)
+    const rest = url.slice(storageBase.length)
+    const slashIdx = rest.indexOf('/')
+    if (slashIdx === -1) return
+
+    const bucket = rest.slice(0, slashIdx)
+    const path = rest.slice(slashIdx + 1).split('?')[0] // enlève les query params éventuels
+
     const admin = createAdminClient()
-    await admin.storage.from(BUCKET).remove([path])
+    await admin.storage.from(bucket).remove([path])
   } catch {
-    // Non critique
+    // Non critique — on continue même si la suppression du fichier échoue
   }
+}
+
+/**
+ * Supprime tous les fichiers médias associés à un post.
+ */
+export async function deletePostMediaFiles(mediaUrls: string[]): Promise<void> {
+  await Promise.allSettled(mediaUrls.map(url => deleteStorageFile(url)))
 }

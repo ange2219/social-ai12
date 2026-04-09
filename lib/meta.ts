@@ -59,6 +59,28 @@ export async function getLongLivedToken(shortToken: string): Promise<string> {
   return data.access_token
 }
 
+/**
+ * Rafraîchit un long-lived token Facebook (valable 60 jours).
+ * À appeler lorsque le token expire dans moins de 30 jours.
+ */
+export async function refreshFacebookLongLivedToken(currentToken: string): Promise<{ access_token: string; expires_at: Date }> {
+  const params = new URLSearchParams({
+    grant_type: 'fb_exchange_token',
+    client_id: APP_ID,
+    client_secret: APP_SECRET,
+    fb_exchange_token: currentToken,
+  })
+  const res = await fetch(`${GRAPH}/oauth/access_token?${params}`)
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(`Refresh token Facebook échoué : ${err?.error?.message || res.status}`)
+  }
+  const data = await res.json()
+  const expiresIn = data.expires_in || 5183944 // ~60 jours
+  const expiresAt = new Date(Date.now() + expiresIn * 1000)
+  return { access_token: data.access_token, expires_at: expiresAt }
+}
+
 /** Récupère les Pages Facebook de l'utilisateur */
 export async function getUserPages(accessToken: string) {
   const res = await fetch(`${GRAPH}/me/accounts?access_token=${accessToken}&fields=id,name,access_token`)

@@ -29,9 +29,13 @@ export async function POST() {
 
   const accountByPlatform: Record<string, { token: string; userId: string }> = {}
   for (const acc of accounts || []) {
-    accountByPlatform[acc.platform] = {
-      token: decryptToken(acc.access_token),
-      userId: acc.platform_user_id,
+    try {
+      accountByPlatform[acc.platform] = {
+        token: decryptToken(acc.access_token),
+        userId: acc.platform_user_id,
+      }
+    } catch {
+      console.error(`[sync] Token malformé pour la plateforme ${acc.platform} — compte ignoré`)
     }
   }
 

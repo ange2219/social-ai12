@@ -3,6 +3,14 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { classifyImageType, buildImagePrompt, generateBrandedImage } from '@/lib/image-generation'
 import { uploadImageFromUrl, uploadImageFromBase64 } from '@/lib/storage'
 import type { Platform, Plan } from '@/types'
+import { z } from 'zod'
+
+const ALLOWED_PLATFORMS = ['instagram', 'facebook', 'twitter', 'linkedin', 'tiktok', 'youtube', 'pinterest'] as const
+
+const GenerateImageSchema = z.object({
+  postContent: z.string().min(1).max(5000),
+  platform:    z.enum(ALLOWED_PLATFORMS).optional().default('instagram'),
+})
 
 export async function POST(req: NextRequest) {
   const supabase = createClient()
@@ -25,15 +33,11 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const body = await req.json()
-  const { postContent, platform = 'instagram' } = body as {
-    postContent: string
-    platform?: Platform
+  const parsed = GenerateImageSchema.safeParse(await req.json())
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Données invalides', details: parsed.error.flatten() }, { status: 400 })
   }
-
-  if (!postContent?.trim()) {
-    return NextResponse.json({ error: 'postContent requis' }, { status: 400 })
-  }
+  const { postContent, platform } = parsed.data as { postContent: string; platform: Platform }
 
   // Charger le profil de marque complet
   const { data: brandProfile } = await admin

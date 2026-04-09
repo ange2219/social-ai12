@@ -56,3 +56,23 @@ export async function getInstagramUser(accessToken: string): Promise<{ id: strin
   }
   return res.json()
 }
+
+/**
+ * Rafraîchit un long-lived token Instagram (valable 60 jours).
+ * À appeler lorsque le token expire dans moins de 30 jours.
+ * Retourne le nouveau token et la date d'expiration.
+ */
+export async function refreshInstagramLongLivedToken(accessToken: string): Promise<{ access_token: string; expires_at: Date }> {
+  const params = new URLSearchParams({
+    grant_type: 'ig_refresh_token',
+    access_token: accessToken,
+  })
+  const res = await fetch(`https://graph.instagram.com/refresh_access_token?${params}`)
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(`Refresh token Instagram échoué : ${err?.error?.message || res.status}`)
+  }
+  const data = await res.json()
+  const expiresAt = new Date(Date.now() + (data.expires_in || 5183944) * 1000)
+  return { access_token: data.access_token, expires_at: expiresAt }
+}

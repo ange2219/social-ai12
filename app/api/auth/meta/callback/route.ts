@@ -1,7 +1,7 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { exchangeCodeForToken, getLongLivedToken, getUserPages, getPersonalProfile, getFacebookPageStats } from '@/lib/meta'
-import { encryptToken, decryptToken } from '@/lib/utils'
+import { encryptToken } from '@/lib/utils'
 
 export async function GET(req: NextRequest) {
   const url = req.nextUrl
@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   const state = url.searchParams.get('state')
   const storedState = req.cookies.get('meta_oauth_state')?.value
 
-  if (!code || state !== storedState) {
+  if (!code || !storedState || state !== storedState) {
     return popupResponse({ error: 'oauth_invalid' })
   }
 
@@ -40,6 +40,8 @@ export async function GET(req: NextRequest) {
       fbToken = longToken
     }
 
+    // Les long-lived tokens Facebook expirent en ~60 jours
+    const tokenExpiresAt = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000)
     await admin.from('social_accounts').delete().eq('user_id', user.id).eq('platform', 'facebook')
     const { error } = await admin.from('social_accounts').insert({
       user_id: user.id,
@@ -47,6 +49,7 @@ export async function GET(req: NextRequest) {
       platform_user_id: fbId,
       platform_username: fbName,
       access_token: encryptToken(fbToken),
+      token_expires_at: tokenExpiresAt.toISOString(),
       connected_via: 'meta_direct',
       is_active: true,
     })
@@ -66,7 +69,10 @@ export async function GET(req: NextRequest) {
       }, { onConflict: 'user_id,platform' })
     } catch { /* baseline non critique */ }
 
-    return popupResponse({ success: 'facebook', page: fbName })
+    const response = popupResponse({ success: 'facebook', page: fbName })
+    // Invalider le state cookie après usage pour éviter le replay
+    response.cookies.set('meta_oauth_state', '', { maxAge: 0, path: '/' })
+    return response
   } catch (err) {
     console.error('Meta OAuth error:', err)
     const msg = err instanceof Error ? err.message : 'Erreur inconnue'
@@ -74,12 +80,12 @@ export async function GET(req: NextRequest) {
   }
 }
 
-function popupResponse(data: Record<string, string>) {
+function popupResponse(data: Record<string, string>): NextResponse {
   const origin = process.env.NEXT_PUBLIC_APP_URL || ''
   const payload = JSON.stringify({ type: 'meta_oauth', ...data })
   const html = `<!DOCTYPE html><html><body><script>
     try { window.opener.postMessage(${payload}, ${JSON.stringify(origin)}) } catch(e) {}
     window.close()
   </script><p style="font-family:sans-serif;color:#aaa;text-align:center;margin-top:40px">Connexion en cours...</p></body></html>`
-  return new Response(html, { headers: { 'Content-Type': 'text/html' } })
+  return new NextResponse(html, { headers: { 'Content-Type': 'text/html' } })
 }

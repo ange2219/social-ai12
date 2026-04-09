@@ -235,7 +235,11 @@ export async function generateImage(prompt: string): Promise<string | null> {
 
 export async function generatePosts(req: GenerateRequest, plan: Plan): Promise<GenerateResponse> {
   if (plan === 'free' && process.env.GITHUB_TOKEN) {
-    try { return await generateWithGitHub(req) } catch { /* fallback */ }
+    try {
+      return await generateWithGitHub(req)
+    } catch (err) {
+      console.error('[ai/generatePosts] GitHub Models failed, falling back to Claude:', err instanceof Error ? err.message : err)
+    }
   }
   return generateWithClaude(req)
 }
@@ -252,8 +256,15 @@ export async function generateWeekPosts(req: GenerateRequest, postsCount: number
         temperature: 0.8,
         response_format: { type: 'json_object' },
       })
-      return JSON.parse(res.choices[0]?.message?.content || '{"week":[]}')
-    } catch { /* fallback to Claude */ }
+      const parsed = JSON.parse(res.choices[0]?.message?.content || '{"week":[]}')
+      if (!Array.isArray(parsed.week) || parsed.week.length === 0) {
+        console.warn('[ai/generateWeekPosts] GitHub Models returned empty week, falling back to Claude')
+        throw new Error('Empty week response from GitHub Models')
+      }
+      return parsed
+    } catch (err) {
+      console.error('[ai/generateWeekPosts] GitHub Models failed, falling back to Claude:', err instanceof Error ? err.message : err)
+    }
   }
 
   const msg = await anthropic.messages.create({
@@ -262,5 +273,10 @@ export async function generateWeekPosts(req: GenerateRequest, postsCount: number
     messages: [{ role: 'user', content: prompt }],
   })
   const text = msg.content[0].type === 'text' ? msg.content[0].text : '{"week":[]}'
-  return JSON.parse(text.trim())
+  const parsed = JSON.parse(text.trim())
+  if (!Array.isArray(parsed.week)) {
+    console.error('[ai/generateWeekPosts] Claude returned invalid week structure')
+    throw new Error('Réponse invalide du modèle — veuillez réessayer')
+  }
+  return parsed
 }

@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { z } from 'zod'
+
+const BrandSchema = z.object({
+  brand_name:   z.string().min(1).max(100).optional(),
+  description:  z.string().max(2000).optional(),
+  default_tone: z.string().max(50).optional(),
+  tone:         z.string().max(50).optional(),
+  sector:       z.string().max(100).optional(),
+  industry:     z.string().max(100).optional(),
+  posts_per_week: z.number().int().min(1).max(30).optional(),
+})
 
 export async function GET() {
   const supabase = createClient()
@@ -15,7 +26,11 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await req.json()
+  const parsed = BrandSchema.safeParse(await req.json())
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Données invalides', details: parsed.error.flatten() }, { status: 400 })
+  }
+  const body = parsed.data
 
   const { data, error } = await supabase
     .from('brand_profiles')
