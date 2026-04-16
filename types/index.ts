@@ -21,6 +21,7 @@ export interface User {
   plan: Plan
   stripe_customer_id: string | null
   ayrshare_profile_key: string | null
+  onboarded?: boolean
   created_at: string
 }
 
@@ -138,7 +139,65 @@ export const PLATFORM_COLORS: Record<Platform, string> = {
   pinterest: '#E60023',
 }
 
-export type GenerateTone = 'professionnel' | 'decontracte' | 'inspirant' | 'humoristique'
+// ─── Generation types ──────────────────────────────────────────────────────────
+
+export type PostObjective =
+  | 'vendre'
+  | 'engager'
+  | 'eduquer'
+  | 'inspirer'
+  | 'annoncer'
+  | 'fideliser'
+
+export type DistributionMode = 'unified' | 'custom'
+
+export type PostLength = 'court' | 'moyen' | 'long'
+
+export type PostFormat = 'direct' | 'liste' | 'narratif' | 'question'
+
+export type PostTone = 'professionnel' | 'decontracte' | 'emotionnel' | 'expert'
+
+export type PostCTA =
+  | 'acheter'
+  | 'commenter'
+  | 'partager'
+  | 'en_savoir_plus'
+  | 'aucun'
+
+export interface GenerationParams {
+  length: PostLength
+  format: PostFormat
+  tone: PostTone
+  cta: PostCTA
+}
+
+export const OBJECTIVE_LABELS: Record<PostObjective, string> = {
+  vendre:    '🎯 Vendre',
+  engager:   '💬 Engager',
+  eduquer:   '📚 Éduquer',
+  inspirer:  '✨ Inspirer',
+  annoncer:  '📣 Annoncer',
+  fideliser: '❤️ Fidéliser',
+}
+
+export const OBJECTIVE_DEFAULTS: Record<PostObjective, GenerationParams> = {
+  vendre:    { length: 'court',  format: 'direct',    tone: 'professionnel', cta: 'acheter'       },
+  engager:   { length: 'court',  format: 'question',  tone: 'decontracte',   cta: 'commenter'     },
+  eduquer:   { length: 'long',   format: 'liste',     tone: 'expert',        cta: 'en_savoir_plus' },
+  inspirer:  { length: 'moyen',  format: 'narratif',  tone: 'emotionnel',    cta: 'partager'      },
+  annoncer:  { length: 'court',  format: 'direct',    tone: 'professionnel', cta: 'en_savoir_plus' },
+  fideliser: { length: 'moyen',  format: 'narratif',  tone: 'decontracte',   cta: 'aucun'         },
+}
+
+// ─── AI generation types ───────────────────────────────────────────────────────
+
+export type GenerateTone =
+  | 'professionnel'
+  | 'decontracte'
+  | 'inspirant'
+  | 'humoristique'
+  | 'emotionnel'
+  | 'expert'
 
 export interface GenerateRequest {
   brief?: string
@@ -150,6 +209,12 @@ export interface GenerateRequest {
   brand_audience?: string
   brand_pillars?: string[]
   brand_avoid?: string
+  // New generation params
+  objective?: PostObjective
+  length?: PostLength
+  format?: PostFormat
+  cta?: PostCTA
+  distributionMode?: DistributionMode
 }
 
 export interface GenerateResponse {

@@ -17,7 +17,8 @@ export async function POST() {
       .select('id, meta_post_ids, platforms')
       .eq('user_id', user.id)
       .eq('status', 'published')
-      .not('meta_post_ids', 'eq', '{}'),
+      .not('meta_post_ids', 'eq', '{}')
+      .limit(50),
     admin
       .from('social_accounts')
       .select('platform, access_token, platform_user_id')

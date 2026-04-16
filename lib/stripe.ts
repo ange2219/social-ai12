@@ -44,8 +44,13 @@ export async function createBillingPortalSession(customerId: string, returnUrl: 
 }
 
 export async function getOrCreateCustomer(userId: string, email: string): Promise<string> {
-  const existing = await stripe.customers.list({ email, limit: 1 })
-  if (existing.data.length > 0) return existing.data[0].id
+  // Chercher d'abord par userId dans les métadonnées (résistant aux changements d'email)
+  const byUserId = await stripe.customers.search({ query: `metadata['userId']:'${userId}'`, limit: 1 })
+  if (byUserId.data.length > 0) return byUserId.data[0].id
+
+  // Fallback : chercher par email (comptes créés avant l'ajout du userId en metadata)
+  const byEmail = await stripe.customers.list({ email, limit: 1 })
+  if (byEmail.data.length > 0) return byEmail.data[0].id
 
   const customer = await stripe.customers.create({
     email,

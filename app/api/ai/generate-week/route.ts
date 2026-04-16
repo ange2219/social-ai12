@@ -39,17 +39,6 @@ export async function POST(req: NextRequest) {
   }
   const body: GenerateRequest & { posts_count?: number } = parsedBody.data
 
-  // Vérifier la limite journalière (génération semaine = 1 appel)
-  const { allowed, used, limit } = await checkGenerationLimit(user.id, plan)
-  if (!allowed) {
-    return NextResponse.json({
-      error: `Limite journalière atteinte (${used}/${limit})`,
-      code: 'DAILY_LIMIT_REACHED',
-      used,
-      limit,
-    }, { status: 429 })
-  }
-
   const { data: brandProfile } = await admin
     .from('brand_profiles')
     .select('brand_name, description, posts_per_week')
@@ -63,9 +52,24 @@ export async function POST(req: NextRequest) {
 
   const postsCount = body.posts_count || brandProfile?.posts_per_week || 5
 
+  // Vérifier la limite journalière — une génération semaine coûte postsCount crédits
+  const { allowed, used, limit } = await checkGenerationLimit(user.id, plan)
+  const remainingCredits = limit === 'unlimited' ? Infinity : (limit as number) - used
+  if (!allowed || remainingCredits < postsCount) {
+    const needed = postsCount
+    const available = limit === 'unlimited' ? '∞' : Math.max(0, (limit as number) - used)
+    return NextResponse.json({
+      error: `Crédits insuffisants — cette génération nécessite ${needed} crédits, il vous en reste ${available}`,
+      code: 'DAILY_LIMIT_REACHED',
+      used,
+      limit,
+    }, { status: 429 })
+  }
+
   try {
     const result = await generateWeekPosts(body, postsCount, plan)
-    await recordGeneration(user.id)
+    // Enregistrer postsCount crédits consommés
+    await Promise.all(Array.from({ length: postsCount }, () => recordGeneration(user.id)))
     return NextResponse.json(result)
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Generation failed'

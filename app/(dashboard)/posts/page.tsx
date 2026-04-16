@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Grid3X3, List, Send, Trash2, Eye, EyeOff, X, Save, Pencil, RotateCcw, RefreshCw, Upload, CheckSquare, Square } from 'lucide-react'
+import { Plus, Grid3X3, List, Send, Trash2, Eye, EyeOff, X, Save, Pencil, RotateCcw, RefreshCw, Upload, CheckSquare, Square, Sparkles, PenLine, ChevronDown } from 'lucide-react'
 import { useToast } from '@/components/ui/Toast'
 import { IconInstagram, IconFacebook, IconTikTok, IconTwitterX, IconLinkedIn, IconYouTube, IconPinterest } from '@/components/icons/BrandIcons'
 
@@ -32,18 +32,18 @@ const ALL_PLATFORMS = ['instagram', 'facebook', 'tiktok', 'twitter', 'linkedin',
 const FREE_PLATFORMS = ['instagram', 'facebook']
 
 function stClass(s: string) {
-  if (s === 'draft') return 'st st-p'
+  if (s === 'draft' || s === 'failed') return 'st st-p'
   if (s === 'scheduled') return 'st st-pub'
   if (s === 'published') return 'st st-a'
   if (s === 'deleted') return 'st'
-  return 'st st-r'
+  return 'st st-p'
 }
 function stLabel(s: string) {
-  if (s === 'draft') return 'Brouillon'
+  if (s === 'draft' || s === 'failed') return 'Brouillon'
   if (s === 'scheduled') return 'Programmé'
   if (s === 'published') return 'Publié'
-  if (s === 'deleted') return 'Corbeille'
-  return 'Rejeté'
+  if (s === 'deleted') return 'Supprimé'
+  return 'Brouillon'
 }
 
 interface PostAnalytics {
@@ -108,7 +108,7 @@ export default function PostsPage() {
   const [posts, setPosts] = useState<Post[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<'all' | 'published' | 'draft' | 'scheduled' | 'failed' | 'deleted'>('all')
+  const [filter, setFilter] = useState<'all' | 'published' | 'draft' | 'scheduled'>('all')
   const [view, setView] = useState<'grid' | 'list'>('grid')
   const [publishing, setPublishing] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -140,10 +140,23 @@ export default function PostsPage() {
   const [replyTexts, setReplyTexts] = useState<Record<string, string>>({})
   const [replying, setReplying] = useState<string | null>(null)
 
-  // Multi-sélection
-  const [selectMode, setSelectMode] = useState(false)
+  // Multi-sélection (permanent checkboxes — no selectMode toggle needed)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkDeleting, setBulkDeleting] = useState(false)
+
+  // Dropdown menu "+"
+  const [plusMenuOpen, setPlusMenuOpen] = useState(false)
+  const plusMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleOutsideClick(e: MouseEvent) {
+      if (plusMenuRef.current && !plusMenuRef.current.contains(e.target as Node)) {
+        setPlusMenuOpen(false)
+      }
+    }
+    if (plusMenuOpen) document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [plusMenuOpen])
 
   function toggleSelect(id: string) {
     setSelectedIds(prev => {
@@ -161,8 +174,7 @@ export default function PostsPage() {
     }
   }
 
-  function exitSelectMode() {
-    setSelectMode(false)
+  function clearSelection() {
     setSelectedIds(new Set())
   }
 
@@ -207,7 +219,7 @@ export default function PostsPage() {
       lastDeletedAt.current = Date.now()
       setPosts(prev => prev.filter(p => !ids.includes(p.id)))
       setTotal(prev => prev - ids.length)
-      exitSelectMode()
+      clearSelection()
     } catch {
       toast('Erreur lors de la suppression', 'error')
     } finally {
@@ -451,12 +463,15 @@ export default function PostsPage() {
     }
   }
 
-  const filtered = filter === 'all'
-    ? posts.filter(p => p.status !== 'deleted')
-    : posts.filter(p => p.status === filter)
+  // Failed posts appear under "Brouillons" filter
+  const filtered =
+    filter === 'all'      ? posts.filter(p => p.status !== 'deleted') :
+    filter === 'draft'    ? posts.filter(p => p.status === 'draft' || p.status === 'failed') :
+    posts.filter(p => p.status === filter)
+
   const isDraft = selectedPost?.status === 'draft' || selectedPost?.status === 'failed'
   const isDeleted = selectedPost?.status === 'deleted'
-  const trashCount = posts.filter(p => p.status === 'deleted').length
+  const draftCount = posts.filter(p => p.status === 'draft' || p.status === 'failed').length
 
   return (
     <div style={{ padding: '1.5rem 2rem 3rem' }}>
@@ -763,14 +778,14 @@ export default function PostsPage() {
       )}
 
       {/* ── Barre de sélection flottante ── */}
-      {selectMode && selectedIds.size > 0 && (
+      {selectedIds.size > 0 && (
         <div style={{ position: 'fixed', bottom: '1.5rem', left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: 'var(--s2)', border: '1px solid var(--b1)', borderRadius: '12px', padding: '.75rem 1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', boxShadow: '0 8px 32px rgba(0,0,0,.6)', backdropFilter: 'blur(8px)' }}>
           <span style={{ fontSize: '.82rem', color: 'var(--t3)' }}>{selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}</span>
           <button onClick={bulkDelete} disabled={bulkDeleting}
             style={{ display: 'flex', alignItems: 'center', gap: '.4rem', padding: '.45rem .9rem', borderRadius: '8px', border: 'none', background: '#EF4444', color: '#fff', cursor: 'pointer', fontSize: '.8rem', fontWeight: 600, opacity: bulkDeleting ? .6 : 1 }}>
             <Trash2 size={13} /> {bulkDeleting ? 'Suppression...' : 'Supprimer'}
           </button>
-          <button onClick={exitSelectMode} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', display: 'flex', padding: '4px' }}>
+          <button onClick={clearSelection} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', display: 'flex', padding: '4px' }}>
             <X size={16} />
           </button>
         </div>
@@ -783,50 +798,70 @@ export default function PostsPage() {
           <p style={{ color: 'var(--t3)', fontSize: '.8rem', marginTop: '.15rem' }}>{total} post{total !== 1 ? 's' : ''} au total</p>
         </div>
         <div style={{ display: 'flex', gap: '.5rem' }}>
-          {selectMode ? (
-            <button onClick={exitSelectMode}
-              style={{ padding: '.5rem .75rem', borderRadius: '8px', border: '1px solid var(--b1)', background: 'var(--card)', color: 'var(--t3)', cursor: 'pointer', fontSize: '.78rem' }}>
-              Annuler
-            </button>
-          ) : (
-            <button onClick={() => setSelectMode(true)}
-              style={{ padding: '.5rem .75rem', borderRadius: '8px', border: '1px solid var(--b1)', background: 'var(--card)', color: 'var(--t3)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.78rem' }}>
-              <CheckSquare size={13} /> Sélectionner
-            </button>
-          )}
-          <button onClick={syncPlatforms} disabled={syncing} title="Vérifier si des posts ont été supprimés sur les plateformes"
-            style={{ padding: '.5rem .75rem', borderRadius: '8px', border: '1px solid var(--b1)', background: 'var(--card)', color: 'var(--t3)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.78rem' }}>
-            <RefreshCw size={13} style={{ animation: syncing ? 'rot .7s linear infinite' : 'none' }} />
-            {syncing ? 'Sync...' : 'Synchroniser'}
+          {/* Sync icon-only */}
+          <button onClick={syncPlatforms} disabled={syncing} title="Synchroniser les plateformes"
+            style={{ padding: '.5rem .6rem', borderRadius: '8px', border: '1px solid var(--b1)', background: 'var(--card)', color: 'var(--t3)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+            <RefreshCw size={14} style={{ animation: syncing ? 'rot .7s linear infinite' : 'none' }} />
           </button>
-          <button onClick={() => router.push('/posts/create')} className="btn-primary flex items-center gap-2" style={{ padding: '.55rem 1.1rem', fontSize: '.82rem' }}>
-            <Plus size={15} /> Créer un post
-          </button>
+
+          {/* + dropdown menu */}
+          <div ref={plusMenuRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => setPlusMenuOpen(o => !o)}
+              className="btn-primary flex items-center gap-1.5"
+              style={{ padding: '.55rem .75rem', fontSize: '.82rem' }}
+            >
+              <Plus size={15} />
+              <ChevronDown size={13} style={{ opacity: .7, transition: 'transform .15s', transform: plusMenuOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
+            </button>
+
+            {plusMenuOpen && (
+              <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, background: 'var(--card)', border: '1px solid var(--b1)', borderRadius: '10px', padding: '.3rem', minWidth: '168px', boxShadow: '0 8px 24px rgba(0,0,0,.5)', zIndex: 50 }}>
+                <button
+                  onClick={() => { setPlusMenuOpen(false); router.push('/posts/create') }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '.6rem', padding: '.55rem .75rem', borderRadius: '7px', border: 'none', background: 'transparent', color: 'var(--t1)', cursor: 'pointer', fontSize: '.82rem', textAlign: 'left' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--s2)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <Sparkles size={14} style={{ color: 'var(--accent, #7B5CF5)', flexShrink: 0 }} />
+                  Générer avec l&apos;IA
+                </button>
+                <button
+                  onClick={() => { setPlusMenuOpen(false); router.push('/posts/create?mode=manual') }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '.6rem', padding: '.55rem .75rem', borderRadius: '7px', border: 'none', background: 'transparent', color: 'var(--t1)', cursor: 'pointer', fontSize: '.82rem', textAlign: 'left' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--s2)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <PenLine size={14} style={{ color: 'var(--t2)', flexShrink: 0 }} />
+                  Créer manuellement
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Filters + view toggle */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', gap: '.5rem' }}>
         <div className="mob-scroll" style={{ display: 'flex', gap: '.4rem', flex: 1, overflowX: 'auto' }}>
-          {(['all', 'published', 'draft', 'scheduled', 'failed', 'deleted'] as const).map(f => (
+          {(['all', 'published', 'draft', 'scheduled'] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)} style={{
               padding: '.3rem .75rem', borderRadius: '6px', fontSize: '.75rem', fontWeight: 500, cursor: 'pointer',
-              border: filter === f ? (f === 'deleted' ? '1px solid rgba(239,68,68,.5)' : '1px solid #4646FF') : '1px solid var(--b1)',
-              background: filter === f ? (f === 'deleted' ? 'rgba(239,68,68,.1)' : 'rgba(59,123,246,.12)') : 'var(--card)',
-              color: filter === f ? (f === 'deleted' ? '#EF4444' : '#4646FF') : 'var(--t3)', transition: '.15s',
+              border: filter === f ? '1px solid #4646FF' : '1px solid var(--b1)',
+              background: filter === f ? 'rgba(59,123,246,.12)' : 'var(--card)',
+              color: filter === f ? '#4646FF' : 'var(--t3)', transition: '.15s',
               display: 'flex', alignItems: 'center', gap: '.3rem',
             }}>
-              {f === 'deleted' && <Trash2 size={11} />}
-              {f === 'all' ? 'Tous' : f === 'published' ? 'Publiés' : f === 'draft' ? 'Brouillons' : f === 'scheduled' ? 'Programmés' : f === 'failed' ? 'Rejetés' : `Corbeille${trashCount > 0 ? ` (${trashCount})` : ''}`}
+              {f === 'all' ? 'Tous' : f === 'published' ? 'Publiés' : f === 'draft' ? `Brouillons${draftCount > 0 ? ` (${draftCount})` : ''}` : 'Programmés'}
             </button>
           ))}
         </div>
         <div style={{ display: 'flex', gap: '.3rem', alignItems: 'center' }}>
-          {selectMode && filtered.length > 0 && (
+          {filtered.length > 0 && (
             <button onClick={toggleSelectAll}
               style={{ padding: '.3rem .65rem', borderRadius: '6px', border: '1px solid var(--b1)', background: 'var(--card)', color: 'var(--t3)', cursor: 'pointer', fontSize: '.73rem', display: 'flex', alignItems: 'center', gap: '.3rem', marginRight: '.25rem' }}>
-              {selectedIds.size === filtered.length ? <CheckSquare size={12} color="#4646FF" /> : <Square size={12} />}
-              {selectedIds.size === filtered.length ? 'Tout désélectionner' : 'Tout sélectionner'}
+              {selectedIds.size > 0 && selectedIds.size === filtered.length ? <CheckSquare size={12} color="#4646FF" /> : <Square size={12} />}
+              {selectedIds.size > 0 && selectedIds.size === filtered.length ? 'Tout désélectionner' : 'Tout sélectionner'}
             </button>
           )}
           {(['grid', 'list'] as const).map(v => (
@@ -851,7 +886,7 @@ export default function PostsPage() {
           <div style={{ color: 'var(--t1)', fontWeight: 600, marginBottom: '.4rem', fontSize: '.9rem' }}>Aucun post</div>
           <div style={{ color: 'var(--t3)', fontSize: '.8rem', marginBottom: '1.25rem' }}>Créez votre premier post en quelques secondes</div>
           <button onClick={() => router.push('/posts/create')} className="btn-primary flex items-center gap-2" style={{ margin: '0 auto', padding: '.5rem 1rem', fontSize: '.8rem' }}>
-            <Plus size={14} /> Créer un post
+            <Plus size={14} /> Générer un post
           </button>
         </div>
       ) : view === 'grid' ? (
@@ -860,7 +895,7 @@ export default function PostsPage() {
             const isSelected = selectedIds.has(post.id)
             return (
             <div key={post.id}
-              onClick={() => selectMode ? toggleSelect(post.id) : openPost(post)}
+              onClick={() => openPost(post)}
               style={{ background: 'var(--card)', border: `1px solid ${isSelected ? '#4646FF' : 'var(--b1)'}`, borderRadius: '10px', overflow: 'hidden', transition: '.15s', cursor: 'pointer', position: 'relative' }}
               onMouseEnter={e => {
                 if (!isSelected) e.currentTarget.style.borderColor = '#4646FF'
@@ -873,14 +908,16 @@ export default function PostsPage() {
                 if (overlay) overlay.style.opacity = '0'
               }}
             >
-              {selectMode && (
-                <div style={{ position: 'absolute', top: '6px', left: '6px', zIndex: 10 }}>
-                  {isSelected
-                    ? <CheckSquare size={18} color="#4646FF" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.8))' }} />
-                    : <Square size={18} color="rgba(255,255,255,.6)" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.8))' }} />
-                  }
-                </div>
-              )}
+              {/* Permanent checkbox */}
+              <div
+                onClick={e => { e.stopPropagation(); toggleSelect(post.id) }}
+                style={{ position: 'absolute', top: '6px', left: '6px', zIndex: 10, cursor: 'pointer' }}
+              >
+                {isSelected
+                  ? <CheckSquare size={18} color="#4646FF" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.8))' }} />
+                  : <Square size={18} color="rgba(255,255,255,.45)" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.8))' }} />
+                }
+              </div>
               <div style={{ aspectRatio: '1', background: 'var(--s2)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {post.media_urls?.[0]
                   ? <img src={post.media_urls[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
@@ -930,16 +967,18 @@ export default function PostsPage() {
             const isSelected = selectedIds.has(post.id)
             return (
             <div key={post.id}
-              onClick={() => selectMode ? toggleSelect(post.id) : openPost(post)}
+              onClick={() => openPost(post)}
               style={{ background: 'var(--card)', border: `1px solid ${isSelected ? '#4646FF' : 'var(--b1)'}`, borderRadius: '8px', padding: '.75rem 1rem', display: 'flex', alignItems: 'center', gap: '1rem', transition: '.15s', cursor: 'pointer' }}
               onMouseEnter={e => { if (!isSelected) e.currentTarget.style.borderColor = '#4646FF' }}
               onMouseLeave={e => { if (!isSelected) e.currentTarget.style.borderColor = 'var(--b1)' }}
             >
-              {selectMode && (
-                <div style={{ flexShrink: 0 }}>
-                  {isSelected ? <CheckSquare size={17} color="#4646FF" /> : <Square size={17} color="#52525C" />}
-                </div>
-              )}
+              {/* Permanent checkbox */}
+              <div
+                onClick={e => { e.stopPropagation(); toggleSelect(post.id) }}
+                style={{ flexShrink: 0, cursor: 'pointer' }}
+              >
+                {isSelected ? <CheckSquare size={17} color="#4646FF" /> : <Square size={17} color="#52525C" />}
+              </div>
               <div style={{ width: '44px', height: '44px', borderRadius: '6px', background: 'var(--s2)', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {post.media_urls?.[0]
                   ? <img src={post.media_urls[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />

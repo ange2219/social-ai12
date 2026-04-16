@@ -44,6 +44,12 @@ export async function exchangeCodeForToken(code: string): Promise<{
 
 /** Échange le short-lived token pour un long-lived token (60 jours) */
 export async function getLongLivedToken(shortToken: string): Promise<string> {
+  const { access_token } = await getLongLivedTokenWithExpiry(shortToken)
+  return access_token
+}
+
+/** Échange le short-lived token et retourne le token + date d'expiration réelle */
+export async function getLongLivedTokenWithExpiry(shortToken: string): Promise<{ access_token: string; expires_at: Date }> {
   const params = new URLSearchParams({
     grant_type: 'fb_exchange_token',
     client_id: APP_ID,
@@ -56,7 +62,11 @@ export async function getLongLivedToken(shortToken: string): Promise<string> {
     throw new Error(`Token long-lived échoué : ${err?.error?.message || res.status}`)
   }
   const data = await res.json()
-  return data.access_token
+  const expiresIn = data.expires_in || 5183944 // ~60 jours fallback
+  return {
+    access_token: data.access_token,
+    expires_at: new Date(Date.now() + expiresIn * 1000),
+  }
 }
 
 /**
@@ -245,9 +255,9 @@ export async function getInstagramComments(mediaId: string, token: string): Prom
 }
 
 /** Répond à un commentaire Instagram */
-export async function replyToInstagramComment(mediaId: string, message: string, token: string): Promise<string> {
+export async function replyToInstagramComment(commentId: string, message: string, token: string): Promise<string> {
   const IG_GRAPH = 'https://graph.instagram.com/v19.0'
-  const res = await fetch(`${IG_GRAPH}/${mediaId}/replies`, {
+  const res = await fetch(`${IG_GRAPH}/${commentId}/replies`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message, access_token: token }),

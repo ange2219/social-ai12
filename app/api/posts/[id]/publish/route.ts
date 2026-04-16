@@ -71,7 +71,7 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
       const accounts = await admin
         .from('social_accounts')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .in('platform', post.platforms as Platform[])
         .eq('is_active', true)
 
@@ -154,10 +154,16 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
     } else {
       // ── Plans payants : Ayrshare ──────────────────────────────────────────
 
+      if (!userProfile?.ayrshare_profile_key) {
+        return NextResponse.json({
+          error: 'Compte Ayrshare non configuré. Rendez-vous dans Paramètres → Réseaux sociaux pour connecter vos comptes.',
+        }, { status: 400 })
+      }
+
       const contentVariants = post.content_variants as Partial<Record<Platform, string>> | null
 
       const result = await ayrsharePublish({
-        profileKey: userProfile!.ayrshare_profile_key!,
+        profileKey: userProfile.ayrshare_profile_key,
         content: post.content,
         platforms: post.platforms as Platform[],
         mediaUrls: post.media_urls || undefined,

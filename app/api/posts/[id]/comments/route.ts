@@ -40,9 +40,13 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
       .single()
 
     if (fbAccount) {
-      const token = decryptToken(fbAccount.access_token)
-      const comments = await getFacebookPostComments(metaIds.facebook, token)
-      results.push({ platform: 'facebook', comments })
+      try {
+        const token = decryptToken(fbAccount.access_token)
+        const comments = await getFacebookPostComments(metaIds.facebook, token)
+        results.push({ platform: 'facebook', comments })
+      } catch {
+        // Token malformé — compte ignoré
+      }
     }
   }
 
@@ -57,9 +61,13 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
       .single()
 
     if (igAccount) {
-      const token = decryptToken(igAccount.access_token)
-      const comments = await getInstagramComments(metaIds.instagram, token)
-      results.push({ platform: 'instagram', comments })
+      try {
+        const token = decryptToken(igAccount.access_token)
+        const comments = await getInstagramComments(metaIds.instagram, token)
+        results.push({ platform: 'instagram', comments })
+      } catch {
+        // Token malformé — compte ignoré
+      }
     }
   }
 
@@ -101,16 +109,19 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   if (!account) return NextResponse.json({ error: 'Compte non connecté' }, { status: 400 })
 
-  const token = decryptToken(account.access_token)
+  let token: string
+  try {
+    token = decryptToken(account.access_token)
+  } catch {
+    return NextResponse.json({ error: 'Token invalide — reconnectez votre compte dans Paramètres' }, { status: 400 })
+  }
 
   try {
     let replyId: string
     if (platform === 'facebook') {
       replyId = await replyToFacebookComment(commentId, message, token)
     } else if (platform === 'instagram') {
-      const mediaId = post.meta_post_ids?.instagram
-      if (!mediaId) return NextResponse.json({ error: 'ID média Instagram manquant' }, { status: 400 })
-      replyId = await replyToInstagramComment(mediaId, message, token)
+      replyId = await replyToInstagramComment(commentId, message, token)
     } else {
       return NextResponse.json({ error: 'Plateforme non supportée' }, { status: 400 })
     }

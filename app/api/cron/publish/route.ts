@@ -51,8 +51,8 @@ export async function GET(req: NextRequest) {
     )
   )
 
-  const succeeded = results.filter(r => r.status === 'fulfilled').length
-  const failed = results.filter(r => r.status === 'rejected').length
+  const succeeded = results.filter(r => r.status === 'fulfilled' && (r as PromiseFulfilledResult<Response>).value.ok).length
+  const failed = results.length - succeeded
 
   console.log(`[cron/publish] ${succeeded} publiés, ${failed} échoués`)
   return NextResponse.json({ published: succeeded, failed })

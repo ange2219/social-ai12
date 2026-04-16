@@ -277,8 +277,8 @@ export default function SettingsPage() {
               </div>
             </div>
             <div style={{ fontSize: '.8rem', color: 'var(--t3)' }}>
-              {userPlan === 'free' ? '20 générations/jour · Instagram & Facebook' :
-               userPlan === 'premium' ? '10 générations/jour · 5 plateformes · Posts de la semaine' :
+              {userPlan === 'free' ? '5 générations/jour · Instagram & Facebook' :
+               userPlan === 'premium' ? '20 générations/jour · 5 plateformes · Posts de la semaine' :
                'Illimité · Toutes plateformes · Workspaces'}
             </div>
           </div>

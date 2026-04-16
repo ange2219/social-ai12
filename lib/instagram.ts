@@ -33,6 +33,12 @@ export async function exchangeInstagramCode(code: string): Promise<{ access_toke
 }
 
 export async function getInstagramLongLivedToken(shortToken: string): Promise<string> {
+  const { access_token } = await getInstagramLongLivedTokenWithExpiry(shortToken)
+  return access_token
+}
+
+/** Échange le short-lived token et retourne le token + date d'expiration réelle */
+export async function getInstagramLongLivedTokenWithExpiry(shortToken: string): Promise<{ access_token: string; expires_at: Date }> {
   const params = new URLSearchParams({
     grant_type: 'ig_exchange_token',
     client_id: IG_APP_ID,
@@ -45,7 +51,11 @@ export async function getInstagramLongLivedToken(shortToken: string): Promise<st
     throw new Error(`Token long-lived Instagram échoué : ${err?.error?.message || res.status}`)
   }
   const data = await res.json()
-  return data.access_token
+  const expiresIn = data.expires_in || 5183944 // ~60 jours fallback
+  return {
+    access_token: data.access_token,
+    expires_at: new Date(Date.now() + expiresIn * 1000),
+  }
 }
 
 export async function getInstagramUser(accessToken: string): Promise<{ id: string; username: string }> {

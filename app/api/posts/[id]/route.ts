@@ -29,6 +29,9 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   const updates = Object.fromEntries(
     Object.entries(body).filter(([k]) => allowed.includes(k))
   )
+  if (updates.status !== undefined && !['draft', 'failed'].includes(updates.status as string)) {
+    return NextResponse.json({ error: 'Statut invalide' }, { status: 400 })
+  }
 
   const { data, error } = await supabase
     .from('posts')
@@ -72,7 +75,12 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     const IG_GRAPH = 'https://graph.instagram.com/v19.0'
 
     for (const account of accounts || []) {
-      const token = decryptToken(account.access_token)
+      let token: string
+      try {
+        token = decryptToken(account.access_token)
+      } catch {
+        continue
+      }
       const postId = metaPostIds[account.platform]
       if (!postId) continue
 
@@ -110,13 +118,15 @@ export async function PATCH(_req: NextRequest, { params }: { params: { id: strin
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const admin = createAdminClient()
-  const { error } = await admin
+  const { data, error } = await admin
     .from('posts')
     .update({ status: 'draft' })
     .eq('id', params.id)
     .eq('user_id', user.id)
     .eq('status', 'deleted')
+    .select()
+    .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error || !data) return NextResponse.json({ error: 'Post introuvable dans la corbeille' }, { status: 404 })
   return NextResponse.json({ success: true })
 }

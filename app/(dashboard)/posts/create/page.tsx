@@ -247,7 +247,7 @@ export default function CreatePage() {
 
   useEffect(() => {
     createClient().from('users').select('plan').single().then(({ data }) => {
-      if (data?.plan) setIsPro(true)
+      if (data?.plan && data.plan !== 'free') setIsPro(true)
     })
     // Charger le ton de marque enregistré dans le profil
     fetch('/api/brand').then(r => r.ok ? r.json() : null).then(b => {
@@ -395,7 +395,7 @@ export default function CreatePage() {
       const res = await fetch('/api/ai/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: content.slice(0, 300) }),
+        body: JSON.stringify({ postContent: content.slice(0, 300) }),
       })
       const data = await res.json()
       if (res.ok) setGeneratedImageUrl(data.url)
@@ -512,7 +512,7 @@ export default function CreatePage() {
     if (postAction) return
     setPostAction(true)
     try {
-      const id = await saveVariantPost('scheduled', scheduledAt)
+      const id = await saveVariantPost('draft')
       const res = await fetch(`/api/posts/${id}/schedule`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -650,7 +650,7 @@ export default function CreatePage() {
             <label className="label">Plateformes</label>
             <div className="flex flex-wrap gap-2">
               {ALL_PLATFORMS.map(p => {
-                const isLocked = !FREE_PLATFORMS.includes(p)
+                const isLocked = !isPro && !FREE_PLATFORMS.includes(p)
                 const isSelected = selectedPlatforms.includes(p)
                 return (
                   <button
