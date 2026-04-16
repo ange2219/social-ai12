@@ -189,6 +189,53 @@ export const OBJECTIVE_DEFAULTS: Record<PostObjective, GenerationParams> = {
   fideliser: { length: 'moyen',  format: 'narratif',  tone: 'decontracte',   cta: 'aucun'         },
 }
 
+export const OBJECTIVE_DESCRIPTIONS: Record<PostObjective, string> = {
+  vendre:    'Persuader votre audience d\'acheter un produit ou service',
+  engager:   'Susciter des interactions : likes, commentaires, partages',
+  eduquer:   'Partager des connaissances et apporter de la valeur',
+  inspirer:  'Créer de l\'émotion et de la motivation',
+  annoncer:  'Communiquer une nouveauté ou un événement',
+  fideliser: 'Renforcer le lien avec votre communauté existante',
+}
+
+export const LENGTH_LABELS: Record<PostLength, string> = {
+  court: 'Court',
+  moyen: 'Moyen',
+  long:  'Long',
+}
+
+export const FORMAT_LABELS: Record<PostFormat, string> = {
+  direct:   'Direct',
+  liste:    'Listé',
+  narratif: 'Narratif',
+  question: 'Question',
+}
+
+export const POSTTONE_LABELS: Record<PostTone, string> = {
+  professionnel: 'Professionnel',
+  decontracte:   'Décontracté',
+  emotionnel:    'Émotionnel',
+  expert:        'Expert',
+}
+
+export const CTA_LABELS: Record<PostCTA, string> = {
+  acheter:       'Acheter',
+  commenter:     'Commenter',
+  partager:      'Partager',
+  en_savoir_plus: 'En savoir plus',
+  aucun:         'Aucun',
+}
+
+export const PLATFORM_CONSTRAINTS_INFO: Partial<Record<Platform, { limit: string; hashtags: string; tone: string }>> = {
+  instagram: { limit: '2 000 car.', hashtags: '5-10 hashtags', tone: 'Engageant' },
+  facebook:  { limit: '2 000 car.', hashtags: '2-3 hashtags',  tone: 'Conversationnel' },
+  twitter:   { limit: '280 car.',   hashtags: '1-2 hashtags',  tone: 'Percutant' },
+  linkedin:  { limit: '1 300 car.', hashtags: '3 hashtags',    tone: 'Professionnel' },
+  tiktok:    { limit: '300 car.',   hashtags: '3-5 hashtags',  tone: 'Dynamique' },
+  youtube:   { limit: 'SEO optimisé', hashtags: 'Mots-clés',   tone: 'Descriptif' },
+  pinterest: { limit: '500 car.',   hashtags: 'Mots-clés',     tone: 'Inspirant' },
+}
+
 // ─── AI generation types ───────────────────────────────────────────────────────
 
 export type GenerateTone =

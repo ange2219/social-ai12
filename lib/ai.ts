@@ -33,6 +33,38 @@ const TONE_INSTRUCTIONS: Record<string, string> = {
   decontracte:   'Ton décontracté, accessible et authentique. Parle directement à l\'audience, comme un ami.',
   inspirant:     'Ton motivant et inspirant. Élève l\'audience, crée de l\'émotion et de l\'aspiration.',
   humoristique:  'Ton léger et humoristique. Wit intelligent, légèreté, mais reste pertinent au sujet.',
+  emotionnel:    'Ton émotionnel et touchant. Crée une connexion profonde avec l\'audience, appelle à l\'émotion.',
+  expert:        'Ton expert et autoritaire. Partage une expertise pointue, use de termes techniques maîtrisés.',
+}
+
+const LENGTH_INSTRUCTIONS: Record<string, string> = {
+  court:  'Rédige un post COURT et percutant (50-150 caractères pour Twitter/TikTok, 200-400 pour les autres plateformes). Va droit au but.',
+  moyen:  'Rédige un post de longueur MOYENNE (280 caractères max pour Twitter/TikTok, 500-900 pour les autres). Équilibre entre concision et détail.',
+  long:   'Rédige un post LONG et développé. Approche la limite de chaque plateforme. Développe le sujet en profondeur.',
+}
+
+const FORMAT_INSTRUCTIONS: Record<string, string> = {
+  direct:   'Format DIRECT : affirmation claire, message central en une phrase forte, sans détour.',
+  liste:    'Format LISTÉ : utilise des points de liste, emojis ou numéros pour structurer l\'information. Facilite la lecture.',
+  narratif: 'Format NARRATIF : commence par une anecdote ou histoire courte, développe le sujet de façon fluide et engageante.',
+  question: 'Format QUESTION : commence par une question accrocheuse pour interpeller l\'audience et inciter à répondre.',
+}
+
+const CTA_INSTRUCTIONS: Record<string, string> = {
+  acheter:        'Inclus un CTA orienté achat/conversion (ex: "Découvrez", "Commandez", "Profitez de", "Obtenez").',
+  commenter:      'Inclus un CTA orienté commentaire/interaction (ex: "Donnez votre avis", "Et vous ?", "Racontez-nous").',
+  partager:       'Inclus un CTA orienté partage (ex: "Partagez si", "Taguez quelqu\'un qui", "Envoyez à").',
+  en_savoir_plus: 'Inclus un CTA orienté information (ex: "En savoir plus", "Lien en bio", "Consultez notre site").',
+  aucun:          'N\'inclus pas de CTA explicite. Laisse le message parler de lui-même.',
+}
+
+const OBJECTIVE_INSTRUCTIONS: Record<string, string> = {
+  vendre:    'OBJECTIF : Vendre. Mets en avant la valeur unique, crée un sentiment d\'urgence ou de désir.',
+  engager:   'OBJECTIF : Engager. Favorise les interactions, pose des questions, invite à participer.',
+  eduquer:   'OBJECTIF : Éduquer. Apporte de la valeur et du savoir de manière claire et structurée.',
+  inspirer:  'OBJECTIF : Inspirer. Crée une connexion émotionnelle forte, partage une vision ou une conviction.',
+  annoncer:  'OBJECTIF : Annoncer. Présente la nouveauté de façon claire, enthousiaste et mémorable.',
+  fideliser: 'OBJECTIF : Fidéliser. Renforce le lien avec la communauté existante, valorise et remercie.',
 }
 
 // ─── Prompt builder ────────────────────────────────────────────────────────────
@@ -49,6 +81,8 @@ function buildBrandContext(req: GenerateRequest): string {
 }
 
 function buildPrompt(req: GenerateRequest): string {
+  const isUnified = req.distributionMode === 'unified'
+
   const platformInstructions = req.platforms
     .map(p => `**${p.toUpperCase()}**: ${PLATFORM_CONSTRAINTS[p]}`)
     .join('\n')
@@ -59,11 +93,29 @@ function buildPrompt(req: GenerateRequest): string {
     ? `Sujet / brief : ${req.brief}`
     : `Aucun brief fourni — choisis toi-même un sujet pertinent, engageant et original pour cette marque. Sois créatif.`
 
+  // Nouvelles instructions contextuelles
+  const objectiveLine  = req.objective  ? OBJECTIVE_INSTRUCTIONS[req.objective]  : ''
+  const lengthLine     = req.length     ? LENGTH_INSTRUCTIONS[req.length]         : ''
+  const formatLine     = req.format     ? FORMAT_INSTRUCTIONS[req.format]         : ''
+  const ctaLine        = req.cta        ? CTA_INSTRUCTIONS[req.cta]               : ''
+  // Le ton PostTone (professionnel/decontracte/emotionnel/expert) prime sur le GenerateTone si présent
+  const toneLine       = TONE_INSTRUCTIONS[req.tone] || ''
+
+  const distributionNote = isUnified
+    ? `Mode de distribution : UNIFIÉ. Génère UN seul post adaptable à toutes les plateformes (le texte sera le même pour chaque variant, légèrement ajusté aux contraintes de chaque plateforme).`
+    : `Mode de distribution : PERSONNALISÉ. Génère un post DIFFÉRENT et spécifiquement optimisé pour chaque plateforme.`
+
+  const contextLines = [objectiveLine, lengthLine, formatLine, toneLine, ctaLine]
+    .filter(Boolean)
+    .join('\n')
+
   return `Tu es un expert Community Manager. Génère des posts pour les réseaux sociaux suivants.
 
 ${brandContext}
 ${briefLine}
-Ton : ${TONE_INSTRUCTIONS[req.tone]}
+${contextLines}
+
+${distributionNote}
 
 Contraintes par plateforme :
 ${platformInstructions}

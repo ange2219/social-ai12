@@ -6,12 +6,22 @@ import type { GenerateRequest, Plan } from '@/types'
 import { z } from 'zod'
 
 const ALLOWED_PLATFORMS = ['instagram', 'facebook', 'twitter', 'linkedin', 'tiktok', 'youtube', 'pinterest'] as const
-const ALLOWED_TONES = ['professionnel', 'decontracte', 'inspirant', 'humoristique'] as const
+const ALLOWED_TONES = ['professionnel', 'decontracte', 'inspirant', 'humoristique', 'emotionnel', 'expert'] as const
+const ALLOWED_OBJECTIVES  = ['vendre', 'engager', 'eduquer', 'inspirer', 'annoncer', 'fideliser'] as const
+const ALLOWED_LENGTHS     = ['court', 'moyen', 'long'] as const
+const ALLOWED_FORMATS     = ['direct', 'liste', 'narratif', 'question'] as const
+const ALLOWED_CTAS        = ['acheter', 'commenter', 'partager', 'en_savoir_plus', 'aucun'] as const
+const ALLOWED_DIST_MODES  = ['unified', 'custom'] as const
 
 const GenerateSchema = z.object({
-  platforms: z.array(z.enum(ALLOWED_PLATFORMS)).min(1).max(7),
-  tone:      z.enum(ALLOWED_TONES),
-  brief:     z.string().max(2000).optional(),
+  platforms:        z.array(z.enum(ALLOWED_PLATFORMS)).min(1).max(7),
+  tone:             z.enum(ALLOWED_TONES),
+  brief:            z.string().max(2000).optional(),
+  objective:        z.enum(ALLOWED_OBJECTIVES).optional(),
+  length:           z.enum(ALLOWED_LENGTHS).optional(),
+  format:           z.enum(ALLOWED_FORMATS).optional(),
+  cta:              z.enum(ALLOWED_CTAS).optional(),
+  distributionMode: z.enum(ALLOWED_DIST_MODES).optional(),
 })
 
 export async function POST(req: NextRequest) {
@@ -43,7 +53,14 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: 'Données invalides', details: parsed.error.flatten() }, { status: 400 })
   }
-  const body: GenerateRequest = parsed.data
+  const body: GenerateRequest = {
+    ...parsed.data,
+    objective:        parsed.data.objective,
+    length:           parsed.data.length,
+    format:           parsed.data.format,
+    cta:              parsed.data.cta,
+    distributionMode: parsed.data.distributionMode,
+  }
 
   // Filtrer les plateformes selon le plan
   if (plan === 'free') {
@@ -73,10 +90,24 @@ export async function POST(req: NextRequest) {
     if (!body.tone && brandProfile.tone) body.tone = brandProfile.tone
   }
 
+  // En mode custom : 1 quota par plateforme sélectionnée
+  const quotaCount = body.distributionMode === 'custom' ? body.platforms.length : 1
+
+  // Vérifier qu'il y a assez de quotas pour ce mode
+  if (typeof limit === 'number' && used + quotaCount > limit) {
+    return NextResponse.json({
+      error: `Quota insuffisant — il vous faut ${quotaCount} génération(s) mais il vous en reste ${limit - used}`,
+      code: 'DAILY_LIMIT_REACHED',
+      used,
+      limit,
+    }, { status: 429 })
+  }
+
   try {
     const result = await generatePosts(body, plan)
-    await recordGeneration(user.id)
-    return NextResponse.json({ ...result, used: used + 1, limit })
+    // Enregistrer autant de générations que de quotas consommés
+    await Promise.all(Array.from({ length: quotaCount }, () => recordGeneration(user.id)))
+    return NextResponse.json({ ...result, used: used + quotaCount, limit })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Generation failed'
     return NextResponse.json({ error: message }, { status: 500 })

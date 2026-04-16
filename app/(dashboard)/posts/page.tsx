@@ -824,7 +824,7 @@ export default function PostsPage() {
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
                   <Sparkles size={14} style={{ color: 'var(--accent, #7B5CF5)', flexShrink: 0 }} />
-                  Générer avec l&apos;IA
+                  Générer
                 </button>
                 <button
                   onClick={() => { setPlusMenuOpen(false); router.push('/posts/create?mode=manual') }}
@@ -833,7 +833,7 @@ export default function PostsPage() {
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
                   <PenLine size={14} style={{ color: 'var(--t2)', flexShrink: 0 }} />
-                  Créer manuellement
+                  Créer
                 </button>
               </div>
             )}
@@ -857,13 +857,6 @@ export default function PostsPage() {
           ))}
         </div>
         <div style={{ display: 'flex', gap: '.3rem', alignItems: 'center' }}>
-          {filtered.length > 0 && (
-            <button onClick={toggleSelectAll}
-              style={{ padding: '.3rem .65rem', borderRadius: '6px', border: '1px solid var(--b1)', background: 'var(--card)', color: 'var(--t3)', cursor: 'pointer', fontSize: '.73rem', display: 'flex', alignItems: 'center', gap: '.3rem', marginRight: '.25rem' }}>
-              {selectedIds.size > 0 && selectedIds.size === filtered.length ? <CheckSquare size={12} color="#4646FF" /> : <Square size={12} />}
-              {selectedIds.size > 0 && selectedIds.size === filtered.length ? 'Tout désélectionner' : 'Tout sélectionner'}
-            </button>
-          )}
           {(['grid', 'list'] as const).map(v => (
             <button key={v} onClick={() => setView(v)} style={{
               padding: '.3rem .5rem', borderRadius: '6px',
@@ -950,10 +943,6 @@ export default function PostsPage() {
                           ? <div style={{ width: '10px', height: '10px', border: '1.5px solid rgba(59,123,246,.3)', borderTopColor: '#4646FF', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
                           : <Send size={10} />}
                       </button>
-                      <button onClick={() => askDelete(post.id)} disabled={deleting === post.id} title="Supprimer"
-                        style={{ background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.2)', borderRadius: '5px', padding: '.2rem .35rem', cursor: 'pointer', color: '#EF4444', display: 'flex', alignItems: 'center' }}>
-                        <Trash2 size={10} />
-                      </button>
                     </div>
                   )}
                 </div>
@@ -1012,18 +1001,12 @@ export default function PostsPage() {
                 )}
                 <span className={stClass(post.status)} style={{ fontSize: '.68rem' }}>{stLabel(post.status)}</span>
                 {(post.status === 'draft' || post.status === 'failed') && (
-                  <>
-                    <button onClick={() => publishPost(post)} disabled={publishing === post.id}
-                      style={{ background: 'rgba(59,123,246,.15)', border: '1px solid rgba(59,123,246,.3)', borderRadius: '6px', padding: '.3rem .6rem', cursor: 'pointer', color: '#4646FF', display: 'flex', alignItems: 'center', gap: '.3rem', fontSize: '.72rem', fontWeight: 500 }}>
-                      {publishing === post.id
-                        ? <div style={{ width: '11px', height: '11px', border: '1.5px solid rgba(59,123,246,.3)', borderTopColor: '#4646FF', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
-                        : <Send size={11} />} Publier
-                    </button>
-                    <button onClick={() => askDelete(post.id)} disabled={deleting === post.id}
-                      style={{ background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.2)', borderRadius: '6px', padding: '.3rem .5rem', cursor: 'pointer', color: '#EF4444', display: 'flex', alignItems: 'center' }}>
-                      <Trash2 size={12} />
-                    </button>
-                  </>
+                  <button onClick={() => publishPost(post)} disabled={publishing === post.id}
+                    style={{ background: 'rgba(59,123,246,.15)', border: '1px solid rgba(59,123,246,.3)', borderRadius: '6px', padding: '.3rem .6rem', cursor: 'pointer', color: '#4646FF', display: 'flex', alignItems: 'center', gap: '.3rem', fontSize: '.72rem', fontWeight: 500 }}>
+                    {publishing === post.id
+                      ? <div style={{ width: '11px', height: '11px', border: '1.5px solid rgba(59,123,246,.3)', borderTopColor: '#4646FF', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
+                      : <Send size={11} />} Publier
+                  </button>
                 )}
               </div>
             </div>
