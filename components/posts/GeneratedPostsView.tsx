@@ -150,10 +150,12 @@ function WheelColumn({
 // ─── SchedulerSheet ───────────────────────────────────────────────────────────
 
 function SchedulerSheet({
-  onConfirm, onClose,
+  onConfirm, onClose, alreadyScheduled, onDeactivate,
 }: {
   onConfirm: (scheduledAt: string) => void
   onClose: () => void
+  alreadyScheduled?: boolean
+  onDeactivate?: () => void
 }) {
   // Build day list: today + 89 days
   const dayItems: string[] = []
@@ -230,63 +232,73 @@ function SchedulerSheet({
     <div
       style={{
         position: 'fixed', inset: 0,
-        background: 'rgba(0,0,0,.65)', backdropFilter: 'blur(4px)',
-        zIndex: 600, display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+        background: 'rgba(0,0,0,.65)', backdropFilter: 'blur(6px)',
+        zIndex: 600, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '1rem',
       }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div style={{
-        background: 'var(--card)', borderTop: '1px solid var(--b1)',
-        borderRadius: '20px 20px 0 0', width: '100%', maxWidth: '480px',
-        padding: '0 1.25rem 2rem',
-        animation: 'slideUpFull .28s cubic-bezier(.22,1,.36,1)',
+      <div className="anim-fade-scale" style={{
+        background: 'var(--card)', border: '1px solid var(--b1)',
+        borderRadius: '20px', width: '100%', maxWidth: '380px',
+        padding: '0 1.5rem 1.5rem',
+        boxShadow: '0 24px 64px rgba(0,0,0,.45)',
       }}>
-        {/* Drag handle */}
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 6px' }}>
-          <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: 'var(--b1)' }} />
-        </div>
-
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.85rem' }}>
-          <span style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1rem', fontWeight: 700, color: 'var(--t1)' }}>
-            Programmer
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.25rem 0 .5rem' }}>
+          <span style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1.05rem', fontWeight: 700, color: 'var(--t1)' }}>
+            Date et heure de publication
           </span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', display: 'flex', padding: '4px' }}>
-            <X size={17} />
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', display: 'flex', padding: '4px', borderRadius: '6px', transition: '.12s' }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--t1)' }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--t3)' }}
+          >
+            <X size={18} />
           </button>
         </div>
 
-        {/* Real-time label */}
+        {/* Wheel grid — no column labels */}
         <div style={{
-          textAlign: 'center', marginBottom: '1rem',
-          fontSize: '.9rem', fontWeight: 600, minHeight: '1.6rem',
-          color: 'var(--accent)',
+          display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '6px',
+          marginBottom: '1.1rem',
+          background: 'var(--s2)', borderRadius: '14px', padding: '.25rem',
+          border: '1px solid var(--b1)',
         }}>
-          {label}
-        </div>
-
-        {/* Column labels above wheels */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '4px', marginBottom: '2px', textAlign: 'center' }}>
-          {['Jour', 'Heure', 'Min'].map(l => (
-            <div key={l} style={{ fontSize: '.62rem', fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>{l}</div>
-          ))}
-        </div>
-
-        {/* Wheel grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '4px', marginBottom: '1.25rem' }}>
           <WheelColumn items={dayItems}    selectedIndex={dayIdx}    onChange={handleDayChange}    />
           <WheelColumn items={hourItems}   selectedIndex={hourIdx}   onChange={handleHourChange}   />
           <WheelColumn items={minuteItems} selectedIndex={minuteIdx} onChange={handleMinuteChange} />
         </div>
 
-        {/* Confirm */}
-        <button
-          onClick={() => onConfirm(scheduled.toISOString())}
-          className="btn-primary"
-          style={{ width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '.4rem', padding: '.7rem' }}
-        >
-          <Check size={14} /> Terminer
-        </button>
+        {/* Note */}
+        <p style={{ fontSize: '.72rem', color: 'var(--t3)', textAlign: 'center', lineHeight: 1.55, margin: '0 0 1.1rem' }}>
+          En continuant, tu donnes ton accord pour que ta publication soit importée et stockée sur nos serveurs jusqu&apos;à la date de publication planifiée.
+        </p>
+
+        {/* Buttons */}
+        <div style={{ display: 'flex', gap: '.6rem' }}>
+          {alreadyScheduled && onDeactivate && (
+            <button
+              onClick={onDeactivate}
+              style={{
+                flex: 1, padding: '.7rem', borderRadius: '12px',
+                border: '1px solid var(--b1)', background: 'var(--s2)',
+                color: 'var(--t2)', cursor: 'pointer', fontSize: '.88rem', fontWeight: 600,
+                transition: '.12s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = '#EF4444'; e.currentTarget.style.color = '#EF4444' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--b1)'; e.currentTarget.style.color = 'var(--t2)' }}
+            >
+              Désactiver
+            </button>
+          )}
+          <button
+            onClick={() => onConfirm(scheduled.toISOString())}
+            className="btn-primary"
+            style={{ flex: 2, justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '.4rem', padding: '.7rem', borderRadius: '12px', fontSize: '.88rem' }}
+          >
+            Terminé
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -332,9 +344,11 @@ function PostPlatformCard({
   const isOverLimit = limit ? content.length > limit : false
   const color       = PLATFORM_COLORS[platform]
 
+  const { toast: cardToast } = useToast()
   const [showImageMenu, setShowImageMenu] = useState(false)
   const imageMenuRef = useRef<HTMLDivElement>(null)
   const fileRef      = useRef<HTMLInputElement>(null)
+  const fileRef2     = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     function handleOutside(e: MouseEvent) {
@@ -356,11 +370,12 @@ function PostPlatformCard({
       })
       const data = await res.json()
       if (res.ok) onImageSet(data.url)
-    } catch { /* silent */ }
+      else cardToast(data.error || 'Erreur génération image', 'error')
+    } catch { cardToast('Erreur génération image', 'error') }
     finally { onImageLoad(false) }
   }
 
-  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>, ref: React.RefObject<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     setShowImageMenu(false)
@@ -370,43 +385,9 @@ function PostPlatformCard({
       const res = await fetch('/api/upload', { method: 'POST', body: fd })
       const data = await res.json()
       if (res.ok) onImageSet(data.url)
-    } catch { /* silent */ }
-    finally { onImageLoad(false); e.target.value = '' }
-  }
-
-  // Shared image menu content
-  function ImageMenu() {
-    return (
-      <>
-        <button
-          onClick={handleGenerateImage}
-          disabled={!isPro}
-          style={{ display: 'flex', alignItems: 'center', gap: '.6rem', width: '100%', padding: '.65rem .9rem', background: 'none', border: 'none', cursor: isPro ? 'pointer' : 'not-allowed', color: isPro ? 'var(--t1)' : 'var(--t3)', fontSize: '.82rem', textAlign: 'left', opacity: isPro ? 1 : .5 }}
-          onMouseEnter={e => { if (isPro) (e.currentTarget as HTMLElement).style.background = 'var(--s2)' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none' }}
-        >
-          <div style={{ width: '22px', height: '22px', borderRadius: '5px', background: 'rgba(123,92,245,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <span style={{ fontSize: '.8rem' }}>✨</span>
-          </div>
-          <div>
-            <div style={{ fontWeight: 600, fontSize: '.8rem' }}>Générer avec l&apos;IA</div>
-            {!isPro && <div style={{ fontSize: '.67rem', color: '#FBBF24' }}>Pro requis</div>}
-          </div>
-        </button>
-        <div style={{ height: '1px', background: 'var(--b1)' }} />
-        <label
-          style={{ display: 'flex', alignItems: 'center', gap: '.6rem', padding: '.65rem .9rem', cursor: 'pointer', fontSize: '.82rem', color: 'var(--t1)' }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--s2)' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none' }}
-        >
-          <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImportFile} />
-          <div style={{ width: '22px', height: '22px', borderRadius: '5px', background: 'rgba(6,182,212,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <span style={{ fontSize: '.8rem' }}>📁</span>
-          </div>
-          <span style={{ fontWeight: 600 }}>Importer une photo</span>
-        </label>
-      </>
-    )
+      else cardToast(data.error || 'Erreur upload', 'error')
+    } catch { cardToast('Erreur upload', 'error') }
+    finally { onImageLoad(false); if (ref.current) ref.current.value = '' }
   }
 
   return (
@@ -530,7 +511,16 @@ function PostPlatformCard({
           </button>
           {showImageMenu && (
             <div style={{ position: 'absolute', top: '44px', left: '8px', background: 'var(--card)', border: '1px solid var(--b1)', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,.3)', zIndex: 50, minWidth: '190px' }}>
-              <ImageMenu />
+              <button onClick={handleGenerateImage} disabled={!isPro} style={{ display: 'flex', alignItems: 'center', gap: '.6rem', width: '100%', padding: '.65rem .9rem', background: 'none', border: 'none', cursor: isPro ? 'pointer' : 'not-allowed', color: isPro ? 'var(--t1)' : 'var(--t3)', fontSize: '.82rem', textAlign: 'left', opacity: isPro ? 1 : .5 }} onMouseEnter={e => { if (isPro) (e.currentTarget as HTMLElement).style.background = 'var(--s2)' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none' }}>
+                <div style={{ width: '22px', height: '22px', borderRadius: '5px', background: 'rgba(123,92,245,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><span style={{ fontSize: '.8rem' }}>✨</span></div>
+                <div><div style={{ fontWeight: 600, fontSize: '.8rem' }}>Générer avec l&apos;IA</div>{!isPro && <div style={{ fontSize: '.67rem', color: '#FBBF24' }}>Pro requis</div>}</div>
+              </button>
+              <div style={{ height: '1px', background: 'var(--b1)' }} />
+              <label style={{ display: 'flex', alignItems: 'center', gap: '.6rem', padding: '.65rem .9rem', cursor: 'pointer', fontSize: '.82rem', color: 'var(--t1)' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--s2)' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none' }}>
+                <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleImportFile(e, fileRef)} />
+                <div style={{ width: '22px', height: '22px', borderRadius: '5px', background: 'rgba(6,182,212,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><span style={{ fontSize: '.8rem' }}>📁</span></div>
+                <span style={{ fontWeight: 600 }}>Importer une photo</span>
+              </label>
             </div>
           )}
         </div>
@@ -555,7 +545,16 @@ function PostPlatformCard({
           </button>
           {!imageUrl && showImageMenu && (
             <div style={{ position: 'absolute', bottom: 'calc(100% + 4px)', left: '1rem', right: '1rem', background: 'var(--card)', border: '1px solid var(--b1)', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,.25)', zIndex: 50 }}>
-              <ImageMenu />
+              <button onClick={handleGenerateImage} disabled={!isPro} style={{ display: 'flex', alignItems: 'center', gap: '.6rem', width: '100%', padding: '.65rem .9rem', background: 'none', border: 'none', cursor: isPro ? 'pointer' : 'not-allowed', color: isPro ? 'var(--t1)' : 'var(--t3)', fontSize: '.82rem', textAlign: 'left', opacity: isPro ? 1 : .5 }} onMouseEnter={e => { if (isPro) (e.currentTarget as HTMLElement).style.background = 'var(--s2)' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none' }}>
+                <div style={{ width: '22px', height: '22px', borderRadius: '5px', background: 'rgba(123,92,245,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><span style={{ fontSize: '.8rem' }}>✨</span></div>
+                <div><div style={{ fontWeight: 600, fontSize: '.8rem' }}>Générer avec l&apos;IA</div>{!isPro && <div style={{ fontSize: '.67rem', color: '#FBBF24' }}>Pro requis</div>}</div>
+              </button>
+              <div style={{ height: '1px', background: 'var(--b1)' }} />
+              <label style={{ display: 'flex', alignItems: 'center', gap: '.6rem', padding: '.65rem .9rem', cursor: 'pointer', fontSize: '.82rem', color: 'var(--t1)' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--s2)' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none' }}>
+                <input ref={fileRef2} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleImportFile(e, fileRef2)} />
+                <div style={{ width: '22px', height: '22px', borderRadius: '5px', background: 'rgba(6,182,212,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><span style={{ fontSize: '.8rem' }}>📁</span></div>
+                <span style={{ fontWeight: 600 }}>Importer une photo</span>
+              </label>
             </div>
           )}
         </div>
@@ -731,6 +730,13 @@ export function GeneratedPostsView({
     updateCard(platform, { scheduledAt })
   }
 
+  function handleScheduleDeactivate() {
+    const platform = schedulerPlatform
+    setSchedulerPlatform(null)
+    if (!platform) return
+    updateCard(platform, { scheduledAt: null })
+  }
+
   async function handlePublishScheduled(platform: Platform) {
     const scheduled = cards[platform]?.scheduledAt
     if (!scheduled || loadingAction) return
@@ -799,9 +805,6 @@ export function GeneratedPostsView({
 
   return (
     <div>
-      {/* Quota bar */}
-      <QuotaBar textUsed={quotaUsed} textLimit={quotaLimit} />
-
       {/* Cards — centred, max 480px each */}
       <div style={{
         display: 'flex', justifyContent: 'center',
@@ -826,6 +829,8 @@ export function GeneratedPostsView({
         <SchedulerSheet
           onConfirm={handleScheduleConfirm}
           onClose={() => setSchedulerPlatform(null)}
+          alreadyScheduled={!!cards[schedulerPlatform]?.scheduledAt}
+          onDeactivate={handleScheduleDeactivate}
         />
       )}
     </div>

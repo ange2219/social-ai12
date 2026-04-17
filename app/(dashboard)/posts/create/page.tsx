@@ -6,7 +6,7 @@ import { useToast } from '@/components/ui/Toast'
 import { createClient } from '@/lib/supabase/client'
 import {
   Save, Send, Upload, X, ArrowLeft, Clock,
-  ChevronDown, Settings2, Layers, Zap, Check,
+  ChevronDown, Settings2, Layers, Zap, Check, Target,
 } from 'lucide-react'
 import { IconInstagram, IconFacebook, IconTikTok, IconTwitterX, IconLinkedIn, IconYouTube, IconPinterest } from '@/components/icons/BrandIcons'
 import {
@@ -720,21 +720,17 @@ export default function CreatePage() {
     }).catch(() => {})
   }, [])
 
-  // Restaurer brouillon sessionStorage
+  // Restaurer brouillon sessionStorage (brief + objective toujours vides au démarrage)
   useEffect(() => {
     try {
       const saved = sessionStorage.getItem('social_ia_create_draft')
       if (saved) {
         const d = JSON.parse(saved)
-        if (d.brief !== undefined)       setBrief(d.brief)
+        // brief et objective ne sont PAS restaurés — toujours commencer vide
         if (d.params)                    setParams(d.params)
-        if (d.objective)                 setObjective(d.objective)
         if (d.selectedPlatforms)         setSelectedPlatforms(d.selectedPlatforms)
         if (d.distributionMode)          setDistributionMode(d.distributionMode)
-        if (d.variants)                  setVariants(d.variants)
         if (d.manualContent !== undefined) setManualContent(d.manualContent)
-        if (d.aiUploadedUrl)             setAiUploadedUrl(d.aiUploadedUrl)
-        if (d.generatedImageUrl)         setGeneratedImageUrl(d.generatedImageUrl)
       }
     } catch { /* ignore */ }
   }, [])
@@ -1108,7 +1104,7 @@ export default function CreatePage() {
                   {aiDetecting ? (
                     <div style={{ width: '10px', height: '10px', border: '1.5px solid rgba(123,92,245,.25)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'rot .7s linear infinite', flexShrink: 0 }} />
                   ) : (
-                    <Zap size={12} style={{ flexShrink: 0, opacity: objective ? 1 : .4 }} />
+                    <Target size={12} style={{ flexShrink: 0, opacity: objective ? 1 : .4 }} />
                   )}
                   <span>{objectiveBtnLabel}</span>
                   <ChevronDown size={13} style={{ transition: 'transform .18s', transform: objectiveMenuOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
