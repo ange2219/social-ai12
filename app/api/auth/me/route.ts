@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { checkGenerationLimit } from '@/lib/server-utils'
 import { z } from 'zod'
 
 const PatchMeSchema = z.object({
@@ -13,8 +14,11 @@ export async function GET() {
 
   const admin = createAdminClient()
   const { data } = await admin.from('users').select('id, email, full_name, plan, avatar_url').eq('id', user.id).single()
+  if (!data) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-  return NextResponse.json(data)
+  const quota = await checkGenerationLimit(user.id, data.plan)
+
+  return NextResponse.json({ ...data, generationsUsed: quota.used, generationsLimit: quota.limit })
 }
 
 export async function PATCH(req: NextRequest) {

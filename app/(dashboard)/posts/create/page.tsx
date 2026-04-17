@@ -3,9 +3,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { useToast } from '@/components/ui/Toast'
 import { createClient } from '@/lib/supabase/client'
-import { PlatformPreview } from '@/components/posts/PlatformPreview'
+import { GeneratedPostsView } from '@/components/posts/GeneratedPostsView'
 import {
-  Save, Send, Upload, X, ArrowLeft, Clock, Image,
+  Save, Send, Upload, X, ArrowLeft, Clock,
   ChevronDown, Settings2, Layers, Zap, Check,
 } from 'lucide-react'
 import { IconInstagram, IconFacebook, IconTikTok, IconTwitterX, IconLinkedIn, IconYouTube, IconPinterest } from '@/components/icons/BrandIcons'
@@ -615,7 +615,6 @@ function PostActionModal({ content, platforms, mediaUrls, aiGenerated, onClose }
 export default function CreatePage() {
   const { toast } = useToast()
   const fileRef    = useRef<HTMLInputElement>(null)
-  const aiFileRef  = useRef<HTMLInputElement>(null)
   const objMenuRef = useRef<HTMLDivElement>(null)
 
   // Mode : AI (défaut) ou manuel (?mode=manual)
@@ -646,18 +645,13 @@ export default function CreatePage() {
   const [variants,           setVariants]          = useState<Partial<Record<Platform, string>>>({})
   const [aiUploadedUrl,      setAiUploadedUrl]     = useState<string | null>(null)
   const [generatedImageUrl,  setGeneratedImageUrl] = useState<string | null>(null)
-  const [generatingImage,    setGeneratingImage]   = useState(false)
+  const [quotaUsed,          setQuotaUsed]         = useState(0)
+  const [quotaLimit,         setQuotaLimit]        = useState<number | 'unlimited'>('unlimited')
 
   // ── Overlay ──
   const [overlayOpen,  setOverlayOpen]  = useState(false)
   const [overlaySteps, setOverlaySteps] = useState<string[]>([])
   const [stepStates,   setStepStates]   = useState<string[]>([])
-
-  // ── Actions post ──
-  const [showSchedule, setShowSchedule] = useState(false)
-  const [schedDate,    setSchedDate]    = useState('')
-  const [schedTime,    setSchedTime]    = useState('')
-  const [postAction,   setPostAction]   = useState(false)
 
   // ── Mode manuel ──
   const [manualContent,    setManualContent]    = useState('')
@@ -781,46 +775,23 @@ export default function CreatePage() {
         return
       }
       setVariants(data.variants)
+      if (data.used  !== undefined) setQuotaUsed(data.used)
+      if (data.limit !== undefined) setQuotaLimit(data.limit)
       setAiUploadedUrl(null)
       setBrief('')
     })
   }
 
-  async function handleAiImageUpload(file: File) {
-    try {
-      const fd = new FormData(); fd.append('file', file)
-      const res = await fetch('/api/upload', { method: 'POST', body: fd })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
-      setAiUploadedUrl(data.url)
-    } catch (err: unknown) { toast(err instanceof Error ? err.message : 'Erreur upload', 'error') }
-  }
-
-  async function handleGenerateImage() {
-    const content = Object.values(variants)[0]
-    if (!content) return
-    setGeneratingImage(true)
-    try {
-      const res = await fetch('/api/ai/generate-image', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postContent: content.slice(0, 300) }),
-      })
-      const data = await res.json()
-      if (res.ok) setGeneratedImageUrl(data.url)
-    } catch { /* silencieux */ }
-    finally { setGeneratingImage(false) }
-  }
-
-  async function saveVariantPost(status: 'draft' | 'scheduled', scheduledAt?: string): Promise<string> {
-    const mediaUrl = aiUploadedUrl || generatedImageUrl
-    const primaryContent = Object.values(variants)[0] || ''
-    const content_variants = Object.keys(variants).length > 1 ? variants : undefined
+  async function savePost(
+    platform: Platform, content: string, mediaUrl: string | null,
+    status: 'draft' | 'scheduled', scheduledAt?: string,
+  ): Promise<string> {
     const res = await fetch('/api/posts', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        content: primaryContent, platforms: selectedPlatforms,
-        media_urls: mediaUrl ? [mediaUrl] : [], ai_generated: true,
-        status, scheduled_at: scheduledAt, content_variants,
+        content, platforms: [platform],
+        media_urls: mediaUrl ? [mediaUrl] : [],
+        ai_generated: true, status, scheduled_at: scheduledAt,
       }),
     })
     const data = await res.json()
@@ -828,52 +799,27 @@ export default function CreatePage() {
     return data.id
   }
 
-  async function handlePublishVariant() {
-    if (postAction) return
-    const mediaUrl = aiUploadedUrl || generatedImageUrl
-    if (selectedPlatforms.includes('instagram') && !mediaUrl) {
+  async function handlePublishVariant(platform: Platform, content: string, imageUrl: string | null) {
+    if (platform === 'instagram' && !imageUrl) {
       toast('Veuillez ajouter une image pour Instagram.', 'warning'); return
     }
-    setPostAction(true)
-    try {
-      const id = await saveVariantPost('draft')
-      const res = await fetch(`/api/posts/${id}/publish`, { method: 'POST' })
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
-      toast('Post publié !', 'success')
-      setVariants({}); sessionStorage.removeItem('social_ia_create_draft')
-    } catch (err: unknown) { toast(err instanceof Error ? err.message : 'Erreur', 'error') }
-    finally { setPostAction(false) }
+    const id = await savePost(platform, content, imageUrl, 'draft')
+    const res = await fetch(`/api/posts/${id}/publish`, { method: 'POST' })
+    if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
   }
 
-  async function handleSaveDraft() {
-    if (postAction) return
-    setPostAction(true)
-    try {
-      await saveVariantPost('draft')
-      toast('Brouillon sauvegardé', 'success')
-      setVariants({}); sessionStorage.removeItem('social_ia_create_draft')
-    } catch (err: unknown) { toast(err instanceof Error ? err.message : 'Erreur', 'error') }
-    finally { setPostAction(false) }
+  async function handleSaveDraft(platform: Platform, content: string, imageUrl: string | null) {
+    await savePost(platform, content, imageUrl, 'draft')
   }
 
-  async function handleScheduleVariant() {
-    if (!schedDate || !schedTime) { toast('Choisissez une date et une heure', 'error'); return }
-    const scheduledAt = new Date(`${schedDate}T${schedTime}`).toISOString()
-    if (new Date(scheduledAt) <= new Date()) { toast('La date doit être dans le futur', 'error'); return }
-    if (postAction) return
-    setPostAction(true)
-    try {
-      const id = await saveVariantPost('draft')
-      const res = await fetch(`/api/posts/${id}/schedule`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scheduledAt }),
-      })
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
-      toast('Post programmé !', 'success')
-      setVariants({}); sessionStorage.removeItem('social_ia_create_draft')
-      setShowSchedule(false)
-    } catch (err: unknown) { toast(err instanceof Error ? err.message : 'Erreur', 'error') }
-    finally { setPostAction(false) }
+  async function handleScheduleVariant(platform: Platform, content: string, imageUrl: string | null, scheduledAt: string) {
+    if (new Date(scheduledAt) <= new Date()) throw new Error('La date doit être dans le futur')
+    const id = await savePost(platform, content, imageUrl, 'draft')
+    const res = await fetch(`/api/posts/${id}/schedule`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scheduledAt }),
+    })
+    if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
   }
 
   // ── Mode manuel ──
@@ -1182,97 +1128,17 @@ export default function CreatePage() {
 
             {/* ── Résultats après génération ── */}
             {hasVariants && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-
-                {selectedPlatforms.filter(p => variants[p]).map(p => (
-                  <div key={p} style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
-                      <PlatformIcon platform={p} size={14} />
-                      <span style={{ fontSize: '.72rem', color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em', fontWeight: 600 }}>
-                        {PLATFORM_NAMES[p]}
-                      </span>
-                    </div>
-                    <PlatformPreview platform={p} content={variants[p]!} />
-                    <div className="card p-4">
-                      <label className="label">Modifier le texte</label>
-                      <textarea
-                        className="input resize-none"
-                        rows={5}
-                        value={variants[p] || ''}
-                        onChange={e => setVariants(prev => ({ ...prev, [p]: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-                ))}
-
-                {/* Image générée */}
-                {generatedImageUrl && (
-                  <div className="card overflow-hidden">
-                    <img src={generatedImageUrl} alt="Image générée" style={{ width: '100%', display: 'block' }} />
-                  </div>
-                )}
-
-                {/* Bouton générer image */}
-                <button
-                  onClick={isPro ? handleGenerateImage : undefined}
-                  disabled={generatingImage || !isPro}
-                  title={!isPro ? 'Génération d\'image réservée aux plans Premium et Business' : undefined}
-                  className="btn-outline w-full flex items-center justify-center gap-2 py-2.5"
-                  style={!isPro ? { opacity: .45, cursor: 'not-allowed' } : undefined}
-                >
-                  {generatingImage
-                    ? <><div style={{ width: '13px', height: '13px', border: '2px solid rgba(255,255,255,.2)', borderTopColor: '#8E8E98', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />Génération de l'image…</>
-                    : <><Image size={14} />{generatedImageUrl ? 'Régénérer l\'image' : 'Générer une image'}{!isPro && <span className="v2tag" style={{ background: 'rgba(251,191,36,.12)', color: '#FBBF24', border: '1px solid rgba(251,191,36,.2)', marginLeft: '.3rem' }}>Pro</span>}</>
-                  }
-                </button>
-
-                {/* Importer une photo */}
-                <input ref={aiFileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handleAiImageUpload(f) }} />
-                {aiUploadedUrl ? (
-                  <div className="card overflow-hidden" style={{ position: 'relative' }}>
-                    <img src={aiUploadedUrl} alt="Photo importée" style={{ width: '100%', display: 'block' }} />
-                    <button
-                      onClick={() => setAiUploadedUrl(null)}
-                      style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,.7)', border: 'none', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff' }}
-                    >
-                      <X size={13} />
-                    </button>
-                  </div>
-                ) : (
-                  <button onClick={() => aiFileRef.current?.click()} className="btn-outline w-full flex items-center justify-center gap-2 py-2.5">
-                    <Upload size={14} />Importer une photo
-                  </button>
-                )}
-
-                {/* Actions */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '.75rem', marginTop: '.5rem' }}>
-                  <div style={{ fontSize: '.78rem', color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em', fontWeight: 500 }}>
-                    Que faire avec ce post ?
-                  </div>
-                  <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
-                    <button className="modal-btn modal-btn-blue" style={{ flex: 1, minWidth: '140px' }} onClick={handlePublishVariant} disabled={postAction}>
-                      <Send size={13} />Publier maintenant
-                    </button>
-                    <button className="modal-btn modal-btn-border" style={{ flex: 1, minWidth: '140px' }} onClick={() => setShowSchedule(p => !p)} disabled={postAction}>
-                      <Clock size={13} />Programmer
-                    </button>
-                    <button className="modal-btn modal-btn-border" style={{ flex: 1, minWidth: '140px' }} onClick={handleSaveDraft} disabled={postAction}>
-                      <Save size={13} />Brouillon
-                    </button>
-                  </div>
-                  {showSchedule && (
-                    <div className="modal-sched" style={{ background: 'var(--s2)', border: '1px solid var(--b1)', borderRadius: '10px', padding: '1rem' }}>
-                      <div className="modal-sched-row">
-                        <input type="date" value={schedDate} min={new Date(Date.now() + 5 * 60000).toISOString().split('T')[0]} onChange={e => setSchedDate(e.target.value)} />
-                        <input type="time" value={schedTime} onChange={e => setSchedTime(e.target.value)} />
-                      </div>
-                      <button className="modal-btn modal-btn-blue" onClick={handleScheduleVariant} disabled={postAction}>
-                        <Clock size={13} />Confirmer la programmation
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <GeneratedPostsView
+                platforms={selectedPlatforms.filter(p => !!variants[p])}
+                variants={variants}
+                objective={objective}
+                quotaUsed={quotaUsed}
+                quotaLimit={quotaLimit}
+                isPro={isPro}
+                onSaveDraft={handleSaveDraft}
+                onPublish={handlePublishVariant}
+                onSchedule={handleScheduleVariant}
+              />
             )}
           </div>
 

@@ -51,6 +51,7 @@ export interface Post {
   platform_errors: Record<string, string> | null
   ai_generated: boolean
   error_message: string | null
+  objective: PostObjective | null
   created_at: string
 }
 
@@ -266,6 +267,8 @@ export interface GenerateRequest {
 
 export interface GenerateResponse {
   variants: Partial<Record<Platform, string>>
+  used?: number
+  limit?: number | 'unlimited'
 }
 
 export interface ApiError {
