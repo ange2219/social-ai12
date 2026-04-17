@@ -844,6 +844,9 @@ export default function CreatePage() {
         isPro,
       }))
       setBrief('')
+      setObjective(null)
+      setAutoDetected(false)
+      sessionStorage.removeItem('social_ia_create_draft')
       router.push('/posts/results')
     })
   }
@@ -1113,6 +1116,25 @@ export default function CreatePage() {
 
                 {objectiveMenuOpen && (
                   <div className="anim-fade-down" style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, background: 'var(--card)', border: '1px solid var(--b1)', borderRadius: '10px', padding: '.3rem', minWidth: '210px', boxShadow: '0 8px 32px rgba(0,0,0,.2)', zIndex: 60 }}>
+                    {/* Aucun */}
+                    <button
+                      onClick={() => { setObjective(null); setAutoDetected(false); setObjMenuOpen(false) }}
+                      style={{
+                        width: '100%', display: 'flex', alignItems: 'center', gap: '.6rem',
+                        padding: '.5rem .75rem', borderRadius: '7px', border: 'none',
+                        background: objective === null ? 'rgba(123,92,245,.08)' : 'transparent',
+                        color: objective === null ? 'var(--accent)' : 'var(--t3)',
+                        cursor: 'pointer', fontSize: '.82rem', textAlign: 'left', transition: 'background .1s',
+                        fontStyle: 'italic',
+                      }}
+                      onMouseEnter={e => { if (objective !== null) e.currentTarget.style.background = 'var(--s2)' }}
+                      onMouseLeave={e => { if (objective !== null) e.currentTarget.style.background = 'transparent' }}
+                    >
+                      <div style={{ width: 13, height: 13, borderRadius: '50%', border: '1.5px dashed var(--t3)', flexShrink: 0 }} />
+                      <span style={{ flex: 1 }}>Aucun</span>
+                      {objective === null && <Check size={12} style={{ flexShrink: 0, opacity: .7 }} />}
+                    </button>
+                    <div style={{ borderTop: '1px solid var(--b1)', margin: '.2rem 0' }} />
                     {(Object.entries(OBJECTIVE_LABELS) as [PostObjective, string][]).map(([key, label]) => (
                       <button
                         key={key}
@@ -1132,6 +1154,12 @@ export default function CreatePage() {
                         {objective === key && <Check size={12} style={{ flexShrink: 0, opacity: .7 }} />}
                       </button>
                     ))}
+                  </div>
+                )}
+                {/* Hint sous le bouton quand aucun objectif */}
+                {!objective && !objectiveMenuOpen && (
+                  <div style={{ position: 'absolute', top: 'calc(100% + 4px)', right: 0, fontSize: '.68rem', color: 'var(--t3)', whiteSpace: 'nowrap', fontStyle: 'italic', pointerEvents: 'none' }}>
+                    L&apos;IA le devinera pour vous
                   </div>
                 )}
               </div>

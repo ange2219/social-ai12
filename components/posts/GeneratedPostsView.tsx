@@ -26,6 +26,12 @@ function PlatformIcon({ platform, size = 16 }: { platform: Platform; size?: numb
   }
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function lowercaseHashtags(text: string): string {
+  return text.replace(/#(\w+)/g, (_, tag) => '#' + tag.toLowerCase())
+}
+
 // ─── Char limits per platform ─────────────────────────────────────────────────
 
 const CHAR_LIMITS: Partial<Record<Platform, number>> = {
@@ -301,6 +307,7 @@ interface PostPlatformCardProps {
   onDraft: () => void
   onPublish: () => void
   isPro: boolean
+  isRewriting: boolean
 }
 
 function PostPlatformCard({
@@ -308,7 +315,7 @@ function PostPlatformCard({
   onContentChange, onImageSet, onImageLoad,
   onRewrite, onHashtags,
   onSchedule, onDraft, onPublish,
-  isPro,
+  isPro, isRewriting,
 }: PostPlatformCardProps) {
   const { content, imageUrl, imageLoading } = cardState
   const limit      = CHAR_LIMITS[platform]
@@ -412,18 +419,26 @@ function PostPlatformCard({
       {/* Réécrire / Hashtags */}
       <div style={{ display: 'flex', gap: '.45rem', padding: '.2rem 1rem .7rem' }}>
         <button
-          onClick={onRewrite}
+          onClick={isRewriting ? undefined : onRewrite}
+          disabled={isRewriting}
           style={{
             display: 'flex', alignItems: 'center', gap: '.3rem',
             padding: '.32rem .7rem', borderRadius: '6px',
             border: '1px solid var(--b1)', background: 'transparent',
-            color: 'var(--t2)', cursor: 'pointer', fontSize: '.73rem', fontWeight: 500,
-            transition: '.12s',
+            color: isRewriting ? 'var(--accent)' : 'var(--t2)',
+            cursor: isRewriting ? 'not-allowed' : 'pointer',
+            fontSize: '.73rem', fontWeight: 500, transition: '.12s',
+            opacity: isRewriting ? .7 : 1,
           }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--b1)'; e.currentTarget.style.color = 'var(--t2)' }}
+          onMouseEnter={e => { if (!isRewriting) { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' } }}
+          onMouseLeave={e => { if (!isRewriting) { e.currentTarget.style.borderColor = 'var(--b1)'; e.currentTarget.style.color = 'var(--t2)' } }}
         >
-          <RotateCcw size={11} /> Réécrire
+          {isRewriting ? (
+            <div style={{ width: '10px', height: '10px', border: '1.5px solid rgba(123,92,245,.25)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'rot .7s linear infinite', flexShrink: 0 }} />
+          ) : (
+            <RotateCcw size={11} />
+          )}
+          Réécrire
         </button>
         <button
           onClick={onHashtags}
@@ -725,7 +740,7 @@ export function GeneratedPostsView({
   const [cards, setCards] = useState<Record<string, CardState>>(() => {
     const init: Record<string, CardState> = {}
     for (const p of platforms) {
-      init[p] = { content: variants[p] || '', imageUrl: null, imageLoading: false }
+      init[p] = { content: lowercaseHashtags(variants[p] || ''), imageUrl: null, imageLoading: false }
     }
     return init
   })
@@ -735,8 +750,8 @@ export function GeneratedPostsView({
     setCards(prev => {
       const next = { ...prev }
       for (const p of platforms) {
-        if (!next[p]) next[p] = { content: variants[p] || '', imageUrl: null, imageLoading: false }
-        else next[p] = { ...next[p], content: variants[p] || next[p].content }
+        if (!next[p]) next[p] = { content: lowercaseHashtags(variants[p] || ''), imageUrl: null, imageLoading: false }
+        else next[p] = { ...next[p], content: lowercaseHashtags(variants[p] || next[p].content) }
       }
       return next
     })
@@ -816,7 +831,7 @@ export function GeneratedPostsView({
         body: JSON.stringify({ content: cards[platform]?.content, platform, instruction: 'Améliore ce post' }),
       })
       const data = await res.json()
-      if (res.ok && data.content) updateCard(platform, { content: data.content })
+      if (res.ok && data.content) updateCard(platform, { content: lowercaseHashtags(data.content) })
       else toast(data.error || 'Erreur réécriture', 'error')
     } catch { toast('Erreur réécriture', 'error') }
     finally { setLoadingAction(null) }
@@ -855,6 +870,7 @@ export function GeneratedPostsView({
       onDraft:     () => handleDraft(p),
       onPublish:   () => handlePublish(p),
       isPro,
+      isRewriting: loadingAction === `rewrite-${p}`,
     }
   }
 
