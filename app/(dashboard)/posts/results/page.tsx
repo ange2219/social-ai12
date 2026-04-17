@@ -60,8 +60,13 @@ export default function ResultsPage() {
     return d.id
   }
 
+  function clearResults() {
+    try { sessionStorage.removeItem('social_ia_results') } catch {}
+  }
+
   async function handleSaveDraft(platform: Platform, content: string, imageUrl: string | null) {
     await savePost(platform, content, imageUrl, 'draft')
+    clearResults()
     toast('Brouillon sauvegardé', 'success')
     router.replace('/posts')
   }
@@ -73,6 +78,7 @@ export default function ResultsPage() {
     const id = await savePost(platform, content, imageUrl, 'draft')
     const res = await fetch(`/api/posts/${id}/publish`, { method: 'POST' })
     if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
+    clearResults()
     toast('Post publié !', 'success')
     router.replace('/posts')
   }
@@ -85,6 +91,7 @@ export default function ResultsPage() {
       body: JSON.stringify({ scheduledAt }),
     })
     if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
+    clearResults()
     toast('Post programmé !', 'success')
     router.replace('/posts')
   }
@@ -96,7 +103,7 @@ export default function ResultsPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1.5rem' }}>
         <button
-          onClick={() => router.push('/posts/create')}
+          onClick={() => { clearResults(); router.push('/posts/create') }}
           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', display: 'flex', alignItems: 'center', padding: '4px', borderRadius: '6px', transition: '.12s' }}
           onMouseEnter={e => { e.currentTarget.style.color = 'var(--t1)'; e.currentTarget.style.background = 'var(--s2)' }}
           onMouseLeave={e => { e.currentTarget.style.color = 'var(--t3)'; e.currentTarget.style.background = 'none' }}
@@ -119,7 +126,7 @@ export default function ResultsPage() {
         onSaveDraft={handleSaveDraft}
         onPublish={handlePublish}
         onSchedule={handleSchedule}
-        onClose={() => router.push('/posts/create')}
+        onClose={() => { clearResults(); router.push('/posts/create') }}
       />
     </div>
   )

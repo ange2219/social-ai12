@@ -35,8 +35,9 @@ export async function POST(req: NextRequest) {
     .eq('id', user.id)
     .single()
 
-  // Toutes les fonctionnalités débloquées — on force 'business' pour le quota et l'IA
-  const plan: Plan = 'business'
+  // On garde le plan DB pour le choix du provider IA (free → GitHub, premium/business → Claude)
+  // mais on ne bloque plus sur le quota — toutes les fonctionnalités sont débloquées
+  const plan = (userProfile?.plan || 'free') as Plan
 
   const parsed = GenerateSchema.safeParse(await req.json())
   if (!parsed.success) {
