@@ -670,7 +670,7 @@ export default function CreatePage() {
 
   useEffect(() => {
     createClient().from('users').select('plan').single().then(({ data }) => {
-      if (data?.plan && data.plan !== 'free') setIsPro(true)
+      if (data) setIsPro(true) // toutes les fonctionnalités débloquées
     })
     fetch('/api/brand').then(r => r.ok ? r.json() : null).then(b => {
       if (b?.tone) {

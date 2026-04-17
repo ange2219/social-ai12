@@ -62,13 +62,7 @@ export async function POST(req: NextRequest) {
     distributionMode: parsed.data.distributionMode,
   }
 
-  // Filtrer les plateformes selon le plan
-  if (plan === 'free') {
-    body.platforms = body.platforms.filter(p => ['instagram', 'facebook'].includes(p))
-    if (!body.platforms.length) {
-      return NextResponse.json({ error: 'Plateforme non disponible sur le plan gratuit' }, { status: 403 })
-    }
-  }
+  // Toutes les plateformes débloquées
 
   // Enrichir avec le profil de marque complet
   const { data: brandProfile } = await admin

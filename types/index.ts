@@ -91,7 +91,7 @@ export interface PlanLimits {
 export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
   free: {
     platforms: 2,
-    generationsPerDay: 5,
+    generationsPerDay: 15,
     accountsPerPlatform: 1,
     scheduling: false,
     advancedAnalytics: false,

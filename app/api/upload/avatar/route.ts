@@ -40,6 +40,13 @@ export async function POST(req: NextRequest) {
 
     const admin = createAdminClient()
 
+    // Créer le bucket s'il n'existe pas encore
+    await admin.storage.createBucket('avatars', {
+      public: true,
+      fileSizeLimit: 5 * 1024 * 1024,
+      allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+    }).catch(() => { /* bucket existe déjà — OK */ })
+
     const { error: uploadError } = await admin.storage
       .from('avatars')
       .upload(path, buffer, { contentType: file.type, upsert: true })

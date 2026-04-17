@@ -13,10 +13,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     .eq('id', user.id)
     .single()
 
-  if (userProfile?.plan === 'free') {
-    return NextResponse.json({ error: 'Le scheduling nécessite un plan payant' }, { status: 403 })
-  }
-
+  // Scheduling débloqué pour tous les plans
   const { scheduledAt } = await req.json()
   if (!scheduledAt) return NextResponse.json({ error: 'scheduledAt requis' }, { status: 400 })
 

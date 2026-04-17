@@ -276,7 +276,7 @@ export default function PostsPage() {
 
   useEffect(() => {
     loadPosts()
-    fetch('/api/auth/me').then(r => r.json()).then(d => { if (d?.plan) setUserPlan(d.plan) }).catch(() => {})
+    fetch('/api/auth/me').then(r => r.json()).then(d => { if (d) setUserPlan('business') }).catch(() => {})
   }, [])
 
   function openPost(post: Post) {

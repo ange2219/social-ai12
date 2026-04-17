@@ -6,7 +6,7 @@ import type { GenerateRequest, Plan } from '@/types'
 import { z } from 'zod'
 
 const ALLOWED_PLATFORMS = ['instagram', 'facebook', 'twitter', 'linkedin', 'tiktok', 'youtube', 'pinterest'] as const
-const ALLOWED_TONES = ['professionnel', 'decontracte', 'inspirant', 'humoristique'] as const
+const ALLOWED_TONES = ['professionnel', 'decontracte', 'inspirant', 'humoristique', 'emotionnel', 'expert'] as const
 
 const GenerateWeekSchema = z.object({
   platforms:   z.array(z.enum(ALLOWED_PLATFORMS)).min(1).max(7),
@@ -28,10 +28,7 @@ export async function POST(req: NextRequest) {
     .single()
 
   const plan = (userProfile?.plan || 'free') as Plan
-
-  if (plan === 'free') {
-    return NextResponse.json({ error: 'Fonctionnalité réservée aux plans Premium et Business' }, { status: 403 })
-  }
+  // Toutes les fonctionnalités débloquées
 
   const parsedBody = GenerateWeekSchema.safeParse(await req.json())
   if (!parsedBody.success) {

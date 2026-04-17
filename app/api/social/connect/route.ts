@@ -14,8 +14,8 @@ export async function POST(req: NextRequest) {
     .eq('id', user.id)
     .single()
 
-  if (!profile || profile.plan === 'free') {
-    return NextResponse.json({ error: 'Plan payant requis' }, { status: 403 })
+  if (!profile) {
+    return NextResponse.json({ error: 'Profil introuvable' }, { status: 404 })
   }
 
   try {

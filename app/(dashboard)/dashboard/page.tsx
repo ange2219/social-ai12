@@ -6,8 +6,7 @@ import { ProgressionWidget } from '@/components/dashboard/ProgressionWidget'
 import { PostsTableCard } from '@/components/dashboard/PostsTableCard'
 import { ActivityChart } from '@/components/dashboard/ActivityChart'
 import { TypingGreeting } from '@/components/dashboard/TypingGreeting'
-
-const PLAN_LIMITS: Record<string, number> = { free: 10, premium: 100, business: 999 }
+import { PLAN_LIMITS, type Plan } from '@/types'
 
 const PLATFORM_NAMES: Record<string, string> = {
   instagram: 'Instagram', facebook: 'Facebook', tiktok: 'TikTok',
