@@ -10,7 +10,7 @@ import {
   IconInstagram, IconFacebook, IconTikTok,
   IconTwitterX, IconLinkedIn, IconYouTube, IconPinterest,
 } from '@/components/icons/BrandIcons'
-import { Send, Save, Clock, X, Image as ImageIcon, RotateCcw, Hash, ChevronDown, Check } from 'lucide-react'
+import { Send, Save, Clock, X, Image as ImageIcon, RotateCcw, Hash, ChevronDown, ChevronRight, Check } from 'lucide-react'
 
 // ─── Platform icon ────────────────────────────────────────────────────────────
 
@@ -30,6 +30,12 @@ function PlatformIcon({ platform, size = 16 }: { platform: Platform; size?: numb
 
 function lowercaseHashtags(text: string): string {
   return text.replace(/#(\w+)/g, (_, tag) => '#' + tag.toLowerCase())
+}
+
+function formatScheduled(iso: string): string {
+  const d = new Date(iso)
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) +
+    ', ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 }
 
 // ─── Char limits per platform ─────────────────────────────────────────────────
@@ -292,6 +298,7 @@ interface CardState {
   content: string
   imageUrl: string | null
   imageLoading: boolean
+  scheduledAt: string | null
 }
 
 interface PostPlatformCardProps {
@@ -303,28 +310,29 @@ interface PostPlatformCardProps {
   onImageLoad: (loading: boolean) => void
   onRewrite: () => void
   onHashtags: () => void
-  onSchedule: () => void
+  onScheduleOpen: () => void
+  onPublishScheduled: () => void
   onDraft: () => void
   onPublish: () => void
   isPro: boolean
   isRewriting: boolean
+  onClose?: () => void
 }
 
 function PostPlatformCard({
   platform, objective, cardState,
   onContentChange, onImageSet, onImageLoad,
   onRewrite, onHashtags,
-  onSchedule, onDraft, onPublish,
-  isPro, isRewriting,
+  onScheduleOpen, onPublishScheduled,
+  onDraft, onPublish,
+  isPro, isRewriting, onClose,
 }: PostPlatformCardProps) {
-  const { content, imageUrl, imageLoading } = cardState
-  const limit      = CHAR_LIMITS[platform]
+  const { content, imageUrl, imageLoading, scheduledAt } = cardState
+  const limit       = CHAR_LIMITS[platform]
   const isOverLimit = limit ? content.length > limit : false
   const color       = PLATFORM_COLORS[platform]
 
   const [showImageMenu, setShowImageMenu] = useState(false)
-  const [imgPanY,       setImgPanY]       = useState(50)
-  const [showImgOverlay, setShowImgOverlay] = useState(false)
   const imageMenuRef = useRef<HTMLDivElement>(null)
   const fileRef      = useRef<HTMLInputElement>(null)
 
@@ -366,312 +374,242 @@ function PostPlatformCard({
     finally { onImageLoad(false); e.target.value = '' }
   }
 
+  // Shared image menu content
+  function ImageMenu() {
+    return (
+      <>
+        <button
+          onClick={handleGenerateImage}
+          disabled={!isPro}
+          style={{ display: 'flex', alignItems: 'center', gap: '.6rem', width: '100%', padding: '.65rem .9rem', background: 'none', border: 'none', cursor: isPro ? 'pointer' : 'not-allowed', color: isPro ? 'var(--t1)' : 'var(--t3)', fontSize: '.82rem', textAlign: 'left', opacity: isPro ? 1 : .5 }}
+          onMouseEnter={e => { if (isPro) (e.currentTarget as HTMLElement).style.background = 'var(--s2)' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none' }}
+        >
+          <div style={{ width: '22px', height: '22px', borderRadius: '5px', background: 'rgba(123,92,245,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <span style={{ fontSize: '.8rem' }}>✨</span>
+          </div>
+          <div>
+            <div style={{ fontWeight: 600, fontSize: '.8rem' }}>Générer avec l&apos;IA</div>
+            {!isPro && <div style={{ fontSize: '.67rem', color: '#FBBF24' }}>Pro requis</div>}
+          </div>
+        </button>
+        <div style={{ height: '1px', background: 'var(--b1)' }} />
+        <label
+          style={{ display: 'flex', alignItems: 'center', gap: '.6rem', padding: '.65rem .9rem', cursor: 'pointer', fontSize: '.82rem', color: 'var(--t1)' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--s2)' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none' }}
+        >
+          <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImportFile} />
+          <div style={{ width: '22px', height: '22px', borderRadius: '5px', background: 'rgba(6,182,212,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <span style={{ fontSize: '.8rem' }}>📁</span>
+          </div>
+          <span style={{ fontWeight: 600 }}>Importer une photo</span>
+        </label>
+      </>
+    )
+  }
+
   return (
     <div style={{
       background: 'var(--card)', border: '1px solid var(--b1)',
-      borderRadius: '14px', overflow: 'hidden',
+      borderRadius: '16px', overflow: 'visible',
       display: 'flex', flexDirection: 'column',
     }}>
-      {/* Header */}
+
+      {/* ── Platform header ── */}
       <div style={{
-        display: 'flex', alignItems: 'center', gap: '.6rem',
-        padding: '.8rem 1rem', borderBottom: '1px solid var(--b1)',
-        background: `${color}08`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '.65rem 1rem', position: 'relative',
+        background: `${color}0d`, borderBottom: '1px solid var(--b1)',
+        borderRadius: '16px 16px 0 0', overflow: 'hidden',
       }}>
-        <PlatformIcon platform={platform} size={18} />
-        <span style={{ fontSize: '.88rem', fontWeight: 600, color: 'var(--t1)', flex: 1 }}>
-          {PLATFORM_NAMES[platform]}
-        </span>
-        {objective && (
-          <span style={{
-            fontSize: '.63rem', fontWeight: 600, padding: '.18rem .5rem', borderRadius: '5px',
-            background: 'rgba(123,92,245,.12)', color: 'var(--accent)',
-            border: '1px solid rgba(123,92,245,.2)', whiteSpace: 'nowrap',
-          }}>
-            {OBJECTIVE_LABELS[objective]}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '.45rem' }}>
+          <PlatformIcon platform={platform} size={20} />
+          <span style={{ fontSize: '.92rem', fontWeight: 700, color: 'var(--t1)' }}>
+            {PLATFORM_NAMES[platform]}
           </span>
+        </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            style={{ position: 'absolute', right: '.7rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', display: 'flex', padding: '4px', borderRadius: '6px', transition: '.12s' }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--t1)'; e.currentTarget.style.background = 'var(--s2)' }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--t3)'; e.currentTarget.style.background = 'none' }}
+          >
+            <X size={16} />
+          </button>
         )}
       </div>
 
-      {/* Textarea */}
-      <div style={{ padding: '.85rem 1rem .4rem', flex: 1 }}>
+      {/* ── User header ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem', padding: '.8rem 1rem .3rem' }}>
+        <div style={{
+          width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+          background: `linear-gradient(135deg, ${color}, ${color}88)`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: '.88rem', fontWeight: 700, color: '#fff',
+        }}>A</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: '.83rem', fontWeight: 600, color: 'var(--t1)' }}>Votre compte</div>
+          {objective && (
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: '.25rem',
+              background: 'var(--s2)', border: '1px solid var(--b1)',
+              borderRadius: '4px', padding: '.1rem .4rem',
+              fontSize: '.62rem', color: 'var(--t3)', marginTop: '.15rem',
+            }}>
+              <span style={{ fontSize: '.66rem' }}>🌐</span>
+              <span>{OBJECTIVE_LABELS[objective]}</span>
+              <ChevronDown size={9} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Textarea ── */}
+      <div style={{ padding: '.2rem 1rem .15rem' }}>
         <textarea
           value={content}
           onChange={e => onContentChange(e.target.value)}
           style={{
-            width: '100%', minHeight: '140px',
-            background: 'transparent',
-            border: `1px solid ${isOverLimit ? '#EF4444' : 'var(--b1)'}`,
-            borderRadius: '8px', padding: '.6rem .75rem',
-            fontSize: '.83rem', color: 'var(--t1)',
-            lineHeight: 1.65, resize: 'vertical', outline: 'none',
-            fontFamily: 'inherit', transition: 'border-color .15s',
+            width: '100%', minHeight: '115px',
+            background: 'transparent', border: 'none', outline: 'none',
+            fontSize: '.84rem', color: 'var(--t1)',
+            lineHeight: 1.65, resize: 'none', fontFamily: 'inherit',
           }}
         />
-        <div style={{
-          textAlign: 'right', fontSize: '.68rem', fontWeight: 500, marginTop: '.2rem',
-          color: isOverLimit ? '#EF4444' : 'var(--t3)',
-        }}>
+        <div style={{ textAlign: 'right', fontSize: '.68rem', fontWeight: 500, color: isOverLimit ? '#EF4444' : 'var(--t3)' }}>
           {content.length}{limit ? ` / ${limit}` : ''}
         </div>
       </div>
 
-      {/* Réécrire / Hashtags */}
-      <div style={{ display: 'flex', gap: '.45rem', padding: '.2rem 1rem .7rem' }}>
+      {/* ── Réécrire / Hashtags ── */}
+      <div style={{ display: 'flex', gap: '.4rem', padding: '.15rem 1rem .6rem' }}>
         <button
           onClick={isRewriting ? undefined : onRewrite}
           disabled={isRewriting}
-          style={{
-            display: 'flex', alignItems: 'center', gap: '.3rem',
-            padding: '.32rem .7rem', borderRadius: '6px',
-            border: '1px solid var(--b1)', background: 'transparent',
-            color: isRewriting ? 'var(--accent)' : 'var(--t2)',
-            cursor: isRewriting ? 'not-allowed' : 'pointer',
-            fontSize: '.73rem', fontWeight: 500, transition: '.12s',
-            opacity: isRewriting ? .7 : 1,
-          }}
+          style={{ display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.28rem .6rem', borderRadius: '6px', border: '1px solid var(--b1)', background: 'transparent', color: isRewriting ? 'var(--accent)' : 'var(--t3)', cursor: isRewriting ? 'not-allowed' : 'pointer', fontSize: '.7rem', fontWeight: 500, transition: '.12s', opacity: isRewriting ? .7 : 1 }}
           onMouseEnter={e => { if (!isRewriting) { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' } }}
-          onMouseLeave={e => { if (!isRewriting) { e.currentTarget.style.borderColor = 'var(--b1)'; e.currentTarget.style.color = 'var(--t2)' } }}
+          onMouseLeave={e => { if (!isRewriting) { e.currentTarget.style.borderColor = 'var(--b1)'; e.currentTarget.style.color = 'var(--t3)' } }}
         >
-          {isRewriting ? (
-            <div style={{ width: '10px', height: '10px', border: '1.5px solid rgba(123,92,245,.25)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'rot .7s linear infinite', flexShrink: 0 }} />
-          ) : (
-            <RotateCcw size={11} />
-          )}
+          {isRewriting ? <div style={{ width: '9px', height: '9px', border: '1.5px solid rgba(123,92,245,.25)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'rot .7s linear infinite', flexShrink: 0 }} /> : <RotateCcw size={10} />}
           Réécrire
         </button>
         <button
           onClick={onHashtags}
-          style={{
-            display: 'flex', alignItems: 'center', gap: '.3rem',
-            padding: '.32rem .7rem', borderRadius: '6px',
-            border: '1px solid var(--b1)', background: 'transparent',
-            color: 'var(--t2)', cursor: 'pointer', fontSize: '.73rem', fontWeight: 500,
-            transition: '.12s',
-          }}
+          style={{ display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.28rem .6rem', borderRadius: '6px', border: '1px solid var(--b1)', background: 'transparent', color: 'var(--t3)', cursor: 'pointer', fontSize: '.7rem', fontWeight: 500, transition: '.12s' }}
           onMouseEnter={e => { e.currentTarget.style.borderColor = '#06B6D4'; e.currentTarget.style.color = '#06B6D4' }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--b1)'; e.currentTarget.style.color = 'var(--t2)' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--b1)'; e.currentTarget.style.color = 'var(--t3)' }}
         >
-          <Hash size={11} /> Hashtags
+          <Hash size={10} /> Hashtags
         </button>
       </div>
 
-      {/* Image: loading state */}
+      {/* ── Image loading ── */}
       {imageLoading && (
-        <div style={{
-          margin: '0 1rem .75rem',
-          borderRadius: '10px', aspectRatio: '1/1',
-          background: 'var(--s2)', border: '1px solid var(--b1)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <div style={{
-            width: '26px', height: '26px',
-            border: '3px solid rgba(123,92,245,.2)',
-            borderTopColor: 'var(--accent)',
-            borderRadius: '50%', animation: 'rot .7s linear infinite',
-          }} />
+        <div style={{ margin: '0 1rem .6rem', borderRadius: '12px', aspectRatio: '16/9', background: 'var(--s2)', border: '1px solid var(--b1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '24px', height: '24px', border: '3px solid rgba(123,92,245,.2)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
         </div>
       )}
 
-      {/* Image: display */}
+      {/* ── Image display ── */}
       {imageUrl && !imageLoading && (
-        <div
-          style={{
-            margin: '0 1rem .75rem', borderRadius: '10px', overflow: 'hidden',
-            border: '1px solid var(--b1)', aspectRatio: '1/1', position: 'relative',
-          }}
-          onMouseEnter={() => setShowImgOverlay(true)}
-          onMouseLeave={() => setShowImgOverlay(false)}
-        >
-          <img
-            src={imageUrl} alt=""
-            style={{
-              width: '100%', height: '100%',
-              objectFit: 'cover', objectPosition: `center ${imgPanY}%`,
-              display: 'block',
-            }}
-          />
-          {showImgOverlay && (
-            <div style={{
-              position: 'absolute', inset: 0,
-              background: 'linear-gradient(to bottom, rgba(0,0,0,.55) 0%, transparent 35%, transparent 65%, rgba(0,0,0,.55) 100%)',
-              display: 'flex', flexDirection: 'column',
-              alignItems: 'stretch', justifyContent: 'space-between',
-              padding: '.6rem',
-            }}>
-              {/* Top row: Régénérer + Supprimer */}
-              <div style={{ display: 'flex', gap: '.4rem', justifyContent: 'flex-end' }}>
-                {isPro && (
-                  <button
-                    onClick={handleGenerateImage}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '.3rem',
-                      padding: '.28rem .55rem', borderRadius: '6px',
-                      background: 'rgba(0,0,0,.6)', border: '1px solid rgba(255,255,255,.15)',
-                      color: '#fff', cursor: 'pointer', fontSize: '.7rem', fontWeight: 500,
-                      backdropFilter: 'blur(4px)',
-                    }}
-                  >
-                    <RotateCcw size={11} /> Régénérer
-                  </button>
-                )}
-                <button
-                  onClick={() => onImageSet(null)}
-                  style={{
-                    display: 'flex', alignItems: 'center', padding: '.28rem .45rem',
-                    borderRadius: '6px', background: 'rgba(0,0,0,.6)',
-                    border: '1px solid rgba(255,255,255,.15)',
-                    color: '#fff', cursor: 'pointer',
-                    backdropFilter: 'blur(4px)',
-                  }}
-                >
-                  <X size={13} />
-                </button>
-              </div>
-              {/* Bottom: vertical pan slider */}
-              <div>
-                <input
-                  type="range" min={0} max={100} value={imgPanY}
-                  onChange={e => setImgPanY(Number(e.target.value))}
-                  onClick={e => e.stopPropagation()}
-                  style={{ width: '100%', accentColor: 'white', cursor: 'ns-resize' }}
-                  title="Cadrage vertical"
-                />
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Image: add button (no image) */}
-      {!imageUrl && !imageLoading && (
-        <div style={{ padding: '0 1rem .7rem', position: 'relative' }} ref={imageMenuRef}>
+        <div style={{ position: 'relative', margin: '0 1rem .6rem' }}>
+          <img src={imageUrl} alt="" style={{ width: '100%', borderRadius: '12px', display: 'block', maxHeight: '260px', objectFit: 'cover' }} />
           <button
             onClick={() => setShowImageMenu(v => !v)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '.4rem', width: '100%',
-              padding: '.35rem .75rem', borderRadius: '7px',
-              border: '1px dashed var(--b1)', background: 'transparent',
-              color: 'var(--t3)', cursor: 'pointer', fontSize: '.73rem', fontWeight: 500,
-              justifyContent: 'center', transition: '.12s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--b1)'; e.currentTarget.style.color = 'var(--t3)' }}
+            style={{ position: 'absolute', top: '8px', left: '8px', display: 'flex', alignItems: 'center', gap: '.25rem', padding: '.25rem .55rem', borderRadius: '6px', background: 'rgba(0,0,0,.65)', border: '1px solid rgba(255,255,255,.15)', backdropFilter: 'blur(4px)', color: '#fff', cursor: 'pointer', fontSize: '.72rem', fontWeight: 500 }}
           >
-            <ImageIcon size={13} /> Ajouter une image
-            <ChevronDown size={11} style={{
-              marginLeft: 'auto', transition: 'transform .15s',
-              transform: showImageMenu ? 'rotate(180deg)' : 'rotate(0)',
-            }} />
+            <RotateCcw size={10} /> changer
+          </button>
+          <button
+            onClick={() => onImageSet(null)}
+            style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', alignItems: 'center', padding: '.25rem .3rem', borderRadius: '6px', background: 'rgba(0,0,0,.65)', border: '1px solid rgba(255,255,255,.15)', backdropFilter: 'blur(4px)', color: '#fff', cursor: 'pointer' }}
+          >
+            <X size={13} />
           </button>
           {showImageMenu && (
-            <div style={{
-              position: 'absolute', bottom: 'calc(100% + 4px)',
-              left: '1rem', right: '1rem',
-              background: 'var(--card)', border: '1px solid var(--b1)',
-              borderRadius: '10px', overflow: 'hidden',
-              boxShadow: '0 8px 24px rgba(0,0,0,.25)', zIndex: 50,
-            }}>
-              <button
-                onClick={handleGenerateImage}
-                disabled={!isPro}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '.6rem',
-                  width: '100%', padding: '.65rem .9rem',
-                  background: 'none', border: 'none',
-                  cursor: isPro ? 'pointer' : 'not-allowed',
-                  color: isPro ? 'var(--t1)' : 'var(--t3)',
-                  fontSize: '.82rem', textAlign: 'left',
-                  opacity: isPro ? 1 : .5,
-                }}
-                onMouseEnter={e => { if (isPro) (e.currentTarget as HTMLElement).style.background = 'var(--s2)' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none' }}
-              >
-                <div style={{
-                  width: '22px', height: '22px', borderRadius: '5px',
-                  background: 'rgba(123,92,245,.12)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}>
-                  <span style={{ fontSize: '.8rem' }}>✨</span>
-                </div>
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: '.8rem' }}>Générer avec l&apos;IA</div>
-                  {!isPro && <div style={{ fontSize: '.67rem', color: '#FBBF24' }}>Pro requis</div>}
-                </div>
-              </button>
-              <div style={{ height: '1px', background: 'var(--b1)' }} />
-              <label
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '.6rem',
-                  padding: '.65rem .9rem', cursor: 'pointer',
-                  fontSize: '.82rem', color: 'var(--t1)',
-                }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--s2)' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none' }}
-              >
-                <input
-                  ref={fileRef}
-                  type="file" accept="image/*"
-                  style={{ display: 'none' }}
-                  onChange={handleImportFile}
-                />
-                <div style={{
-                  width: '22px', height: '22px', borderRadius: '5px',
-                  background: 'rgba(6,182,212,.12)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}>
-                  <span style={{ fontSize: '.8rem' }}>📁</span>
-                </div>
-                <span style={{ fontWeight: 600 }}>Importer une photo</span>
-              </label>
+            <div style={{ position: 'absolute', top: '44px', left: '8px', background: 'var(--card)', border: '1px solid var(--b1)', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,.3)', zIndex: 50, minWidth: '190px' }}>
+              <ImageMenu />
             </div>
           )}
         </div>
       )}
 
-      {/* Footer: Brouillon / Programmer / Publier */}
-      <div style={{
-        display: 'flex', gap: '.45rem', padding: '.7rem 1rem',
-        borderTop: '1px solid var(--b1)',
-      }}>
+      {/* ── Action rows ── */}
+      <div style={{ borderTop: '1px solid var(--b1)' }}>
+
+        {/* Ajouter une image */}
+        <div style={{ position: 'relative' }} ref={imageMenuRef}>
+          <button
+            onClick={() => setShowImageMenu(v => !v)}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '.7rem', padding: '.75rem 1rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t1)', fontSize: '.83rem', fontFamily: 'inherit', transition: '.1s' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--s2)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none' }}
+          >
+            <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--s2)', border: '1px solid var(--b1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <ImageIcon size={14} color="var(--t2)" />
+            </div>
+            <span style={{ flex: 1, textAlign: 'left', fontWeight: 500 }}>{imageUrl ? "Changer l'image" : 'Ajouter une image'}</span>
+            <ChevronRight size={15} color="var(--t3)" />
+          </button>
+          {!imageUrl && showImageMenu && (
+            <div style={{ position: 'absolute', bottom: 'calc(100% + 4px)', left: '1rem', right: '1rem', background: 'var(--card)', border: '1px solid var(--b1)', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,.25)', zIndex: 50 }}>
+              <ImageMenu />
+            </div>
+          )}
+        </div>
+
+        <div style={{ height: '1px', background: 'var(--b1)', margin: '0 1rem' }} />
+
+        {/* Programmer la publication */}
+        <button
+          onClick={onScheduleOpen}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '.7rem', padding: '.75rem 1rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t1)', fontSize: '.83rem', fontFamily: 'inherit', transition: '.1s' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--s2)' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none' }}
+        >
+          <div style={{ width: 30, height: 30, borderRadius: '50%', background: scheduledAt ? 'rgba(123,92,245,.1)' : 'var(--s2)', border: `1px solid ${scheduledAt ? 'rgba(123,92,245,.3)' : 'var(--b1)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Clock size={14} color={scheduledAt ? 'var(--accent)' : 'var(--t2)'} />
+          </div>
+          <span style={{ flex: 1, textAlign: 'left', fontWeight: 500 }}>Programmer la publication</span>
+          {scheduledAt && (
+            <span style={{ fontSize: '.75rem', color: 'var(--accent)', fontWeight: 600, marginRight: '.2rem' }}>
+              {formatScheduled(scheduledAt)}
+            </span>
+          )}
+          <ChevronRight size={15} color="var(--t3)" />
+        </button>
+
+      </div>
+
+      {/* ── Footer buttons ── */}
+      <div style={{ display: 'flex', gap: '.6rem', padding: '.9rem 1rem', borderTop: '1px solid var(--b1)', borderRadius: '0 0 16px 16px' }}>
         <button
           onClick={onDraft}
-          style={{
-            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.3rem',
-            padding: '.5rem', borderRadius: '8px',
-            border: '1px solid var(--b1)', background: 'transparent',
-            color: 'var(--t2)', cursor: 'pointer', fontSize: '.75rem', fontWeight: 500,
-            transition: '.12s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' }}
+          style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.35rem', padding: '.65rem', borderRadius: '10px', border: '1px solid var(--b1)', background: 'var(--s2)', color: 'var(--t2)', cursor: 'pointer', fontSize: '.82rem', fontWeight: 600, transition: '.12s' }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--b2)'; e.currentTarget.style.color = 'var(--t1)' }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--b1)'; e.currentTarget.style.color = 'var(--t2)' }}
         >
-          <Save size={12} /> Brouillon
+          <Save size={14} /> Brouillons
         </button>
-        <button
-          onClick={onSchedule}
-          title="Programmer"
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: '.5rem .65rem', borderRadius: '8px',
-            border: '1px solid var(--b1)', background: 'transparent',
-            color: 'var(--t2)', cursor: 'pointer', transition: '.12s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--b1)'; e.currentTarget.style.color = 'var(--t2)' }}
-        >
-          <Clock size={14} />
-        </button>
-        <button
-          onClick={onPublish}
-          className="btn-primary"
-          style={{
-            flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.35rem',
-            padding: '.5rem', borderRadius: '8px', fontSize: '.78rem', fontWeight: 600,
-          }}
-        >
-          <Send size={12} /> Publier
-        </button>
+        {scheduledAt ? (
+          <button
+            onClick={onPublishScheduled}
+            className="btn-primary"
+            style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.35rem', padding: '.65rem', borderRadius: '10px', fontSize: '.82rem', fontWeight: 600 }}
+          >
+            <Clock size={14} /> Programmer
+          </button>
+        ) : (
+          <button
+            onClick={onPublish}
+            className="btn-primary"
+            style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.35rem', padding: '.65rem', borderRadius: '10px', fontSize: '.82rem', fontWeight: 600 }}
+          >
+            <Send size={14} /> Publier
+          </button>
+        )}
       </div>
     </div>
   )
@@ -727,12 +665,13 @@ export interface GeneratedPostsViewProps {
   onSaveDraft:  (platform: Platform, content: string, imageUrl: string | null) => Promise<void>
   onPublish:    (platform: Platform, content: string, imageUrl: string | null) => Promise<void>
   onSchedule:   (platform: Platform, content: string, imageUrl: string | null, scheduledAt: string) => Promise<void>
+  onClose?:     () => void
 }
 
 export function GeneratedPostsView({
   platforms, variants, objective,
   quotaUsed, quotaLimit, isPro,
-  onSaveDraft, onPublish, onSchedule,
+  onSaveDraft, onPublish, onSchedule, onClose,
 }: GeneratedPostsViewProps) {
   const { toast } = useToast()
 
@@ -740,7 +679,7 @@ export function GeneratedPostsView({
   const [cards, setCards] = useState<Record<string, CardState>>(() => {
     const init: Record<string, CardState> = {}
     for (const p of platforms) {
-      init[p] = { content: lowercaseHashtags(variants[p] || ''), imageUrl: null, imageLoading: false }
+      init[p] = { content: lowercaseHashtags(variants[p] || ''), imageUrl: null, imageLoading: false, scheduledAt: null }
     }
     return init
   })
@@ -750,42 +689,18 @@ export function GeneratedPostsView({
     setCards(prev => {
       const next = { ...prev }
       for (const p of platforms) {
-        if (!next[p]) next[p] = { content: lowercaseHashtags(variants[p] || ''), imageUrl: null, imageLoading: false }
+        if (!next[p]) next[p] = { content: lowercaseHashtags(variants[p] || ''), imageUrl: null, imageLoading: false, scheduledAt: null }
         else next[p] = { ...next[p], content: lowercaseHashtags(variants[p] || next[p].content) }
       }
       return next
     })
   }, [variants, platforms])
 
-  // Active tab / mobile index
-  const [activeTab,      setActiveTab]      = useState<Platform>(platforms[0])
-  const [activeMobileIdx, setActiveMobileIdx] = useState(0)
   const [schedulerPlatform, setSchedulerPlatform] = useState<Platform | null>(null)
-  const [loadingAction,  setLoadingAction]  = useState<string | null>(null)
-
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const [loadingAction,     setLoadingAction]     = useState<string | null>(null)
 
   function updateCard(platform: Platform, partial: Partial<CardState>) {
     setCards(prev => ({ ...prev, [platform]: { ...prev[platform], ...partial } }))
-  }
-
-  function handleMobileScroll() {
-    const el = scrollRef.current
-    if (!el) return
-    const idx = Math.max(0, Math.min(Math.round(el.scrollLeft / el.offsetWidth), platforms.length - 1))
-    if (idx !== activeMobileIdx) {
-      setActiveMobileIdx(idx)
-      if (platforms[idx]) setActiveTab(platforms[idx])
-    }
-  }
-
-  function scrollToIdx(idx: number) {
-    scrollRef.current?.scrollTo({ left: idx * (scrollRef.current?.offsetWidth ?? 0), behavior: 'smooth' })
-  }
-
-  function tabClick(platform: Platform, idx: number) {
-    setActiveTab(platform)
-    scrollToIdx(idx)
   }
 
   async function handleDraft(platform: Platform) {
@@ -809,13 +724,19 @@ export function GeneratedPostsView({
     } finally { setLoadingAction(null) }
   }
 
-  async function handleScheduleConfirm(scheduledAt: string) {
+  function handleScheduleConfirm(scheduledAt: string) {
     const platform = schedulerPlatform
     setSchedulerPlatform(null)
-    if (!platform || loadingAction) return
+    if (!platform) return
+    updateCard(platform, { scheduledAt })
+  }
+
+  async function handlePublishScheduled(platform: Platform) {
+    const scheduled = cards[platform]?.scheduledAt
+    if (!scheduled || loadingAction) return
     setLoadingAction(`schedule-${platform}`)
     try {
-      await onSchedule(platform, cards[platform]?.content || '', cards[platform]?.imageUrl || null, scheduledAt)
+      await onSchedule(platform, cards[platform]?.content || '', cards[platform]?.imageUrl || null, scheduled)
     } catch (err: unknown) {
       toast(err instanceof Error ? err.message : 'Erreur de programmation', 'error')
     } finally { setLoadingAction(null) }
@@ -858,19 +779,21 @@ export function GeneratedPostsView({
 
   function cardProps(p: Platform): PostPlatformCardProps {
     return {
-      platform: p,
+      platform:    p,
       objective,
-      cardState: cards[p] || { content: '', imageUrl: null, imageLoading: false },
-      onContentChange: v => updateCard(p, { content: v }),
-      onImageSet:      url => updateCard(p, { imageUrl: url }),
-      onImageLoad:     loading => updateCard(p, { imageLoading: loading }),
-      onRewrite:   () => handleRewrite(p),
-      onHashtags:  () => handleHashtags(p),
-      onSchedule:  () => setSchedulerPlatform(p),
-      onDraft:     () => handleDraft(p),
-      onPublish:   () => handlePublish(p),
+      cardState:   cards[p] || { content: '', imageUrl: null, imageLoading: false, scheduledAt: null },
+      onContentChange:    v       => updateCard(p, { content: v }),
+      onImageSet:         url     => updateCard(p, { imageUrl: url }),
+      onImageLoad:        loading => updateCard(p, { imageLoading: loading }),
+      onRewrite:          () => handleRewrite(p),
+      onHashtags:         () => handleHashtags(p),
+      onScheduleOpen:     () => setSchedulerPlatform(p),
+      onPublishScheduled: () => handlePublishScheduled(p),
+      onDraft:            () => handleDraft(p),
+      onPublish:          () => handlePublish(p),
       isPro,
       isRewriting: loadingAction === `rewrite-${p}`,
+      onClose:     onClose,
     }
   }
 
@@ -879,85 +802,26 @@ export function GeneratedPostsView({
       {/* Quota bar */}
       <QuotaBar textUsed={quotaUsed} textLimit={quotaLimit} />
 
-      {/* Platform tabs */}
+      {/* Cards — centred, max 480px each */}
       <div style={{
-        display: 'flex', gap: '.35rem', flexWrap: 'wrap',
-        marginBottom: '.9rem', overflowX: 'auto',
-        scrollbarWidth: 'none',
-      } as React.CSSProperties}>
-        {platforms.map((p, i) => {
-          const isActive = p === activeTab
-          const col = PLATFORM_COLORS[p]
-          return (
-            <button
-              key={p}
-              onClick={() => tabClick(p, i)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '.4rem',
-                padding: '.38rem .8rem', borderRadius: '20px',
-                border: `1px solid ${isActive ? col + '55' : 'var(--b1)'}`,
-                background: isActive ? col + '14' : 'transparent',
-                color: isActive ? col : 'var(--t3)',
-                cursor: 'pointer', fontSize: '.76rem', fontWeight: 500,
-                transition: '.15s', whiteSpace: 'nowrap',
-              }}
-            >
-              <PlatformIcon platform={p} size={13} />
-              {PLATFORM_NAMES[p]}
-            </button>
-          )
-        })}
-      </div>
-
-      {/* ── Mobile: horizontal swipe ── */}
-      <div className="gpv-mobile">
-        <div
-          ref={scrollRef}
-          onScroll={handleMobileScroll}
-          style={{
-            display: 'flex', overflowX: 'auto',
-            scrollSnapType: 'x mandatory',
-            scrollbarWidth: 'none',
-          } as React.CSSProperties}
-        >
-          {platforms.map(p => (
-            <div key={p} style={{ minWidth: '100%', scrollSnapAlign: 'start' }}>
-              <PostPlatformCard {...cardProps(p)} />
-            </div>
-          ))}
-        </div>
-        {/* Dot indicators */}
-        {platforms.length > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '.4rem', marginTop: '.75rem' }}>
-            {platforms.map((_, i) => (
-              <div
-                key={i} onClick={() => scrollToIdx(i)}
-                style={{
-                  width: i === activeMobileIdx ? '16px' : '6px', height: '6px',
-                  borderRadius: '3px', cursor: 'pointer',
-                  background: i === activeMobileIdx ? 'var(--accent)' : 'var(--b1)',
-                  transition: 'all .2s',
-                }}
-              />
-            ))}
+        display: 'flex', justifyContent: 'center',
+        flexWrap: 'wrap', gap: '1.25rem',
+      }}>
+        {platforms.map(p => (
+          <div
+            key={p}
+            style={{
+              width: '100%',
+              maxWidth: platforms.length === 1 ? '480px' : '440px',
+              flex: platforms.length === 1 ? '0 0 auto' : '1 1 340px',
+            }}
+          >
+            <PostPlatformCard {...cardProps(p)} />
           </div>
-        )}
+        ))}
       </div>
 
-      {/* ── Desktop: 2-col grid ── */}
-      <div className="gpv-desktop">
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: platforms.length === 1 ? '1fr' : 'repeat(2, 1fr)',
-          gap: '1rem',
-        }}>
-          {platforms.map(p => (
-            <PostPlatformCard key={p} {...cardProps(p)} />
-          ))}
-        </div>
-      </div>
-
-      {/* Scheduler */}
+      {/* Scheduler sheet */}
       {schedulerPlatform && (
         <SchedulerSheet
           onConfirm={handleScheduleConfirm}

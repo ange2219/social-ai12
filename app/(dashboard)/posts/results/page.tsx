@@ -113,6 +113,7 @@ export default function ResultsPage() {
         onSaveDraft={handleSaveDraft}
         onPublish={handlePublish}
         onSchedule={handleSchedule}
+        onClose={() => router.push('/posts/create')}
       />
     </div>
   )
