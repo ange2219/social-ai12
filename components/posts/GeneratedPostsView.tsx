@@ -789,7 +789,7 @@ export function GeneratedPostsView({
       const res = await fetch('/api/ai/rewrite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: cards[platform]?.content, platform }),
+        body: JSON.stringify({ content: cards[platform]?.content, platform, instruction: 'Améliore ce post' }),
       })
       const data = await res.json()
       if (res.ok && data.content) updateCard(platform, { content: data.content })
@@ -810,7 +810,7 @@ export function GeneratedPostsView({
       const data = await res.json()
       if (res.ok && data.hashtags) {
         const c = cards[platform]?.content || ''
-        updateCard(platform, { content: c.trimEnd() + '\n\n' + data.hashtags })
+        updateCard(platform, { content: c.trimEnd() + '\n\n' + data.hashtags.join(' ') })
       } else toast(data.error || 'Erreur hashtags', 'error')
     } catch { toast('Erreur hashtags', 'error') }
     finally { setLoadingAction(null) }

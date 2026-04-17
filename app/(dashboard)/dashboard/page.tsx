@@ -105,12 +105,12 @@ export default async function DashboardPage() {
   }
   const bestPlatform = Object.entries(platformEng).sort((a, b) => b[1] - a[1])[0]?.[0] || null
 
-  const plan = userData?.plan || 'free'
+  const plan = (userData?.plan || 'free') as Plan
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
   const monthRes = await admin.from('posts').select('id', { count: 'exact' })
     .eq('user_id', authUser.id).gte('created_at', monthStart).neq('status', 'deleted')
   const monthCount = monthRes.count || 0
-  const planLimit  = PLAN_LIMITS[plan]
+  const planLimit  = PLAN_LIMITS[plan].generationsPerDay
 
   const aiTip = getAiTip(weeks, bestPlatform, avgPerWeek)
   const firstName = userData?.full_name?.split(' ')[0] || authUser.email?.split('@')[0] || 'vous'
@@ -138,15 +138,15 @@ export default async function DashboardPage() {
             </div>
           </div>
           <div className="kpi-donut-row">
-            <div className="kpi-val">{generatedCount} <small>/{planLimit === 999 ? '∞' : planLimit}</small></div>
-            {planLimit !== 999 && (
+            <div className="kpi-val">{generatedCount} <small>/{planLimit === 'unlimited' ? '∞' : planLimit}</small></div>
+            {planLimit !== 'unlimited' && (
               <div className="kpi-donut">
                 <svg width="48" height="48" viewBox="0 0 48 48">
                   <circle cx="24" cy="24" r="19" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="4.5"/>
                   {generatedCount > 0 && (
                     <circle cx="24" cy="24" r="19" fill="none" stroke="url(#gradKpi1)" strokeWidth="4.5"
                       strokeDasharray="119.4"
-                      strokeDashoffset={119.4 - (119.4 * Math.min(generatedCount / planLimit, 1))}
+                      strokeDashoffset={119.4 - (119.4 * Math.min(generatedCount / (planLimit as number), 1))}
                       style={{ transition: 'stroke-dashoffset 0.9s cubic-bezier(.4,0,.2,1) 0.3s' }}/>
                   )}
                   <defs>
@@ -156,7 +156,7 @@ export default async function DashboardPage() {
                     </linearGradient>
                   </defs>
                 </svg>
-                <div className="kpi-donut-center">{Math.round((generatedCount / planLimit) * 100)}%</div>
+                <div className="kpi-donut-center">{Math.round((generatedCount / (planLimit as number)) * 100)}%</div>
               </div>
             )}
           </div>
