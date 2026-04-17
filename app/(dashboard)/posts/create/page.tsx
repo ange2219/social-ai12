@@ -342,13 +342,14 @@ function PlatformPopup({
 // ─── Panneau aperçu live ───────────────────────────────────────────────────────
 
 function LivePreviewPanel({
-  objective, params, selectedPlatforms, distributionMode, brief,
+  objective, params, selectedPlatforms, distributionMode, brief, onClose,
 }: {
   objective: PostObjective | null
   params: GenerationParams
   selectedPlatforms: Platform[]
   distributionMode: DistributionMode
   brief: string
+  onClose: () => void
 }) {
   const [reformulation, setReformulation] = useState<string | null>(null)
   const [reformulating, setReformulating] = useState(false)
@@ -382,7 +383,10 @@ function LivePreviewPanel({
       {/* Titre */}
       <div style={{ padding: '.9rem 1.1rem', borderBottom: '1px solid var(--b1)', display: 'flex', alignItems: 'center', gap: '.5rem' }}>
         <Zap size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-        <span style={{ fontSize: '.78rem', fontWeight: 600, color: 'var(--t2)' }}>Aperçu en direct</span>
+        <span style={{ fontSize: '.78rem', fontWeight: 600, color: 'var(--t2)', flex: 1 }}>Aperçu en direct</span>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', display: 'flex', padding: '2px' }}>
+          <X size={15} />
+        </button>
       </div>
 
       <div style={{ padding: '.85rem 1.1rem', display: 'flex', flexDirection: 'column', gap: '.9rem' }}>
@@ -452,27 +456,30 @@ function LivePreviewPanel({
           </div>
         </div>
 
-        {sep}
-
-        {/* Paramètres actifs */}
-        <div>
-          <div style={{ fontSize: '.65rem', fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '.4rem' }}>Paramètres</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.3rem' }}>
-            {[
-              { label: LENGTH_LABELS[params.length], color: '#7B5CF5' },
-              { label: FORMAT_LABELS[params.format], color: '#06B6D4' },
-              { label: POSTTONE_LABELS[params.tone],  color: '#10B981' },
-              { label: CTA_LABELS[params.cta],        color: '#F59E0B' },
-            ].map(tag => (
-              <span key={tag.label} style={{
-                fontSize: '.67rem', fontWeight: 500, padding: '.2rem .55rem', borderRadius: '5px',
-                background: tag.color + '15', color: tag.color, border: `1px solid ${tag.color}30`,
-              }}>
-                {tag.label}
-              </span>
-            ))}
-          </div>
-        </div>
+        {/* Paramètres actifs — seulement si objectif choisi */}
+        {objective && (
+          <>
+            {sep}
+            <div>
+              <div style={{ fontSize: '.65rem', fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '.4rem' }}>Paramètres</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.3rem' }}>
+                {[
+                  { label: LENGTH_LABELS[params.length], color: '#7B5CF5' },
+                  { label: FORMAT_LABELS[params.format], color: '#06B6D4' },
+                  { label: POSTTONE_LABELS[params.tone],  color: '#10B981' },
+                  { label: CTA_LABELS[params.cta],        color: '#F59E0B' },
+                ].map(tag => (
+                  <span key={tag.label} style={{
+                    fontSize: '.67rem', fontWeight: 500, padding: '.2rem .55rem', borderRadius: '5px',
+                    background: tag.color + '15', color: tag.color, border: `1px solid ${tag.color}30`,
+                  }}>
+                    {tag.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Brief reformulé */}
         {(brief.trim() || reformulating) && (
@@ -637,7 +644,7 @@ export default function CreatePage() {
   const [objectiveMenuOpen, setObjMenuOpen] = useState(false)
   const [brief, setBrief]                   = useState('')
   const [params, setParams]                 = useState<GenerationParams>({
-    length: 'court', format: 'direct', tone: 'professionnel', cta: 'acheter',
+    length: 'moyen', format: 'direct', tone: 'professionnel', cta: 'aucun',
   })
   const [distributionMode, setDistributionMode] = useState<DistributionMode>('unified')
   const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(['instagram'])
@@ -645,6 +652,7 @@ export default function CreatePage() {
   // ── Popups ──
   const [showParamsPopup,   setShowParamsPopup]   = useState(false)
   const [showPlatformPopup, setShowPlatformPopup] = useState(false)
+  const [showLive,          setShowLive]          = useState(false)
 
   // ── Résultats IA ──
   const [variants,           setVariants]          = useState<Partial<Record<Platform, string>>>({})
@@ -1026,11 +1034,31 @@ export default function CreatePage() {
           {/* ── Colonne gauche : formulaire ── */}
           <div style={{ flex: 1, minWidth: 0 }}>
 
-            {/* Header : titre + objectif */}
+            {/* Header : titre + objectif + live */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '.75rem' }}>
               <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1.25rem', fontWeight: 700, color: 'var(--t1)', letterSpacing: '-.02em' }}>
                 Générer un post
               </h1>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+
+              {/* Bouton Live — visible seulement si objectif ou brief */}
+              {(objective || brief.trim()) && (
+                <button
+                  onClick={() => setShowLive(v => !v)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '.4rem',
+                    padding: '.45rem .75rem', borderRadius: '8px',
+                    border: `1px solid ${showLive ? 'rgba(16,185,129,.5)' : 'var(--b1)'}`,
+                    background: showLive ? 'rgba(16,185,129,.1)' : 'var(--card)',
+                    color: showLive ? '#10B981' : 'var(--t3)',
+                    cursor: 'pointer', fontSize: '.78rem', fontWeight: 500, transition: '.15s',
+                  }}
+                >
+                  <Zap size={12} />
+                  Live
+                </button>
+              )}
 
               {/* Bouton Objectif */}
               <div ref={objMenuRef} style={{ position: 'relative' }}>
@@ -1073,6 +1101,8 @@ export default function CreatePage() {
                   </div>
                 )}
               </div>
+
+              </div>{/* fin flex boutons */}
             </div>
 
             {/* Brief */}
@@ -1139,16 +1169,19 @@ export default function CreatePage() {
 
           </div>
 
-          {/* ── Colonne droite : aperçu live ── */}
-          <div className="w-full lg:w-[360px] shrink-0">
-            <LivePreviewPanel
-              objective={objective}
-              params={params}
-              selectedPlatforms={selectedPlatforms}
-              distributionMode={distributionMode}
-              brief={brief}
-            />
-          </div>
+          {/* ── Colonne droite : aperçu live (seulement si activé) ── */}
+          {showLive && (objective || brief.trim()) && (
+            <div className="w-full lg:w-[360px] shrink-0">
+              <LivePreviewPanel
+                objective={objective}
+                params={params}
+                selectedPlatforms={selectedPlatforms}
+                distributionMode={distributionMode}
+                brief={brief}
+                onClose={() => setShowLive(false)}
+              />
+            </div>
+          )}
 
         </div>
       )}

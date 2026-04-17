@@ -47,14 +47,21 @@ function WheelColumn({
   selectedIndex: number
   onChange: (index: number) => void
 }) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const ITEM_H = 42
-  const lastFiredIdx = useRef(selectedIndex)
+  const containerRef  = useRef<HTMLDivElement>(null)
+  const ITEM_H        = 42
+  const lastFiredIdx  = useRef(selectedIndex)
+  const didMount      = useRef(false)
 
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
-    el.scrollTo({ top: selectedIndex * ITEM_H, behavior: 'smooth' })
+    if (!didMount.current) {
+      // Premier rendu : position instantanée sans animation
+      didMount.current = true
+      el.scrollTop = selectedIndex * ITEM_H
+    } else {
+      el.scrollTo({ top: selectedIndex * ITEM_H, behavior: 'smooth' })
+    }
   }, [selectedIndex])
 
   function handleScroll() {
@@ -827,7 +834,8 @@ export function GeneratedPostsView({
       const data = await res.json()
       if (res.ok && data.hashtags) {
         const c = cards[platform]?.content || ''
-        updateCard(platform, { content: c.trimEnd() + '\n\n' + data.hashtags.join(' ') })
+        const tags = (data.hashtags as string[]).map((h: string) => h.toLowerCase()).join(' ')
+        updateCard(platform, { content: c.trimEnd() + '\n\n' + tags })
       } else toast(data.error || 'Erreur hashtags', 'error')
     } catch { toast('Erreur hashtags', 'error') }
     finally { setLoadingAction(null) }

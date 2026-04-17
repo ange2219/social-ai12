@@ -58,7 +58,7 @@ export default function ResultsPage() {
   async function handleSaveDraft(platform: Platform, content: string, imageUrl: string | null) {
     await savePost(platform, content, imageUrl, 'draft')
     toast('Brouillon sauvegardé', 'success')
-    router.push('/posts')
+    router.replace('/posts')
   }
 
   async function handlePublish(platform: Platform, content: string, imageUrl: string | null) {
@@ -69,7 +69,7 @@ export default function ResultsPage() {
     const res = await fetch(`/api/posts/${id}/publish`, { method: 'POST' })
     if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
     toast('Post publié !', 'success')
-    router.push('/posts')
+    router.replace('/posts')
   }
 
   async function handleSchedule(platform: Platform, content: string, imageUrl: string | null, scheduledAt: string) {
@@ -81,7 +81,7 @@ export default function ResultsPage() {
     })
     if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
     toast('Post programmé !', 'success')
-    router.push('/posts')
+    router.replace('/posts')
   }
 
   if (!ready || !data) return null
