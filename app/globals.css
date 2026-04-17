@@ -437,11 +437,21 @@ tbody td{padding:10px;font-size:12px;color:var(--text);}
 .manual-preview-img { width: 100%; border-radius: 8px; object-fit: cover; max-height: 200px; }
 
 /* ── Animations ── */
-@keyframes rot      { to { transform: rotate(360deg); } }
-@keyframes slideUp  { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-@keyframes fadeUp   { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes shimmer  { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
-@keyframes blink    { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+@keyframes rot         { to { transform: rotate(360deg); } }
+@keyframes slideUp     { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes slideUpFull { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes fadeUp      { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeDown    { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeInScale { from { opacity: 0; transform: scale(.94); }        to { opacity: 1; transform: scale(1); } }
+@keyframes fadeInRight { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes shimmer     { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
+@keyframes blink       { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+
+/* ── Utilitaires animation ── */
+.anim-fade-down  { animation: fadeDown   .18s cubic-bezier(.22,1,.36,1); }
+.anim-fade-scale { animation: fadeInScale .2s  cubic-bezier(.22,1,.36,1); }
+.anim-fade-right { animation: fadeInRight .22s cubic-bezier(.22,1,.36,1); }
+.anim-slide-up   { animation: slideUp    .2s  cubic-bezier(.22,1,.36,1); }
 
 /* ══════════════════════════════════════
    MOBILE — bottom nav + responsive

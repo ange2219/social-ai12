@@ -173,12 +173,12 @@ export interface GenerationParams {
 }
 
 export const OBJECTIVE_LABELS: Record<PostObjective, string> = {
-  vendre:    '🎯 Vendre',
-  engager:   '💬 Engager',
-  eduquer:   '📚 Éduquer',
-  inspirer:  '✨ Inspirer',
-  annoncer:  '📣 Annoncer',
-  fideliser: '❤️ Fidéliser',
+  vendre:    'Vendre',
+  engager:   'Engager',
+  eduquer:   'Éduquer',
+  inspirer:  'Inspirer',
+  annoncer:  'Annoncer',
+  fideliser: 'Fidéliser',
 }
 
 export const OBJECTIVE_DEFAULTS: Record<PostObjective, GenerationParams> = {

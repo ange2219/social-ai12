@@ -125,7 +125,7 @@ function ParamsPopup({
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.72)', backdropFilter: 'blur(6px)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div style={{ background: 'var(--card)', border: '1px solid var(--b1)', borderRadius: '16px', width: '100%', maxWidth: '440px', maxHeight: '90vh', overflow: 'auto' }}>
+      <div className="anim-fade-scale" style={{ background: 'var(--card)', border: '1px solid var(--b1)', borderRadius: '16px', width: '100%', maxWidth: '440px', maxHeight: '90vh', overflow: 'auto' }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--b1)' }}>
           <span style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1rem', fontWeight: 700, color: 'var(--t1)' }}>Autres paramètres</span>
@@ -227,7 +227,7 @@ function PlatformPopup({
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.72)', backdropFilter: 'blur(6px)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div style={{ background: 'var(--card)', border: '1px solid var(--b1)', borderRadius: '16px', width: '100%', maxWidth: '420px', maxHeight: '90vh', overflow: 'auto' }}>
+      <div className="anim-fade-scale" style={{ background: 'var(--card)', border: '1px solid var(--b1)', borderRadius: '16px', width: '100%', maxWidth: '420px', maxHeight: '90vh', overflow: 'auto' }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--b1)' }}>
           <span style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1rem', fontWeight: 700, color: 'var(--t1)' }}>Plateformes</span>
@@ -621,6 +621,27 @@ function PostActionModal({ content, platforms, mediaUrls, aiGenerated, onClose }
   )
 }
 
+// ─── Icônes d'objectif (petites, colorées) ────────────────────────────────────
+
+const OBJ_COLORS: Record<string, string> = {
+  vendre: '#EF4444', engager: '#7B5CF5', eduquer: '#06B6D4',
+  inspirer: '#F59E0B', annoncer: '#10B981', fideliser: '#EC4899',
+}
+
+function ObjIcon({ objective, active, size = 13 }: { objective: string; active: boolean; size?: number }) {
+  const color = active ? 'var(--accent)' : OBJ_COLORS[objective] || 'var(--t3)'
+  const s = size
+  switch (objective) {
+    case 'vendre':    return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    case 'engager':   return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    case 'eduquer':   return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+    case 'inspirer':  return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    case 'annoncer':  return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    case 'fideliser': return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    default:          return <div style={{ width: s, height: s, borderRadius: '50%', background: color }} />
+  }
+}
+
 // ─── Page principale ──────────────────────────────────────────────────────────
 
 export default function CreatePage() {
@@ -732,6 +753,32 @@ export default function CreatePage() {
   useEffect(() => {
     if (objective) setParams(OBJECTIVE_DEFAULTS[objective])
   }, [objective])
+
+  // Auto-détecter l'objectif à partir du brief (debounce 1.4s)
+  const [aiDetecting, setAiDetecting] = useState(false)
+  const [autoDetected, setAutoDetected] = useState(false)
+  useEffect(() => {
+    if (brief.trim().length < 8) return
+    if (objective && !autoDetected) return // objectif choisi manuellement → pas d'override
+    const timer = setTimeout(async () => {
+      setAiDetecting(true)
+      try {
+        const res = await fetch('/api/ai/detect-objective', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ brief: brief.trim() }),
+        })
+        const data = await res.json()
+        if (res.ok && data.objective && data.objective !== objective) {
+          setObjective(data.objective as PostObjective)
+          setAutoDetected(true)
+        }
+      } catch { /* silencieux */ }
+      finally { setAiDetecting(false) }
+    }, 1400)
+    return () => clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brief])
 
   // Fermer le menu objectif si clic extérieur
   useEffect(() => {
@@ -1042,7 +1089,54 @@ export default function CreatePage() {
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
 
-              {/* Bouton Live — visible seulement si objectif ou brief */}
+              {/* Bouton Objectif */}
+              <div ref={objMenuRef} style={{ position: 'relative' }}>
+                <button
+                  onClick={() => { setObjMenuOpen(o => !o); setAutoDetected(false) }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '.5rem',
+                    padding: '.45rem .85rem', borderRadius: '8px',
+                    border: `1px solid ${objective ? 'var(--accent)' : 'var(--b1)'}`,
+                    background: objective ? 'rgba(123,92,245,.1)' : 'var(--card)',
+                    color: objective ? 'var(--accent)' : 'var(--t2)',
+                    cursor: 'pointer', fontSize: '.82rem', fontWeight: 500, transition: 'all .18s',
+                  }}
+                >
+                  {aiDetecting ? (
+                    <div style={{ width: '10px', height: '10px', border: '1.5px solid rgba(123,92,245,.25)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'rot .7s linear infinite', flexShrink: 0 }} />
+                  ) : (
+                    <Zap size={12} style={{ flexShrink: 0, opacity: objective ? 1 : .4 }} />
+                  )}
+                  <span>{objectiveBtnLabel}</span>
+                  <ChevronDown size={13} style={{ transition: 'transform .18s', transform: objectiveMenuOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
+                </button>
+
+                {objectiveMenuOpen && (
+                  <div className="anim-fade-down" style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, background: 'var(--card)', border: '1px solid var(--b1)', borderRadius: '10px', padding: '.3rem', minWidth: '210px', boxShadow: '0 8px 32px rgba(0,0,0,.2)', zIndex: 60 }}>
+                    {(Object.entries(OBJECTIVE_LABELS) as [PostObjective, string][]).map(([key, label]) => (
+                      <button
+                        key={key}
+                        onClick={() => { setObjective(key); setAutoDetected(false); setObjMenuOpen(false) }}
+                        style={{
+                          width: '100%', display: 'flex', alignItems: 'center', gap: '.6rem',
+                          padding: '.5rem .75rem', borderRadius: '7px', border: 'none',
+                          background: objective === key ? 'rgba(123,92,245,.1)' : 'transparent',
+                          color: objective === key ? 'var(--accent)' : 'var(--t1)',
+                          cursor: 'pointer', fontSize: '.82rem', textAlign: 'left', transition: 'background .1s',
+                        }}
+                        onMouseEnter={e => { if (objective !== key) e.currentTarget.style.background = 'var(--s2)' }}
+                        onMouseLeave={e => { if (objective !== key) e.currentTarget.style.background = 'transparent' }}
+                      >
+                        <ObjIcon objective={key} active={objective === key} />
+                        <span style={{ flex: 1 }}>{label}</span>
+                        {objective === key && <Check size={12} style={{ flexShrink: 0, opacity: .7 }} />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Bouton Live — après Objectif, visible seulement si objectif ou brief */}
               {(objective || brief.trim()) && (
                 <button
                   onClick={() => setShowLive(v => !v)}
@@ -1052,55 +1146,13 @@ export default function CreatePage() {
                     border: `1px solid ${showLive ? 'rgba(16,185,129,.5)' : 'var(--b1)'}`,
                     background: showLive ? 'rgba(16,185,129,.1)' : 'var(--card)',
                     color: showLive ? '#10B981' : 'var(--t3)',
-                    cursor: 'pointer', fontSize: '.78rem', fontWeight: 500, transition: '.15s',
+                    cursor: 'pointer', fontSize: '.78rem', fontWeight: 500, transition: 'all .18s',
                   }}
                 >
                   <Zap size={12} />
                   Live
                 </button>
               )}
-
-              {/* Bouton Objectif */}
-              <div ref={objMenuRef} style={{ position: 'relative' }}>
-                <button
-                  onClick={() => setObjMenuOpen(o => !o)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '.5rem',
-                    padding: '.45rem .85rem', borderRadius: '8px',
-                    border: `1px solid ${objective ? 'var(--accent)' : 'var(--b1)'}`,
-                    background: objective ? 'rgba(123,92,245,.1)' : 'var(--card)',
-                    color: objective ? 'var(--accent)' : 'var(--t2)',
-                    cursor: 'pointer', fontSize: '.82rem', fontWeight: 500, transition: '.15s',
-                  }}
-                >
-                  <span>{objectiveBtnLabel}</span>
-                  <ChevronDown size={13} style={{ transition: 'transform .15s', transform: objectiveMenuOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
-                </button>
-
-                {objectiveMenuOpen && (
-                  <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, background: 'var(--card)', border: '1px solid var(--b1)', borderRadius: '10px', padding: '.3rem', minWidth: '200px', boxShadow: '0 8px 24px rgba(0,0,0,.25)', zIndex: 60 }}>
-                    {(Object.entries(OBJECTIVE_LABELS) as [PostObjective, string][]).map(([key, label]) => (
-                      <button
-                        key={key}
-                        onClick={() => { setObjective(key); setObjMenuOpen(false) }}
-                        style={{
-                          width: '100%', display: 'flex', alignItems: 'center', gap: '.6rem',
-                          padding: '.5rem .75rem', borderRadius: '7px', border: 'none',
-                          background: objective === key ? 'rgba(123,92,245,.1)' : 'transparent',
-                          color: objective === key ? 'var(--accent)' : 'var(--t1)',
-                          cursor: 'pointer', fontSize: '.82rem', textAlign: 'left', transition: '.1s',
-                        }}
-                        onMouseEnter={e => { if (objective !== key) e.currentTarget.style.background = 'var(--s2)' }}
-                        onMouseLeave={e => { if (objective !== key) e.currentTarget.style.background = 'transparent' }}
-                      >
-                        <span style={{ fontSize: '1rem' }}>{label.split(' ')[0]}</span>
-                        <span>{label.split(' ').slice(1).join(' ')}</span>
-                        {objective === key && <Check size={13} style={{ marginLeft: 'auto', flexShrink: 0 }} />}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
 
               </div>{/* fin flex boutons */}
             </div>
@@ -1171,7 +1223,7 @@ export default function CreatePage() {
 
           {/* ── Colonne droite : aperçu live (seulement si activé) ── */}
           {showLive && (objective || brief.trim()) && (
-            <div className="w-full lg:w-[360px] shrink-0">
+            <div className="anim-fade-right w-full lg:w-[360px] shrink-0">
               <LivePreviewPanel
                 objective={objective}
                 params={params}

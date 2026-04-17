@@ -227,7 +227,7 @@ function SchedulerSheet({
         background: 'var(--card)', borderTop: '1px solid var(--b1)',
         borderRadius: '20px 20px 0 0', width: '100%', maxWidth: '480px',
         padding: '0 1.25rem 2rem',
-        animation: 'slideUp .25s cubic-bezier(.22,1,.36,1)',
+        animation: 'slideUpFull .28s cubic-bezier(.22,1,.36,1)',
       }}>
         {/* Drag handle */}
         <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 6px' }}>
