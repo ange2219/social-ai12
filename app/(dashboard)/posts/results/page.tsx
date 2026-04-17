@@ -21,6 +21,7 @@ export default function ResultsPage() {
   const { toast }  = useToast()
   const [data, setData] = useState<ResultsData | null>(null)
   const [ready, setReady] = useState(false)
+  const [userName, setUserName] = useState<string | null>(null)
 
   useEffect(() => {
     try {
@@ -36,6 +37,10 @@ export default function ResultsPage() {
       router.replace('/posts/create')
     }
     setReady(true)
+    // Fetch user name
+    fetch('/api/auth/me').then(r => r.json()).then(d => {
+      if (d?.full_name) setUserName(d.full_name)
+    }).catch(() => {})
   }, [router])
 
   async function savePost(
@@ -110,6 +115,7 @@ export default function ResultsPage() {
         quotaUsed={data.quotaUsed}
         quotaLimit={data.quotaLimit}
         isPro={data.isPro}
+        userName={userName}
         onSaveDraft={handleSaveDraft}
         onPublish={handlePublish}
         onSchedule={handleSchedule}

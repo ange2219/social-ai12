@@ -38,6 +38,27 @@ function formatScheduled(iso: string): string {
     ', ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 }
 
+// ─── Objective icons ──────────────────────────────────────────────────────────
+
+const OBJ_COLORS: Record<string, string> = {
+  vendre: '#EF4444', engager: '#7B5CF5', eduquer: '#06B6D4',
+  inspirer: '#F59E0B', annoncer: '#10B981', fideliser: '#EC4899',
+}
+
+function ObjIcon({ objective, size = 10 }: { objective: string; size?: number }) {
+  const color = OBJ_COLORS[objective] || 'var(--t3)'
+  const s = size
+  switch (objective) {
+    case 'vendre':    return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    case 'engager':   return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    case 'eduquer':   return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+    case 'inspirer':  return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    case 'annoncer':  return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    case 'fideliser': return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    default:          return <div style={{ width: s, height: s, borderRadius: '50%', background: color }} />
+  }
+}
+
 // ─── Char limits per platform ─────────────────────────────────────────────────
 
 const CHAR_LIMITS: Partial<Record<Platform, number>> = {
@@ -329,6 +350,7 @@ interface PostPlatformCardProps {
   isPro: boolean
   isRewriting: boolean
   onClose?: () => void
+  userName?: string | null
 }
 
 function PostPlatformCard({
@@ -337,7 +359,7 @@ function PostPlatformCard({
   onRewrite, onHashtags,
   onScheduleOpen, onPublishScheduled,
   onDraft, onPublish,
-  isPro, isRewriting, onClose,
+  isPro, isRewriting, onClose, userName,
 }: PostPlatformCardProps) {
   const { content, imageUrl, imageLoading, scheduledAt } = cardState
   const limit       = CHAR_LIMITS[platform]
@@ -429,9 +451,9 @@ function PostPlatformCard({
           background: `linear-gradient(135deg, ${color}, ${color}88)`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: '.88rem', fontWeight: 700, color: '#fff',
-        }}>A</div>
+        }}>{userName ? userName.charAt(0).toUpperCase() : 'A'}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: '.83rem', fontWeight: 600, color: 'var(--t1)' }}>Votre compte</div>
+          <div style={{ fontSize: '.83rem', fontWeight: 600, color: 'var(--t1)' }}>{userName || 'Votre compte'}</div>
           {objective && (
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: '.25rem',
@@ -439,7 +461,7 @@ function PostPlatformCard({
               borderRadius: '4px', padding: '.1rem .4rem',
               fontSize: '.62rem', color: 'var(--t3)', marginTop: '.15rem',
             }}>
-              <span style={{ fontSize: '.66rem' }}>🌐</span>
+              <ObjIcon objective={objective} size={10} />
               <span>{OBJECTIVE_LABELS[objective]}</span>
               <ChevronDown size={9} />
             </div>
@@ -596,7 +618,7 @@ function PostPlatformCard({
           <button
             onClick={onPublishScheduled}
             className="btn-primary"
-            style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.35rem', padding: '.65rem', borderRadius: '10px', fontSize: '.82rem', fontWeight: 600 }}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.35rem', padding: '.65rem', borderRadius: '10px', fontSize: '.82rem', fontWeight: 600 }}
           >
             <Clock size={14} /> Programmer
           </button>
@@ -604,7 +626,7 @@ function PostPlatformCard({
           <button
             onClick={onPublish}
             className="btn-primary"
-            style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.35rem', padding: '.65rem', borderRadius: '10px', fontSize: '.82rem', fontWeight: 600 }}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.35rem', padding: '.65rem', borderRadius: '10px', fontSize: '.82rem', fontWeight: 600 }}
           >
             <Send size={14} /> Publier
           </button>
@@ -661,6 +683,7 @@ export interface GeneratedPostsViewProps {
   quotaUsed:    number
   quotaLimit:   number | 'unlimited'
   isPro:        boolean
+  userName?:    string | null
   onSaveDraft:  (platform: Platform, content: string, imageUrl: string | null) => Promise<void>
   onPublish:    (platform: Platform, content: string, imageUrl: string | null) => Promise<void>
   onSchedule:   (platform: Platform, content: string, imageUrl: string | null, scheduledAt: string) => Promise<void>
@@ -669,7 +692,7 @@ export interface GeneratedPostsViewProps {
 
 export function GeneratedPostsView({
   platforms, variants, objective,
-  quotaUsed, quotaLimit, isPro,
+  quotaUsed, quotaLimit, isPro, userName,
   onSaveDraft, onPublish, onSchedule, onClose,
 }: GeneratedPostsViewProps) {
   const { toast } = useToast()
@@ -800,6 +823,7 @@ export function GeneratedPostsView({
       isPro,
       isRewriting: loadingAction === `rewrite-${p}`,
       onClose:     onClose,
+      userName,
     }
   }
 

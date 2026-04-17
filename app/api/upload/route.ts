@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseAdmin } from '@supabase/supabase-js'
 
 export const runtime = 'nodejs'
 
@@ -43,8 +44,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const admin = createAdminClient()
-    const { error } = await admin.storage
+    const storageAdmin = createSupabaseAdmin(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_KEY!,
+      { auth: { persistSession: false } }
+    )
+    const { error } = await storageAdmin.storage
       .from('media')
       .upload(path, buffer, { contentType: file.type, upsert: false })
 
@@ -53,7 +58,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    const { data: { publicUrl } } = admin.storage.from('media').getPublicUrl(path)
+    const { data: { publicUrl } } = storageAdmin.storage.from('media').getPublicUrl(path)
     return NextResponse.json({ url: publicUrl })
   } catch (err) {
     console.error('[upload] Unhandled error:', err)

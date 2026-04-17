@@ -148,6 +148,9 @@ export default function PostsPage() {
   const [plusMenuOpen, setPlusMenuOpen] = useState(false)
   const plusMenuRef = useRef<HTMLDivElement>(null)
 
+  // Pending results banner
+  const [hasPendingResults, setHasPendingResults] = useState(false)
+
   useEffect(() => {
     function handleOutsideClick(e: MouseEvent) {
       if (plusMenuRef.current && !plusMenuRef.current.contains(e.target as Node)) {
@@ -277,6 +280,10 @@ export default function PostsPage() {
   useEffect(() => {
     loadPosts()
     fetch('/api/auth/me').then(r => r.json()).then(d => { if (d) setUserPlan('business') }).catch(() => {})
+    // Check for pending generated results in sessionStorage
+    try {
+      if (sessionStorage.getItem('social_ia_results')) setHasPendingResults(true)
+    } catch {}
   }, [])
 
   function openPost(post: Post) {
@@ -788,6 +795,37 @@ export default function PostsPage() {
           <button onClick={clearSelection} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', display: 'flex', padding: '4px' }}>
             <X size={16} />
           </button>
+        </div>
+      )}
+
+      {/* Pending results banner */}
+      {hasPendingResults && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          gap: '.75rem', padding: '.75rem 1rem', marginBottom: '1rem',
+          background: 'rgba(123,92,245,.1)', border: '1px solid rgba(123,92,245,.25)',
+          borderRadius: '10px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem' }}>
+            <span style={{ fontSize: '.9rem' }}>✨</span>
+            <span style={{ fontSize: '.82rem', color: 'var(--t2)', fontWeight: 500 }}>
+              Vous avez des posts générés en attente
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: '.4rem', flexShrink: 0 }}>
+            <button
+              onClick={() => router.push('/posts/results')}
+              style={{ padding: '.35rem .8rem', borderRadius: '7px', border: 'none', background: 'var(--accent)', color: '#fff', cursor: 'pointer', fontSize: '.78rem', fontWeight: 600 }}
+            >
+              Reprendre
+            </button>
+            <button
+              onClick={() => { try { sessionStorage.removeItem('social_ia_results') } catch {} setHasPendingResults(false) }}
+              style={{ padding: '.35rem .5rem', borderRadius: '7px', border: '1px solid var(--b1)', background: 'transparent', color: 'var(--t3)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+            >
+              <X size={14} />
+            </button>
+          </div>
         </div>
       )}
 

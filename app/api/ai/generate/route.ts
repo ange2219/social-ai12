@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { generatePosts } from '@/lib/ai'
-import { checkGenerationLimit, recordGeneration } from '@/lib/server-utils'
 import type { GenerateRequest, Plan } from '@/types'
 import { z } from 'zod'
 
@@ -36,18 +35,8 @@ export async function POST(req: NextRequest) {
     .eq('id', user.id)
     .single()
 
-  const plan = (userProfile?.plan || 'free') as Plan
-
-  // Vérifier la limite journalière
-  const { allowed, used, limit } = await checkGenerationLimit(user.id, plan)
-  if (!allowed) {
-    return NextResponse.json({
-      error: `Limite journalière atteinte (${used}/${limit})`,
-      code: 'DAILY_LIMIT_REACHED',
-      used,
-      limit,
-    }, { status: 429 })
-  }
+  // Toutes les fonctionnalités débloquées — on force 'business' pour le quota et l'IA
+  const plan: Plan = 'business'
 
   const parsed = GenerateSchema.safeParse(await req.json())
   if (!parsed.success) {
@@ -61,8 +50,6 @@ export async function POST(req: NextRequest) {
     cta:              parsed.data.cta,
     distributionMode: parsed.data.distributionMode,
   }
-
-  // Toutes les plateformes débloquées
 
   // Enrichir avec le profil de marque complet
   const { data: brandProfile } = await admin
@@ -80,28 +67,12 @@ export async function POST(req: NextRequest) {
                                ? brandProfile.content_pillars
                                : undefined
     body.brand_avoid       = brandProfile.avoid_words       || undefined
-    // Utiliser le ton du profil si non fourni par le frontend
     if (!body.tone && brandProfile.tone) body.tone = brandProfile.tone
-  }
-
-  // En mode custom : 1 quota par plateforme sélectionnée
-  const quotaCount = body.distributionMode === 'custom' ? body.platforms.length : 1
-
-  // Vérifier qu'il y a assez de quotas pour ce mode
-  if (typeof limit === 'number' && used + quotaCount > limit) {
-    return NextResponse.json({
-      error: `Quota insuffisant — il vous faut ${quotaCount} génération(s) mais il vous en reste ${limit - used}`,
-      code: 'DAILY_LIMIT_REACHED',
-      used,
-      limit,
-    }, { status: 429 })
   }
 
   try {
     const result = await generatePosts(body, plan)
-    // Enregistrer autant de générations que de quotas consommés
-    await Promise.all(Array.from({ length: quotaCount }, () => recordGeneration(user.id)))
-    return NextResponse.json({ ...result, used: used + quotaCount, limit })
+    return NextResponse.json({ ...result, used: 0, limit: 'unlimited' })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Generation failed'
     return NextResponse.json({ error: message }, { status: 500 })

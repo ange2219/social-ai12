@@ -210,10 +210,6 @@ export async function generateBrandedImage(
   ctx: ImagePromptContext,
   plan: Plan
 ): Promise<ImageResult> {
-  if (plan === 'free') {
-    throw new Error('Génération d\'image non disponible sur le plan gratuit')
-  }
-
   const prompt = buildImagePrompt(ctx)
   console.log(`[image-generation] type=${ctx.imageType} platform=${ctx.platform}`)
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseAdmin } from '@supabase/supabase-js'
 
 const AVATAR_MAX_SIZE = 5 * 1024 * 1024
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -38,16 +39,20 @@ export async function POST(req: NextRequest) {
 
     console.log(`[avatar] uploading user=${user.id} type=${file.type} size=${file.size} path=${path}`)
 
-    const admin = createAdminClient()
+    const storageAdmin = createSupabaseAdmin(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_KEY!,
+      { auth: { persistSession: false } }
+    )
 
     // Créer le bucket s'il n'existe pas encore
-    await admin.storage.createBucket('avatars', {
+    await storageAdmin.storage.createBucket('avatars', {
       public: true,
       fileSizeLimit: 5 * 1024 * 1024,
       allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
     }).catch(() => { /* bucket existe déjà — OK */ })
 
-    const { error: uploadError } = await admin.storage
+    const { error: uploadError } = await storageAdmin.storage
       .from('avatars')
       .upload(path, buffer, { contentType: file.type, upsert: true })
 
@@ -56,10 +61,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Upload échoué : ${uploadError.message}` }, { status: 500 })
     }
 
-    const { data: { publicUrl } } = admin.storage.from('avatars').getPublicUrl(path)
+    const { data: { publicUrl } } = storageAdmin.storage.from('avatars').getPublicUrl(path)
     const urlWithCache = `${publicUrl}?t=${Date.now()}`
 
-    const { error: dbError } = await admin.from('users').update({ avatar_url: urlWithCache }).eq('id', user.id)
+    const { error: dbError } = await storageAdmin.from('users').update({ avatar_url: urlWithCache }).eq('id', user.id)
     if (dbError) {
       console.error('[avatar] db update error:', dbError.message)
       return NextResponse.json({ error: `Sauvegarde profil échouée : ${dbError.message}` }, { status: 500 })
