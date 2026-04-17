@@ -91,7 +91,7 @@ function buildPrompt(req: GenerateRequest): string {
 
   const briefLine = req.brief
     ? `Sujet / brief : ${req.brief}`
-    : `Aucun brief fourni — choisis toi-même un sujet pertinent, engageant et original pour cette marque. Sois créatif.`
+    : `Aucun brief fourni. Choisis un sujet DIRECTEMENT lié à l'activité de cette marque${req.brand_industry ? ` (secteur : ${req.brand_industry})` : ''}. INTERDIT : nature, statistiques génériques, citations motivationnelles sans rapport, contenu lifestyle non lié à la marque. Reste 100% dans l'univers professionnel de la marque.`
 
   // Nouvelles instructions contextuelles
   const objectiveLine  = req.objective  ? OBJECTIVE_INSTRUCTIONS[req.objective]  : ''
@@ -109,11 +109,18 @@ function buildPrompt(req: GenerateRequest): string {
     .filter(Boolean)
     .join('\n')
 
+  const brandSection = brandContext
+    ? `PROFIL DE MARQUE (respecte-le strictement) :\n${brandContext}`
+    : `ATTENTION : Aucun profil de marque défini. Génère un contenu professionnel générique sur la productivité ou la croissance des entreprises.`
+
   return `Tu es un expert Community Manager. Génère des posts pour les réseaux sociaux suivants.
 
-${brandContext}
+${brandSection}
+
 ${briefLine}
 ${contextLines}
+
+RÈGLE ABSOLUE : Tout contenu généré DOIT être directement lié à l'activité et au secteur de la marque. Ne génère jamais de contenu hors-sujet (nature, animaux, citations sans rapport, statistiques génériques, etc.).
 
 ${distributionNote}
 
@@ -136,14 +143,19 @@ function buildWeekPrompt(req: GenerateRequest, postsCount: number): string {
     .join('\n')
 
   const brandContext = req.brand_name
-    ? `Marque : ${req.brand_name}${req.brand_description ? `. Description : ${req.brand_description}` : ''}.`
+    ? `Marque : ${req.brand_name}${req.brand_description ? `. Description : ${req.brand_description}` : ''}${req.brand_industry ? `. Secteur : ${req.brand_industry}` : ''}${req.brand_audience ? `. Audience : ${req.brand_audience}` : ''}.`
     : ''
+
+  const weekBriefLine = req.brief
+    ? `Thème général de la semaine : ${req.brief}`
+    : `Choisis des sujets variés DIRECTEMENT liés à l'activité de la marque${req.brand_industry ? ` (secteur : ${req.brand_industry})` : ''}. INTERDIT : nature, citations génériques, contenu hors-sujet.`
 
   return `Tu es un expert Community Manager. Génère ${postsCount} posts différents pour la semaine.
 
 ${brandContext}
+RÈGLE ABSOLUE : Tout contenu généré DOIT être directement lié à l'activité et au secteur de la marque.
 Ton : ${TONE_INSTRUCTIONS[req.tone]}
-${req.brief ? `Thème général de la semaine : ${req.brief}` : 'Choisis des sujets variés et pertinents pour chaque post.'}
+${weekBriefLine}
 
 Contraintes par plateforme :
 ${platformInstructions}
@@ -285,14 +297,30 @@ export async function generateImage(prompt: string): Promise<string | null> {
 // ─── Export principal ──────────────────────────────────────────────────────────
 
 export async function generatePosts(req: GenerateRequest, plan: Plan): Promise<GenerateResponse> {
+  let result: GenerateResponse
+
   if (plan === 'free' && process.env.GITHUB_TOKEN) {
     try {
-      return await generateWithGitHub(req)
+      result = await generateWithGitHub(req)
     } catch (err) {
       console.error('[ai/generatePosts] GitHub Models failed, falling back to Claude:', err instanceof Error ? err.message : err)
+      result = await generateWithClaude(req)
+    }
+  } else {
+    result = await generateWithClaude(req)
+  }
+
+  // Mode unifié : même texte pour toutes les plateformes
+  if (req.distributionMode === 'unified' && result.variants) {
+    const firstValue = Object.values(result.variants).find(v => v && v.trim())
+    if (firstValue) {
+      for (const platform of req.platforms) {
+        result.variants[platform] = firstValue
+      }
     }
   }
-  return generateWithClaude(req)
+
+  return result
 }
 
 export async function generateWeekPosts(req: GenerateRequest, postsCount: number, plan: Plan): Promise<{ week: { day: number; topic: string; variants: Partial<Record<Platform, string>> }[] }> {

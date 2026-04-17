@@ -53,6 +53,8 @@ function getAiTip(weeks: number[], bestPlatform: string | null, avgPerWeek: numb
   return "La régularité est clé : publier à heure fixe améliore la portée organique jusqu'à 40%."
 }
 
+export const revalidate = 0
+
 export default async function DashboardPage() {
   const supabase = createClient()
   const { data: { user: authUser } } = await supabase.auth.getUser()
@@ -86,7 +88,7 @@ export default async function DashboardPage() {
   const totalImpressions = analytics.reduce((s: number, a: any) => s + (a.impressions || 0), 0)
   const totalEngagement  = analytics.reduce((s: number, a: any) => s + (a.likes || 0) + (a.comments || 0) + (a.shares || 0), 0)
   const publishedCount   = allPosts.filter((p: any) => p.status === 'published').length
-  const scheduledCount   = allPosts.filter((p: any) => p.status === 'scheduled').length
+  const generatedCount   = allPosts.filter((p: any) => p.status !== 'deleted').length
 
   const now = new Date()
   const weeks: number[] = [0, 0, 0, 0]
@@ -131,21 +133,21 @@ export default async function DashboardPage() {
       <div className="kpi-row">
         <div className="kpi-card c-blue">
           <div className="kpi-card-header">
-            <span className="kpi-label">Posts publiés</span>
+            <span className="kpi-label">Posts générés</span>
             <div className="kpi-icon ki-blue">
               <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 0 2-2h2a2 2 0 0 0 2 2"/></svg>
             </div>
           </div>
           <div className="kpi-donut-row">
-            <div className="kpi-val">{publishedCount} <small>/{planLimit === 999 ? '∞' : planLimit}</small></div>
+            <div className="kpi-val">{generatedCount} <small>/{planLimit === 999 ? '∞' : planLimit}</small></div>
             {planLimit !== 999 && (
               <div className="kpi-donut">
                 <svg width="48" height="48" viewBox="0 0 48 48">
                   <circle cx="24" cy="24" r="19" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="4.5"/>
-                  {publishedCount > 0 && (
+                  {generatedCount > 0 && (
                     <circle cx="24" cy="24" r="19" fill="none" stroke="url(#gradKpi1)" strokeWidth="4.5"
                       strokeDasharray="119.4"
-                      strokeDashoffset={119.4 - (119.4 * Math.min(publishedCount / planLimit, 1))}
+                      strokeDashoffset={119.4 - (119.4 * Math.min(generatedCount / planLimit, 1))}
                       style={{ transition: 'stroke-dashoffset 0.9s cubic-bezier(.4,0,.2,1) 0.3s' }}/>
                   )}
                   <defs>
@@ -155,12 +157,12 @@ export default async function DashboardPage() {
                     </linearGradient>
                   </defs>
                 </svg>
-                <div className="kpi-donut-center">{Math.round((publishedCount / planLimit) * 100)}%</div>
+                <div className="kpi-donut-center">{Math.round((generatedCount / planLimit) * 100)}%</div>
               </div>
             )}
           </div>
           <div className="kpi-bottom">
-            <span className="kpi-score-label">{scheduledCount} programmés ce mois</span>
+            <span className="kpi-score-label">{weeks[3]} publiés cette semaine</span>
           </div>
         </div>
 
@@ -211,7 +213,7 @@ export default async function DashboardPage() {
         {/* Right column */}
         <div className="right-col">
 
-          <ActivityChart hasPosts={allPosts.length > 0} />
+          <ActivityChart hasPosts={publishedCount > 0} posts={allPosts} analytics={analytics} />
 
           {/* Suggestions IA */}
           <div className="sugg-card">
