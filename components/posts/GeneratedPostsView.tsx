@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useToast } from '@/components/ui/Toast'
 import {
   Platform, PostObjective,
@@ -720,6 +720,8 @@ export function GeneratedPostsView({
 
   const [schedulerPlatform, setSchedulerPlatform] = useState<Platform | null>(null)
   const [loadingAction,     setLoadingAction]     = useState<string | null>(null)
+  const [activeIdx,         setActiveIdx]         = useState(0)
+  const sliderRef = useRef<HTMLDivElement>(null)
 
   function updateCard(platform: Platform, partial: Partial<CardState>) {
     setCards(prev => ({ ...prev, [platform]: { ...prev[platform], ...partial } }))
@@ -827,26 +829,81 @@ export function GeneratedPostsView({
     }
   }
 
+  const scrollToIdx = useCallback((idx: number) => {
+    const el = sliderRef.current
+    if (!el) return
+    const child = el.children[idx] as HTMLElement | undefined
+    if (child) child.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    setActiveIdx(idx)
+  }, [])
+
+  function handleSliderScroll() {
+    const el = sliderRef.current
+    if (!el) return
+    const center = el.scrollLeft + el.offsetWidth / 2
+    let closest = 0
+    let minDist = Infinity
+    Array.from(el.children).forEach((child, i) => {
+      const c = child as HTMLElement
+      const childCenter = c.offsetLeft + c.offsetWidth / 2
+      const dist = Math.abs(center - childCenter)
+      if (dist < minDist) { minDist = dist; closest = i }
+    })
+    setActiveIdx(closest)
+  }
+
   return (
     <div>
-      {/* Cards — centred, max 480px each */}
-      <div style={{
-        display: 'flex', justifyContent: 'center',
-        flexWrap: 'wrap', gap: '1.25rem',
-      }}>
+      {/* ── Slider ── */}
+      <div
+        ref={sliderRef}
+        onScroll={handleSliderScroll}
+        style={{
+          display: 'flex',
+          overflowX: platforms.length > 1 ? 'auto' : 'visible',
+          scrollSnapType: platforms.length > 1 ? 'x mandatory' : 'none',
+          gap: '1rem',
+          padding: platforms.length > 1 ? '0 calc(50% - 220px) .5rem' : '0',
+          scrollbarWidth: 'none',
+          justifyContent: platforms.length === 1 ? 'center' : 'flex-start',
+        } as React.CSSProperties}
+      >
         {platforms.map(p => (
           <div
             key={p}
             style={{
+              flexShrink: 0,
               width: '100%',
-              maxWidth: platforms.length === 1 ? '480px' : '440px',
-              flex: platforms.length === 1 ? '0 0 auto' : '1 1 340px',
+              maxWidth: '440px',
+              scrollSnapAlign: 'center',
             }}
           >
             <PostPlatformCard {...cardProps(p)} />
           </div>
         ))}
       </div>
+
+      {/* ── Nav bar (dots) — seulement si plusieurs cartes ── */}
+      {platforms.length > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '.4rem', marginTop: '.75rem' }}>
+          {platforms.map((p, i) => (
+            <button
+              key={p}
+              onClick={() => scrollToIdx(i)}
+              style={{
+                height: '4px',
+                width: i === activeIdx ? '24px' : '8px',
+                borderRadius: '2px',
+                border: 'none',
+                cursor: 'pointer',
+                background: i === activeIdx ? 'var(--accent)' : 'var(--b1)',
+                padding: 0,
+                transition: 'width .2s ease, background .2s ease',
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Scheduler sheet */}
       {schedulerPlatform && (

@@ -1103,8 +1103,10 @@ export default function CreatePage() {
                 >
                   {aiDetecting ? (
                     <div style={{ width: '10px', height: '10px', border: '1.5px solid rgba(123,92,245,.25)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'rot .7s linear infinite', flexShrink: 0 }} />
+                  ) : objective ? (
+                    <ObjIcon objective={objective} active={true} size={12} />
                   ) : (
-                    <Target size={12} style={{ flexShrink: 0, opacity: objective ? 1 : .4 }} />
+                    <Target size={12} style={{ flexShrink: 0, opacity: .4 }} />
                   )}
                   <span>{objectiveBtnLabel}</span>
                   <ChevronDown size={13} style={{ transition: 'transform .18s', transform: objectiveMenuOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
