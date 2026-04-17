@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
 import { createClient } from '@/lib/supabase/client'
-import { GeneratedPostsView } from '@/components/posts/GeneratedPostsView'
 import {
   Save, Send, Upload, X, ArrowLeft, Clock,
   ChevronDown, Settings2, Layers, Zap, Check,
@@ -214,11 +214,13 @@ function PlatformPopup({
 
   function save() {
     onChange(localSelected)
-    onDistributionChange(localMode)
+    // Si une seule plateforme, toujours unified
+    onDistributionChange(localSelected.length <= 1 ? 'unified' : localMode)
     onClose()
   }
 
-  const quotas = localMode === 'unified' ? 1 : localSelected.length
+  const effectiveMode = localSelected.length <= 1 ? 'unified' : localMode
+  const quotas = effectiveMode === 'unified' ? 1 : localSelected.length
 
   return (
     <div
@@ -277,41 +279,43 @@ function PlatformPopup({
             </div>
           </div>
 
-          {/* Mode de distribution */}
-          <div>
-            <label style={{ display: 'block', fontSize: '.78rem', fontWeight: 600, color: 'var(--t2)', marginBottom: '.6rem' }}>Mode de distribution</label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
-              {([
-                { value: 'unified' as const, label: 'Unifié', desc: 'Même post distribué sur toutes les plateformes', quota: '1 quota utilisé' },
-                { value: 'custom' as const,  label: 'Personnalisé', desc: 'Post adapté et optimisé pour chaque plateforme', quota: '1 quota par plateforme' },
-              ]).map(opt => (
-                <button
-                  key={opt.value}
-                  onClick={() => setLocalMode(opt.value)}
-                  style={{
-                    display: 'flex', alignItems: 'flex-start', gap: '.75rem', padding: '.75rem .9rem',
-                    borderRadius: '10px', border: `1px solid ${localMode === opt.value ? 'var(--accent)' : 'var(--b1)'}`,
-                    background: localMode === opt.value ? 'rgba(123,92,245,.08)' : 'transparent',
-                    cursor: 'pointer', textAlign: 'left', transition: '.12s',
-                  }}
-                >
-                  <div style={{
-                    width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0, marginTop: '1px',
-                    border: `2px solid ${localMode === opt.value ? 'var(--accent)' : 'var(--b1)'}`,
-                    background: localMode === opt.value ? 'var(--accent)' : 'transparent',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    {localMode === opt.value && <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#fff' }} />}
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '.82rem', fontWeight: 600, color: 'var(--t1)', marginBottom: '.15rem' }}>{opt.label}</div>
-                    <div style={{ fontSize: '.72rem', color: 'var(--t3)', lineHeight: 1.45 }}>{opt.desc}</div>
-                    <div style={{ fontSize: '.68rem', color: localMode === opt.value ? 'var(--accent)' : 'var(--t3)', marginTop: '.25rem', fontWeight: 500 }}>{opt.quota}</div>
-                  </div>
-                </button>
-              ))}
+          {/* Mode de distribution — masqué si une seule plateforme */}
+          {localSelected.length > 1 && (
+            <div>
+              <label style={{ display: 'block', fontSize: '.78rem', fontWeight: 600, color: 'var(--t2)', marginBottom: '.6rem' }}>Mode de distribution</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
+                {([
+                  { value: 'unified' as const, label: 'Unifié', desc: 'Même post distribué sur toutes les plateformes', quota: '1 quota utilisé' },
+                  { value: 'custom' as const,  label: 'Personnalisé', desc: 'Post adapté et optimisé pour chaque plateforme', quota: '1 quota par plateforme' },
+                ]).map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setLocalMode(opt.value)}
+                    style={{
+                      display: 'flex', alignItems: 'flex-start', gap: '.75rem', padding: '.75rem .9rem',
+                      borderRadius: '10px', border: `1px solid ${localMode === opt.value ? 'var(--accent)' : 'var(--b1)'}`,
+                      background: localMode === opt.value ? 'rgba(123,92,245,.08)' : 'transparent',
+                      cursor: 'pointer', textAlign: 'left', transition: '.12s',
+                    }}
+                  >
+                    <div style={{
+                      width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0, marginTop: '1px',
+                      border: `2px solid ${localMode === opt.value ? 'var(--accent)' : 'var(--b1)'}`,
+                      background: localMode === opt.value ? 'var(--accent)' : 'transparent',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      {localMode === opt.value && <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#fff' }} />}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '.82rem', fontWeight: 600, color: 'var(--t1)', marginBottom: '.15rem' }}>{opt.label}</div>
+                      <div style={{ fontSize: '.72rem', color: 'var(--t3)', lineHeight: 1.45 }}>{opt.desc}</div>
+                      <div style={{ fontSize: '.68rem', color: localMode === opt.value ? 'var(--accent)' : 'var(--t3)', marginTop: '.25rem', fontWeight: 500 }}>{opt.quota}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Compteur de quotas */}
           <div style={{ background: 'var(--s2)', border: '1px solid var(--b1)', borderRadius: '8px', padding: '.65rem .9rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -613,7 +617,8 @@ function PostActionModal({ content, platforms, mediaUrls, aiGenerated, onClose }
 // ─── Page principale ──────────────────────────────────────────────────────────
 
 export default function CreatePage() {
-  const { toast } = useToast()
+  const { toast }  = useToast()
+  const router     = useRouter()
   const fileRef    = useRef<HTMLInputElement>(null)
   const objMenuRef = useRef<HTMLDivElement>(null)
 
@@ -774,11 +779,17 @@ export default function CreatePage() {
         )
         return
       }
-      setVariants(data.variants)
-      if (data.used  !== undefined) setQuotaUsed(data.used)
-      if (data.limit !== undefined) setQuotaLimit(data.limit)
-      setAiUploadedUrl(null)
+      // Enregistrer les résultats et naviguer vers la page dédiée
+      sessionStorage.setItem('social_ia_results', JSON.stringify({
+        variants:    data.variants,
+        platforms:   selectedPlatforms,
+        objective,
+        quotaUsed:   data.used  ?? 0,
+        quotaLimit:  data.limit ?? 'unlimited',
+        isPro,
+      }))
       setBrief('')
+      router.push('/posts/results')
     })
   }
 
@@ -1126,20 +1137,6 @@ export default function CreatePage() {
               Générer
             </button>
 
-            {/* ── Résultats après génération ── */}
-            {hasVariants && (
-              <GeneratedPostsView
-                platforms={selectedPlatforms.filter(p => !!variants[p])}
-                variants={variants}
-                objective={objective}
-                quotaUsed={quotaUsed}
-                quotaLimit={quotaLimit}
-                isPro={isPro}
-                onSaveDraft={handleSaveDraft}
-                onPublish={handlePublishVariant}
-                onSchedule={handleScheduleVariant}
-              />
-            )}
           </div>
 
           {/* ── Colonne droite : aperçu live ── */}

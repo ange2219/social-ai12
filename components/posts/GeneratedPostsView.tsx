@@ -157,6 +157,40 @@ function SchedulerSheet({
   const [hourIdx,   setHourIdx]   = useState(initDate.getHours())
   const [minuteIdx, setMinuteIdx] = useState(Math.min(Math.ceil(initDate.getMinutes() / 5), 11))
 
+  // Retourne {hour, minuteIdx} minimum pour aujourd'hui
+  function getMinToday() {
+    const m = new Date(Date.now() + 45 * 60 * 1000)
+    return { hour: m.getHours(), minIdx: Math.min(Math.ceil(m.getMinutes() / 5), 11) }
+  }
+
+  function handleDayChange(idx: number) {
+    setDayIdx(idx)
+    if (idx === 0) {
+      const min = getMinToday()
+      if (hourIdx < min.hour || (hourIdx === min.hour && minuteIdx < min.minIdx)) {
+        setHourIdx(min.hour)
+        setMinuteIdx(min.minIdx)
+      }
+    }
+  }
+
+  function handleHourChange(idx: number) {
+    if (dayIdx === 0) {
+      const min = getMinToday()
+      if (idx < min.hour) { setHourIdx(min.hour); return }
+      if (idx === min.hour && minuteIdx < min.minIdx) setMinuteIdx(min.minIdx)
+    }
+    setHourIdx(idx)
+  }
+
+  function handleMinuteChange(idx: number) {
+    if (dayIdx === 0) {
+      const min = getMinToday()
+      if (hourIdx <= min.hour && idx < min.minIdx) { setMinuteIdx(min.minIdx); return }
+    }
+    setMinuteIdx(idx)
+  }
+
   // Compute selected datetime
   const scheduled = new Date(dayDates[dayIdx])
   scheduled.setHours(hourIdx, parseInt(minuteItems[minuteIdx]), 0, 0)
@@ -166,9 +200,6 @@ function SchedulerSheet({
   const label = isToday    ? `Aujourd'hui à ${hourIdx}h${minuteItems[minuteIdx]}` :
                 isTomorrow ? `Demain à ${hourIdx}h${minuteItems[minuteIdx]}` :
                 `${dayItems[dayIdx]} à ${hourIdx}h${minuteItems[minuteIdx]}`
-
-  const tooSoon  = scheduled.getTime() - Date.now() < 44 * 60 * 1000
-  const disabled = tooSoon
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
@@ -209,16 +240,10 @@ function SchedulerSheet({
         {/* Real-time label */}
         <div style={{
           textAlign: 'center', marginBottom: '1rem',
-          fontSize: '.9rem', fontWeight: 600, minHeight: '2.4rem',
-          color: disabled ? '#EF4444' : 'var(--accent)',
-          transition: 'color .2s',
+          fontSize: '.9rem', fontWeight: 600, minHeight: '1.6rem',
+          color: 'var(--accent)',
         }}>
           {label}
-          {tooSoon && (
-            <div style={{ fontSize: '.7rem', fontWeight: 400, color: '#EF4444', marginTop: '.15rem' }}>
-              Minimum 45 min à l&apos;avance
-            </div>
-          )}
         </div>
 
         {/* Column labels above wheels */}
@@ -230,21 +255,16 @@ function SchedulerSheet({
 
         {/* Wheel grid */}
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '4px', marginBottom: '1.25rem' }}>
-          <WheelColumn items={dayItems}    selectedIndex={dayIdx}    onChange={setDayIdx}    />
-          <WheelColumn items={hourItems}   selectedIndex={hourIdx}   onChange={setHourIdx}   />
-          <WheelColumn items={minuteItems} selectedIndex={minuteIdx} onChange={setMinuteIdx} />
+          <WheelColumn items={dayItems}    selectedIndex={dayIdx}    onChange={handleDayChange}    />
+          <WheelColumn items={hourItems}   selectedIndex={hourIdx}   onChange={handleHourChange}   />
+          <WheelColumn items={minuteItems} selectedIndex={minuteIdx} onChange={handleMinuteChange} />
         </div>
 
         {/* Confirm */}
         <button
-          onClick={() => { if (!disabled) onConfirm(scheduled.toISOString()) }}
-          disabled={disabled}
+          onClick={() => onConfirm(scheduled.toISOString())}
           className="btn-primary"
-          style={{
-            width: '100%', justifyContent: 'center',
-            display: 'flex', alignItems: 'center', gap: '.4rem',
-            padding: '.7rem', opacity: disabled ? .45 : 1,
-          }}
+          style={{ width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '.4rem', padding: '.7rem' }}
         >
           <Check size={14} /> Terminer
         </button>
@@ -752,7 +772,6 @@ export function GeneratedPostsView({
     setLoadingAction(key)
     try {
       await onSaveDraft(platform, cards[platform]?.content || '', cards[platform]?.imageUrl || null)
-      toast('Brouillon sauvegardé', 'success')
     } catch (err: unknown) {
       toast(err instanceof Error ? err.message : 'Erreur', 'error')
     } finally { setLoadingAction(null) }
@@ -763,7 +782,6 @@ export function GeneratedPostsView({
     setLoadingAction(`publish-${platform}`)
     try {
       await onPublish(platform, cards[platform]?.content || '', cards[platform]?.imageUrl || null)
-      toast('Post publié !', 'success')
     } catch (err: unknown) {
       toast(err instanceof Error ? err.message : 'Erreur de publication', 'error')
     } finally { setLoadingAction(null) }
@@ -776,7 +794,6 @@ export function GeneratedPostsView({
     setLoadingAction(`schedule-${platform}`)
     try {
       await onSchedule(platform, cards[platform]?.content || '', cards[platform]?.imageUrl || null, scheduledAt)
-      toast('Post programmé !', 'success')
     } catch (err: unknown) {
       toast(err instanceof Error ? err.message : 'Erreur de programmation', 'error')
     } finally { setLoadingAction(null) }
