@@ -350,7 +350,8 @@ interface PostPlatformCardProps {
   onPublish: () => void
   isPro: boolean
   isRewriting: boolean
-  isActing: boolean
+  isDrafting: boolean
+  isPublishing: boolean
   onClose?: () => void
   userName?: string | null
 }
@@ -361,8 +362,9 @@ function PostPlatformCard({
   onRewrite, onHashtags,
   onScheduleOpen, onPublishScheduled,
   onDraft, onPublish,
-  isPro, isRewriting, isActing, onClose, userName,
+  isPro, isRewriting, isDrafting, isPublishing, onClose, userName,
 }: PostPlatformCardProps) {
+  const isActing = isDrafting || isPublishing
   const { content, imageUrl, imageLoading, scheduledAt } = cardState
   const isUnifiedCard = allPlatforms && allPlatforms.length > 1
   // In unified mode, use the most restrictive char limit
@@ -643,7 +645,7 @@ function PostPlatformCard({
           onMouseEnter={e => { if (!isActing) { e.currentTarget.style.borderColor = 'var(--b2)'; e.currentTarget.style.color = 'var(--t1)' } }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--b1)'; e.currentTarget.style.color = 'var(--t2)' }}
         >
-          {isActing ? <div style={{ width: '13px', height: '13px', border: '2px solid rgba(123,92,245,.2)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'rot .7s linear infinite', flexShrink: 0 }} /> : <Save size={14} />}
+          {isDrafting ? <div style={{ width: '13px', height: '13px', border: '2px solid rgba(123,92,245,.2)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'rot .7s linear infinite', flexShrink: 0 }} /> : <Save size={14} />}
           Brouillons
         </button>
         {scheduledAt ? (
@@ -653,7 +655,7 @@ function PostPlatformCard({
             className="btn-primary"
             style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.35rem', padding: '.65rem', borderRadius: '10px', fontSize: '.82rem', fontWeight: 600, opacity: isActing ? .6 : 1, cursor: isActing ? 'not-allowed' : 'pointer' }}
           >
-            {isActing ? <div style={{ width: '13px', height: '13px', border: '2px solid rgba(255,255,255,.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'rot .7s linear infinite', flexShrink: 0 }} /> : <Clock size={14} />}
+            {isPublishing ? <div style={{ width: '13px', height: '13px', border: '2px solid rgba(255,255,255,.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'rot .7s linear infinite', flexShrink: 0 }} /> : <Clock size={14} />}
             Programmer
           </button>
         ) : (
@@ -663,7 +665,7 @@ function PostPlatformCard({
             className="btn-primary"
             style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.35rem', padding: '.65rem', borderRadius: '10px', fontSize: '.82rem', fontWeight: 600, opacity: isActing ? .6 : 1, cursor: isActing ? 'not-allowed' : 'pointer' }}
           >
-            {isActing ? <div style={{ width: '13px', height: '13px', border: '2px solid rgba(255,255,255,.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'rot .7s linear infinite', flexShrink: 0 }} /> : <Send size={14} />}
+            {isPublishing ? <div style={{ width: '13px', height: '13px', border: '2px solid rgba(255,255,255,.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'rot .7s linear infinite', flexShrink: 0 }} /> : <Send size={14} />}
             Publier
           </button>
         )}
@@ -889,9 +891,10 @@ export function GeneratedPostsView({
       onDraft:            () => handleDraft(p),
       onPublish:          () => handlePublish(p),
       isPro,
-      isRewriting: loadingAction === `rewrite-${p}`,
-      isActing:    loadingAction === `publish-${p}` || loadingAction === `draft-${p}` || loadingAction === `schedule-${p}`,
-      onClose:     allowPlatformToggle && activePlatforms.length > 1 ? () => togglePlatform(p) : undefined,
+      isRewriting:  loadingAction === `rewrite-${p}`,
+      isDrafting:   loadingAction === `draft-${p}`,
+      isPublishing: loadingAction === `publish-${p}` || loadingAction === `schedule-${p}`,
+      onClose:      allowPlatformToggle && activePlatforms.length > 1 ? () => togglePlatform(p) : undefined,
       userName,
     }
   }
