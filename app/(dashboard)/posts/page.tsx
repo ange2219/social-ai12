@@ -499,6 +499,7 @@ export default function PostsPage() {
   const isDraft = selectedPost?.status === 'draft' || selectedPost?.status === 'failed'
   const isDeleted = selectedPost?.status === 'deleted'
   const draftCount = posts.filter(p => p.status === 'draft' || p.status === 'failed').length
+  const nonDeletedCount = posts.filter(p => p.status !== 'deleted').length
 
   return (
     <div style={{ padding: '1.5rem 2rem 3rem' }}>
@@ -853,7 +854,7 @@ export default function PostsPage() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '.75rem' }}>
         <div>
           <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1.3rem', fontWeight: 700, color: 'var(--t1)', letterSpacing: '-.02em' }}>Mes Posts</h1>
-          <p style={{ color: 'var(--t3)', fontSize: '.8rem', marginTop: '.15rem' }}>{total} post{total !== 1 ? 's' : ''} au total</p>
+          <p style={{ color: 'var(--t3)', fontSize: '.8rem', marginTop: '.15rem' }}>{nonDeletedCount} post{nonDeletedCount !== 1 ? 's' : ''} au total</p>
         </div>
         <div style={{ display: 'flex', gap: '.5rem' }}>
           {/* Sync icon-only */}

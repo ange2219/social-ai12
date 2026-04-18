@@ -6,6 +6,7 @@ import { ProgressionWidget } from '@/components/dashboard/ProgressionWidget'
 import { PostsTableCard } from '@/components/dashboard/PostsTableCard'
 import { ActivityChart } from '@/components/dashboard/ActivityChart'
 import { TypingGreeting } from '@/components/dashboard/TypingGreeting'
+import { AutoRefresh } from '@/components/dashboard/AutoRefresh'
 import { type Plan } from '@/types'
 
 const PLATFORM_NAMES: Record<string, string> = {
@@ -117,6 +118,7 @@ export default async function DashboardPage() {
 
   return (
     <>
+      <AutoRefresh />
       <WelcomeBanner firstName={firstName} />
 
       {/* Greeting */}
