@@ -50,19 +50,37 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL(`/profile?error=compte+${platform}+introuvable+dans+Zernio`, req.url))
   }
 
+  // Vérifie si un token Meta direct existe déjà pour cette plateforme
+  const { data: existing } = await admin
+    .from('social_accounts')
+    .select('access_token, connected_via')
+    .eq('user_id', userId)
+    .eq('platform', platform)
+    .single()
+
+  const hasMetaToken = existing?.access_token && existing.access_token !== 'zernio_managed'
+  const connectedVia = hasMetaToken ? 'both' : 'zernio'
+
+  // Si un token Meta existe, on ne l'écrase pas — on ajoute seulement Zernio par-dessus
+  const upsertPayload: Record<string, unknown> = {
+    user_id:              userId,
+    platform,
+    zernio_account_id:    finalAccountId,
+    is_active:            true,
+    platform_username:    platformUsername,
+    platform_avatar_url:  platformAvatarUrl,
+    connected_via:        connectedVia,
+  }
+  if (!hasMetaToken) {
+    // Pas de token Meta → connexion pure Zernio
+    upsertPayload.access_token    = 'zernio_managed'
+    upsertPayload.platform_user_id = finalAccountId
+  }
+  // Si hasMetaToken : on ne touche ni access_token ni platform_user_id (IDs Meta conservés)
+
   const { error } = await admin
     .from('social_accounts')
-    .upsert({
-      user_id:              userId,
-      platform,
-      zernio_account_id:    finalAccountId,
-      is_active:            true,
-      access_token:         'zernio_managed',
-      platform_user_id:     finalAccountId,
-      platform_username:    platformUsername,
-      platform_avatar_url:  platformAvatarUrl,
-      connected_via:        'zernio',
-    }, { onConflict: 'user_id,platform' })
+    .upsert(upsertPayload, { onConflict: 'user_id,platform' })
 
   if (error) {
     console.error('[social/callback] DB upsert error:', error.message)
