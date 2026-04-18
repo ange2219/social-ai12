@@ -119,7 +119,7 @@ export default function ResultsPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1.5rem' }}>
         <button
-          onClick={() => { clearResults(); router.push(data.editPostId ? '/posts' : '/posts/create') }}
+          onClick={() => { clearResults(); router.push('/posts') }}
           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', display: 'flex', alignItems: 'center', padding: '4px', borderRadius: '6px', transition: '.12s' }}
           onMouseEnter={e => { e.currentTarget.style.color = 'var(--t1)'; e.currentTarget.style.background = 'var(--s2)' }}
           onMouseLeave={e => { e.currentTarget.style.color = 'var(--t3)'; e.currentTarget.style.background = 'none' }}
@@ -144,7 +144,7 @@ export default function ResultsPage() {
         onSaveDraft={handleSaveDraft}
         onPublish={handlePublish}
         onSchedule={handleSchedule}
-        onClose={() => { clearResults(); router.push(data.editPostId ? '/posts' : '/posts/create') }}
+        onClose={() => { clearResults(); router.push('/posts') }}
       />
     </div>
   )
