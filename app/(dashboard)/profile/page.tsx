@@ -147,6 +147,16 @@ export default function ProfilePage() {
     toast(res.ok ? 'Profil de marque sauvegardé' : 'Erreur', res.ok ? 'success' : 'error')
   }
 
+  async function renameAccount(id: string, name: string) {
+    const res = await fetch('/api/social/accounts', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, platform_username: name }) })
+    if (res.ok) {
+      setAccounts(prev => prev.map(a => a.id === id ? { ...a, platform_username: name } : a))
+      toast('Nom mis à jour', 'success')
+    } else {
+      toast('Erreur lors de la mise à jour', 'error')
+    }
+  }
+
   async function disconnect(id: string) {
     const res = await fetch(`/api/social/accounts?id=${id}`, { method: 'DELETE' })
     if (res.ok) { setAccounts(prev => prev.filter(a => a.id !== id)); toast('Compte déconnecté', 'success') }
@@ -275,6 +285,7 @@ export default function ProfilePage() {
                     acc={acc}
                     onConnect={onConnect}
                     onDisconnect={disconnect}
+                    onRename={renameAccount}
                     isLast={i === arr.length - 1}
                   />
                 )
@@ -363,17 +374,25 @@ function Row({ label, desc, children }: { label: string; desc?: string; children
   )
 }
 
-function AccountListItem({ platform, acc, onConnect, onDisconnect, isLast }: {
+function AccountListItem({ platform, acc, onConnect, onDisconnect, onRename, isLast }: {
   platform: Platform
   acc: SocialAccount | undefined
   onConnect: () => void
   onDisconnect: (id: string) => void
+  onRename: (id: string, name: string) => void
   isLast?: boolean
 }) {
   const color = PLATFORM_COLORS[platform]
   const displayName = acc?.platform_username && acc.platform_username !== platform ? acc.platform_username : null
-  const rawName = displayName
   const accountType = platform === 'facebook' ? 'Page' : 'Compte'
+  const [editing, setEditing] = useState(false)
+  const [editVal, setEditVal] = useState(displayName || '')
+
+  function startEdit() { setEditVal(displayName || ''); setEditing(true) }
+  function cancelEdit() { setEditing(false) }
+  async function saveEdit() {
+    if (acc && editVal.trim()) { await onRename(acc.id, editVal.trim()); setEditing(false) }
+  }
 
   return (
     <div style={{
@@ -381,81 +400,70 @@ function AccountListItem({ platform, acc, onConnect, onDisconnect, isLast }: {
       padding: '1rem 0',
       borderBottom: isLast ? 'none' : '1px solid var(--b1)',
     }}>
-      {/* Avatar + badge plateforme */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minWidth: 0 }}>
+        {/* Avatar + badge */}
         <div style={{ position: 'relative', flexShrink: 0 }}>
           {acc ? (
-            <AvatarWithFallback
-              avatarUrl={(acc as any).platform_avatar_url}
-              label={rawName || platform}
-              color={color}
-            />
+            <AvatarWithFallback avatarUrl={(acc as any).platform_avatar_url} label={displayName || platform} color={color} />
           ) : (
-            /* Cercle pointillé + icône — non connecté */
-            <div style={{
-              width: '48px', height: '48px', borderRadius: '50%',
-              border: '2px dashed var(--b1)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              opacity: .5,
-            }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '50%', border: '2px dashed var(--b1)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: .5 }}>
               <PlatformIcon platform={platform} size={22} />
             </div>
           )}
-          {/* Badge plateforme en bas à droite */}
           {acc && (
-            <div style={{
-              position: 'absolute', bottom: '-2px', right: '-2px',
-              width: '20px', height: '20px', borderRadius: '50%',
-              overflow: 'hidden',
-              border: '2px solid var(--s1)',
-            }}>
+            <div style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '20px', height: '20px', borderRadius: '50%', overflow: 'hidden', border: '2px solid var(--s1)' }}>
               <PlatformIcon platform={platform} size={20} />
             </div>
           )}
         </div>
 
-        {/* Infos */}
-        <div>
-          {acc ? (
-            <>
-              <div style={{ fontSize: '.88rem', fontWeight: 600, color: 'var(--t1)' }}>
-                {displayName || PLATFORM_NAMES[platform]}
+        {/* Infos / édition inline */}
+        {acc ? (
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {editing ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+                <input
+                  autoFocus
+                  value={editVal}
+                  onChange={e => setEditVal(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') cancelEdit() }}
+                  style={{ fontSize: '.85rem', fontWeight: 600, background: 'var(--bg)', border: '1px solid #4646FF', borderRadius: '6px', color: 'var(--t1)', padding: '.2rem .5rem', outline: 'none', width: '160px' }}
+                />
+                <button onClick={saveEdit} style={{ fontSize: '.72rem', color: '#22C55E', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, padding: '2px 4px' }}>OK</button>
+                <button onClick={cancelEdit} style={{ fontSize: '.72rem', color: 'var(--t3)', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px' }}>✕</button>
               </div>
-              <div style={{ fontSize: '.75rem', color: 'var(--t3)', marginTop: '.1rem' }}>{accountType}</div>
-            </>
-          ) : (
-            <>
-              <div style={{ fontSize: '.88rem', fontWeight: 500, color: 'var(--t3)' }}>
-                Connecter {PLATFORM_NAMES[platform]}
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+                <span style={{ fontSize: '.88rem', fontWeight: 600, color: 'var(--t1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {displayName || PLATFORM_NAMES[platform]}
+                </span>
+                <button onClick={startEdit} title="Modifier le nom" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', padding: '2px', display: 'flex', flexShrink: 0, opacity: .6 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
               </div>
-              <div style={{ fontSize: '.75rem', color: 'var(--t3)', marginTop: '.1rem', opacity: .6 }}>Non connecté</div>
-            </>
-          )}
-        </div>
+            )}
+            <div style={{ fontSize: '.75rem', color: 'var(--t3)', marginTop: '.1rem' }}>{accountType}</div>
+          </div>
+        ) : (
+          <div>
+            <div style={{ fontSize: '.88rem', fontWeight: 500, color: 'var(--t3)' }}>Connecter {PLATFORM_NAMES[platform]}</div>
+            <div style={{ fontSize: '.75rem', color: 'var(--t3)', marginTop: '.1rem', opacity: .6 }}>Non connecté</div>
+          </div>
+        )}
       </div>
 
       {/* Action */}
-      {acc ? (
-        <button onClick={() => onDisconnect(acc.id)} style={{
-          display: 'flex', alignItems: 'center', gap: '.3rem',
-          padding: '.4rem .85rem', borderRadius: '7px',
-          border: '1px solid rgba(239,68,68,.22)', background: 'transparent',
-          color: '#ef4444', cursor: 'pointer', fontSize: '.78rem', fontWeight: 500,
-          transition: '.15s',
-        }}>
-          <Unlink size={12} /> Déconnecter
-        </button>
-      ) : (
-        <button onClick={onConnect} style={{
-          display: 'flex', alignItems: 'center', gap: '.3rem',
-          padding: '.4rem .85rem', borderRadius: '7px',
-          border: '1px solid var(--b1)', background: 'transparent',
-          color: 'var(--t1)', cursor: 'pointer', fontSize: '.78rem', fontWeight: 500,
-          transition: '.15s',
-        }}>
-          <Link2 size={12} /> Connecter
-        </button>
-      )}
+      <div style={{ flexShrink: 0, marginLeft: '1rem' }}>
+        {acc ? (
+          <button onClick={() => onDisconnect(acc.id)} style={{ display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.4rem .85rem', borderRadius: '7px', border: '1px solid rgba(239,68,68,.22)', background: 'transparent', color: '#ef4444', cursor: 'pointer', fontSize: '.78rem', fontWeight: 500 }}>
+            <Unlink size={12} /> Déconnecter
+          </button>
+        ) : (
+          <button onClick={onConnect} style={{ display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.4rem .85rem', borderRadius: '7px', border: '1px solid var(--b1)', background: 'transparent', color: 'var(--t1)', cursor: 'pointer', fontSize: '.78rem', fontWeight: 500 }}>
+            <Link2 size={12} /> Connecter
+          </button>
+        )}
+      </div>
     </div>
   )
 }

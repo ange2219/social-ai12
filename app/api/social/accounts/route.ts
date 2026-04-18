@@ -17,6 +17,24 @@ export async function GET() {
   return NextResponse.json(data)
 }
 
+export async function PATCH(req: Request) {
+  const { id, platform_username } = await req.json()
+  if (!id || !platform_username) return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
+
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { error } = await supabase
+    .from('social_accounts')
+    .update({ platform_username })
+    .eq('id', id)
+    .eq('user_id', user.id)
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ success: true })
+}
+
 export async function DELETE(req: Request) {
   const { searchParams } = new URL(req.url)
   const id = searchParams.get('id')
