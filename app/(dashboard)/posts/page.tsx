@@ -823,9 +823,10 @@ export default function PostsPage() {
       {hasPendingResults && (
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          gap: '.75rem', padding: '.75rem 1rem', marginBottom: '1rem',
+          gap: '.75rem', padding: '.6rem .9rem', marginBottom: '1rem',
           background: 'rgba(123,92,245,.1)', border: '1px solid rgba(123,92,245,.25)',
           borderRadius: '10px',
+          maxWidth: 480, marginLeft: 'auto', marginRight: 'auto',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem' }}>
             <span style={{ fontSize: '.9rem' }}>✨</span>

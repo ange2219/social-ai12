@@ -902,9 +902,9 @@ export function GeneratedPostsView({
       <div style={{
         display: 'grid',
         gridTemplateColumns: activePlatforms.length === 1
-          ? 'minmax(0, 480px)'
-          : 'repeat(2, minmax(0, 460px))',
-        gap: '1.25rem',
+          ? 'minmax(0, 400px)'
+          : 'repeat(auto-fill, minmax(320px, 380px))',
+        gap: '1rem',
         justifyContent: 'center',
       }}>
         {activePlatforms.map(p => (

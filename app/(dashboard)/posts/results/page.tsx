@@ -117,16 +117,23 @@ export default function ResultsPage() {
   if (!ready || !data) return null
 
   return (
-    <div style={{ maxWidth: '1200px', padding: '0 0 4rem' }}>
+    <div style={{ maxWidth: '960px', margin: '0 auto', padding: '0 0 4rem' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1.5rem' }}>
         <button
           onClick={() => { clearResults(); router.push('/posts') }}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', display: 'flex', alignItems: 'center', padding: '4px', borderRadius: '6px', transition: '.12s' }}
-          onMouseEnter={e => { e.currentTarget.style.color = 'var(--t1)'; e.currentTarget.style.background = 'var(--s2)' }}
-          onMouseLeave={e => { e.currentTarget.style.color = 'var(--t3)'; e.currentTarget.style.background = 'none' }}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '.4rem',
+            padding: '.35rem .7rem', borderRadius: '8px',
+            border: '1px solid var(--b1)', background: 'var(--card)',
+            color: 'var(--t2)', cursor: 'pointer', fontSize: '.8rem', fontWeight: 500,
+            transition: '.12s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--t1)'; e.currentTarget.style.borderColor = 'var(--b2)' }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--t2)'; e.currentTarget.style.borderColor = 'var(--b1)' }}
         >
-          <ArrowLeft size={18} />
+          <ArrowLeft size={14} />
+          Retour
         </button>
         <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1.25rem', fontWeight: 700, color: 'var(--t1)', letterSpacing: '-.02em' }}>
           {data.pageTitle ?? (data.editPostId ? 'Modifier le post' : 'Posts générés')}
