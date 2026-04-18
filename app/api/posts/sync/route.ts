@@ -100,14 +100,32 @@ export async function POST() {
           }
           if (!res.ok) return
           const data = await res.json()
+
+          // Impressions + reach via l'endpoint Insights (requiert read_insights)
+          let impressions = 0
+          let reach = 0
+          try {
+            const insRes = await fetch(
+              `${GRAPH}/${postId}/insights?metric=post_impressions,post_impressions_unique&period=lifetime&access_token=${acc.token}`
+            )
+            if (insRes.ok) {
+              const ins = await insRes.json()
+              for (const metric of ins.data || []) {
+                const val = metric.values?.[0]?.value || 0
+                if (metric.name === 'post_impressions')        impressions = val
+                if (metric.name === 'post_impressions_unique') reach       = val
+              }
+            }
+          } catch { /* permission absente — on garde 0 */ }
+
           await admin.from('analytics').upsert({
             post_id: post.id,
             platform: 'facebook',
             likes: data.likes?.summary?.total_count || 0,
             comments: data.comments?.summary?.total_count || 0,
             shares: data.shares?.count || 0,
-            impressions: 0,
-            reach: 0,
+            impressions,
+            reach,
           }, { onConflict: 'post_id,platform' })
         })())
       }
@@ -123,14 +141,32 @@ export async function POST() {
           }
           if (!res.ok) return
           const data = await res.json()
+
+          // Impressions + reach via l'endpoint Insights IG (requiert instagram_manage_insights)
+          let impressions = 0
+          let reach = 0
+          try {
+            const insRes = await fetch(
+              `${IG_GRAPH}/${postId}/insights?metric=impressions,reach&access_token=${acc.token}`
+            )
+            if (insRes.ok) {
+              const ins = await insRes.json()
+              for (const metric of ins.data || []) {
+                const val = metric.values?.[0]?.value || 0
+                if (metric.name === 'impressions') impressions = val
+                if (metric.name === 'reach')       reach       = val
+              }
+            }
+          } catch { /* permission absente — on garde 0 */ }
+
           await admin.from('analytics').upsert({
             post_id: post.id,
             platform: 'instagram',
             likes: data.like_count || 0,
             comments: data.comments_count || 0,
             shares: 0,
-            impressions: 0,
-            reach: 0,
+            impressions,
+            reach,
           }, { onConflict: 'post_id,platform' })
         })())
       }
