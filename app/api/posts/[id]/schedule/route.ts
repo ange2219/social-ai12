@@ -36,7 +36,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     .update({ status: 'scheduled', scheduled_at: scheduledDate.toISOString() })
     .eq('id', params.id)
     .eq('user_id', user.id)
-    .in('status', ['draft', 'failed'])
+    .in('status', ['draft', 'failed', 'scheduled'])
     .select()
     .single()
 

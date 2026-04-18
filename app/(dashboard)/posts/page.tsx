@@ -287,7 +287,7 @@ export default function PostsPage() {
   }, [])
 
   function openPost(post: Post) {
-    if (post.status === 'draft' || post.status === 'failed') {
+    if (post.status === 'draft' || post.status === 'failed' || post.status === 'scheduled') {
       const variants: Partial<Record<string, string>> = {}
       const initialImages: Partial<Record<string, string>> = {}
       for (const p of post.platforms) {
@@ -304,6 +304,7 @@ export default function PostsPage() {
           isPro: true,
           editPostId: post.id,
           initialImages: Object.keys(initialImages).length > 0 ? initialImages : undefined,
+          initialScheduledAt: post.scheduled_at || undefined,
         }))
       } catch {}
       router.push('/posts/results')

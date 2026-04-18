@@ -8,14 +8,15 @@ import { ArrowLeft } from 'lucide-react'
 import type { Platform, PostObjective } from '@/types'
 
 interface ResultsData {
-  variants:       Partial<Record<Platform, string>>
-  platforms:      Platform[]
-  objective:      PostObjective | null
-  quotaUsed:      number
-  quotaLimit:     number | 'unlimited'
-  isPro:          boolean
-  editPostId?:    string
-  initialImages?: Partial<Record<Platform, string>>
+  variants:            Partial<Record<Platform, string>>
+  platforms:           Platform[]
+  objective:           PostObjective | null
+  quotaUsed:           number
+  quotaLimit:          number | 'unlimited'
+  isPro:               boolean
+  editPostId?:         string
+  initialImages?:      Partial<Record<Platform, string>>
+  initialScheduledAt?: string
 }
 
 export default function ResultsPage() {
@@ -118,7 +119,7 @@ export default function ResultsPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1.5rem' }}>
         <button
-          onClick={() => { clearResults(); router.push('/posts/create') }}
+          onClick={() => { clearResults(); router.push(data.editPostId ? '/posts' : '/posts/create') }}
           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', display: 'flex', alignItems: 'center', padding: '4px', borderRadius: '6px', transition: '.12s' }}
           onMouseEnter={e => { e.currentTarget.style.color = 'var(--t1)'; e.currentTarget.style.background = 'var(--s2)' }}
           onMouseLeave={e => { e.currentTarget.style.color = 'var(--t3)'; e.currentTarget.style.background = 'none' }}
@@ -126,7 +127,7 @@ export default function ResultsPage() {
           <ArrowLeft size={18} />
         </button>
         <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1.25rem', fontWeight: 700, color: 'var(--t1)', letterSpacing: '-.02em' }}>
-          Posts générés
+          {data.editPostId ? 'Éditer le post' : 'Posts générés'}
         </h1>
       </div>
 
@@ -139,10 +140,11 @@ export default function ResultsPage() {
         isPro={data.isPro}
         userName={userName}
         initialImages={data.initialImages}
+        initialScheduledAt={data.initialScheduledAt}
         onSaveDraft={handleSaveDraft}
         onPublish={handlePublish}
         onSchedule={handleSchedule}
-        onClose={() => { clearResults(); router.push('/posts/create') }}
+        onClose={() => { clearResults(); router.push(data.editPostId ? '/posts' : '/posts/create') }}
       />
     </div>
   )

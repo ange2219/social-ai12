@@ -684,23 +684,24 @@ function QuotaBar({ textUsed, textLimit }: {
 // ─── Main GeneratedPostsView ──────────────────────────────────────────────────
 
 export interface GeneratedPostsViewProps {
-  platforms:      Platform[]
-  variants:       Partial<Record<Platform, string>>
-  objective:      PostObjective | null
-  quotaUsed:      number
-  quotaLimit:     number | 'unlimited'
-  isPro:          boolean
-  userName?:      string | null
-  initialImages?: Partial<Record<Platform, string>>
-  onSaveDraft:    (platform: Platform, content: string, imageUrl: string | null) => Promise<void>
-  onPublish:      (platform: Platform, content: string, imageUrl: string | null) => Promise<void>
-  onSchedule:     (platform: Platform, content: string, imageUrl: string | null, scheduledAt: string) => Promise<void>
-  onClose?:       () => void
+  platforms:            Platform[]
+  variants:             Partial<Record<Platform, string>>
+  objective:            PostObjective | null
+  quotaUsed:            number
+  quotaLimit:           number | 'unlimited'
+  isPro:                boolean
+  userName?:            string | null
+  initialImages?:       Partial<Record<Platform, string>>
+  initialScheduledAt?:  string
+  onSaveDraft:          (platform: Platform, content: string, imageUrl: string | null) => Promise<void>
+  onPublish:            (platform: Platform, content: string, imageUrl: string | null) => Promise<void>
+  onSchedule:           (platform: Platform, content: string, imageUrl: string | null, scheduledAt: string) => Promise<void>
+  onClose?:             () => void
 }
 
 export function GeneratedPostsView({
   platforms, variants, objective,
-  quotaUsed, quotaLimit, isPro, userName, initialImages,
+  quotaUsed, quotaLimit, isPro, userName, initialImages, initialScheduledAt,
   onSaveDraft, onPublish, onSchedule, onClose,
 }: GeneratedPostsViewProps) {
   const { toast } = useToast()
@@ -709,7 +710,12 @@ export function GeneratedPostsView({
   const [cards, setCards] = useState<Record<string, CardState>>(() => {
     const init: Record<string, CardState> = {}
     for (const p of platforms) {
-      init[p] = { content: lowercaseHashtags(variants[p] || ''), imageUrl: initialImages?.[p] || null, imageLoading: false, scheduledAt: null }
+      init[p] = {
+        content: lowercaseHashtags(variants[p] || ''),
+        imageUrl: initialImages?.[p] || null,
+        imageLoading: false,
+        scheduledAt: initialScheduledAt || null,
+      }
     }
     return init
   })
