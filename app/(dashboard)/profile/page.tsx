@@ -271,8 +271,18 @@ export default function ProfilePage() {
 
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {([
-                { platform: 'facebook' as Platform, onConnect: () => window.open('/api/auth/meta/start', 'meta_oauth', `width=600,height=700,left=${window.screen.width/2-300},top=${window.screen.height/2-350}`) },
-                { platform: 'instagram' as Platform, onConnect: () => window.open('/api/auth/instagram/start', 'instagram_oauth', `width=600,height=700,left=${window.screen.width/2-300},top=${window.screen.height/2-350}`) },
+                {
+                  platform: 'facebook' as Platform,
+                  onConnect: () => userPlan === 'free'
+                    ? window.open('/api/auth/meta/start', 'meta_oauth', `width=600,height=700,left=${window.screen.width/2-300},top=${window.screen.height/2-350}`)
+                    : openOAuthPopup('facebook'),
+                },
+                {
+                  platform: 'instagram' as Platform,
+                  onConnect: () => userPlan === 'free'
+                    ? window.open('/api/auth/instagram/start', 'instagram_oauth', `width=600,height=700,left=${window.screen.width/2-300},top=${window.screen.height/2-350}`)
+                    : openOAuthPopup('instagram'),
+                },
                 { platform: 'tiktok' as Platform, onConnect: () => openOAuthPopup('tiktok') },
                 { platform: 'twitter' as Platform, onConnect: () => openOAuthPopup('twitter') },
                 { platform: 'linkedin' as Platform, onConnect: () => openOAuthPopup('linkedin') },
@@ -283,7 +293,9 @@ export default function ProfilePage() {
                     key={platform}
                     platform={platform}
                     acc={acc}
+                    userPlan={userPlan}
                     onConnect={onConnect}
+                    onAddZernio={() => openOAuthPopup(platform)}
                     onDisconnect={disconnect}
                     onRename={renameAccount}
                     isLast={i === arr.length - 1}
@@ -374,10 +386,12 @@ function Row({ label, desc, children }: { label: string; desc?: string; children
   )
 }
 
-function AccountListItem({ platform, acc, onConnect, onDisconnect, onRename, isLast }: {
+function AccountListItem({ platform, acc, userPlan, onConnect, onAddZernio, onDisconnect, onRename, isLast }: {
   platform: Platform
   acc: SocialAccount | undefined
+  userPlan: 'free' | 'premium' | 'business'
   onConnect: () => void
+  onAddZernio: () => void
   onDisconnect: (id: string) => void
   onRename: (id: string, name: string) => void
   isLast?: boolean
@@ -385,6 +399,10 @@ function AccountListItem({ platform, acc, onConnect, onDisconnect, onRename, isL
   const color = PLATFORM_COLORS[platform]
   const displayName = acc?.platform_username && acc.platform_username !== platform ? acc.platform_username : null
   const accountType = platform === 'facebook' ? 'Page' : 'Compte'
+  const connectedVia = (acc as any)?.connected_via as string | undefined
+  const isPro = userPlan !== 'free'
+  // FB/IG connectés en meta_direct mais pas encore reliés à Zernio → proposer l'ajout
+  const needsZernio = isPro && acc && connectedVia === 'meta_direct' && ['facebook', 'instagram'].includes(platform)
   const [editing, setEditing] = useState(false)
   const [editVal, setEditVal] = useState(displayName || '')
 
@@ -442,7 +460,18 @@ function AccountListItem({ platform, acc, onConnect, onDisconnect, onRename, isL
                 </button>
               </div>
             )}
-            <div style={{ fontSize: '.75rem', color: 'var(--t3)', marginTop: '.1rem' }}>{accountType}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginTop: '.15rem' }}>
+              <span style={{ fontSize: '.72rem', color: 'var(--t3)' }}>{accountType}</span>
+              {connectedVia && (
+                <span style={{
+                  fontSize: '.62rem', fontWeight: 600, padding: '.1rem .4rem', borderRadius: '4px',
+                  background: connectedVia === 'both' ? 'rgba(34,197,94,.1)' : connectedVia === 'zernio' ? 'rgba(70,70,255,.1)' : 'rgba(156,163,175,.1)',
+                  color: connectedVia === 'both' ? '#22C55E' : connectedVia === 'zernio' ? '#4646FF' : 'var(--t3)',
+                }}>
+                  {connectedVia === 'both' ? '✓ Meta + Zernio' : connectedVia === 'zernio' ? 'Zernio' : 'Meta direct'}
+                </span>
+              )}
+            </div>
           </div>
         ) : (
           <div>
@@ -453,11 +482,18 @@ function AccountListItem({ platform, acc, onConnect, onDisconnect, onRename, isL
       </div>
 
       {/* Action */}
-      <div style={{ flexShrink: 0, marginLeft: '1rem' }}>
+      <div style={{ flexShrink: 0, marginLeft: '1rem', display: 'flex', flexDirection: 'column', gap: '.35rem', alignItems: 'flex-end' }}>
         {acc ? (
-          <button onClick={() => onDisconnect(acc.id)} style={{ display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.4rem .85rem', borderRadius: '7px', border: '1px solid rgba(239,68,68,.22)', background: 'transparent', color: '#ef4444', cursor: 'pointer', fontSize: '.78rem', fontWeight: 500 }}>
-            <Unlink size={12} /> Déconnecter
-          </button>
+          <>
+            {needsZernio && (
+              <button onClick={onAddZernio} style={{ display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.35rem .75rem', borderRadius: '7px', border: '1px solid rgba(70,70,255,.35)', background: 'rgba(70,70,255,.08)', color: '#4646FF', cursor: 'pointer', fontSize: '.73rem', fontWeight: 600 }}>
+                <Link2 size={11} /> Activer Zernio
+              </button>
+            )}
+            <button onClick={() => onDisconnect(acc.id)} style={{ display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.35rem .75rem', borderRadius: '7px', border: '1px solid rgba(239,68,68,.22)', background: 'transparent', color: '#ef4444', cursor: 'pointer', fontSize: '.73rem', fontWeight: 500 }}>
+              <Unlink size={11} /> Déconnecter
+            </button>
+          </>
         ) : (
           <button onClick={onConnect} style={{ display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.4rem .85rem', borderRadius: '7px', border: '1px solid var(--b1)', background: 'transparent', color: 'var(--t1)', cursor: 'pointer', fontSize: '.78rem', fontWeight: 500 }}>
             <Link2 size={12} /> Connecter
