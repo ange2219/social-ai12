@@ -1075,7 +1075,7 @@ export default function CreatePage() {
 
       {/* ── Mode IA ────────────────────────────────────────────────────── */}
       {mode === 'ai' && (
-        <div className="flex flex-col lg:flex-row gap-6 items-start" style={{ maxWidth: 560, margin: '0 auto' }}>
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
 
           {/* ── Colonne gauche : formulaire ── */}
           <div style={{ flex: 1, minWidth: 0 }}>
