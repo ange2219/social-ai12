@@ -1075,7 +1075,7 @@ export default function CreatePage() {
 
       {/* ── Mode IA ────────────────────────────────────────────────────── */}
       {mode === 'ai' && (
-        <div className="flex flex-col lg:flex-row gap-6 items-start">
+        <div className="flex flex-col lg:flex-row gap-6 items-start" style={{ maxWidth: 560, margin: '0 auto' }}>
 
           {/* ── Colonne gauche : formulaire ── */}
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -1231,20 +1231,33 @@ export default function CreatePage() {
                 style={{
                   display: 'flex', alignItems: 'center', gap: '.45rem',
                   padding: '.45rem .9rem', borderRadius: '8px',
-                  border: `1px solid ${selectedPlatforms.length > 0 ? 'rgba(123,92,245,.4)' : 'var(--b1)'}`,
-                  background: selectedPlatforms.length > 0 ? 'rgba(123,92,245,.07)' : 'var(--card)',
-                  color: selectedPlatforms.length > 0 ? 'var(--accent)' : 'var(--t2)',
-                  cursor: 'pointer', fontSize: '.82rem', fontWeight: 500, transition: '.15s',
+                  border: '1px solid var(--b1)', background: 'var(--card)',
+                  color: 'var(--t2)', cursor: 'pointer', fontSize: '.82rem', fontWeight: 500, transition: '.15s',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)' }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = selectedPlatforms.length > 0 ? 'rgba(123,92,245,.4)' : 'var(--b1)' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--b1)'; e.currentTarget.style.color = 'var(--t2)' }}
               >
                 <Layers size={14} />
                 Plateforme
                 {selectedPlatforms.length > 0 && (
-                  <span style={{ background: 'var(--accent)', color: '#fff', borderRadius: '999px', fontSize: '.6rem', fontWeight: 700, padding: '1px 6px', lineHeight: '1.5' }}>
-                    {selectedPlatforms.length}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', marginLeft: '.1rem' }}>
+                    {selectedPlatforms.slice(0, 4).map((p, i) => (
+                      <div
+                        key={p}
+                        style={{
+                          width: 18, height: 18, borderRadius: '50%',
+                          background: PLATFORM_COLORS[p],
+                          border: '2px solid var(--card)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          marginLeft: i === 0 ? 0 : -6,
+                          zIndex: selectedPlatforms.length - i,
+                          overflow: 'hidden', flexShrink: 0,
+                        }}
+                      >
+                        <PlatformIcon platform={p} size={10} />
+                      </div>
+                    ))}
+                  </div>
                 )}
               </button>
             </div>
