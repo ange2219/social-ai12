@@ -81,13 +81,13 @@ export default function SettingsPage() {
   const strengthColor = ['', '#EF4444', '#F59E0B', '#22C55E']
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-page, #0d0d0f)' }}>
+    <div style={{ display: 'flex', minHeight: '100%', margin: '-20px' }}>
       {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
       <aside style={{
-        width: '240px', flexShrink: 0,
+        width: '220px', flexShrink: 0,
         borderRight: '1px solid var(--b1)',
-        padding: '2rem 0',
-        position: 'sticky', top: 0, height: '100vh', overflowY: 'auto',
+        padding: '1.5rem 0',
+        position: 'sticky', top: 0, alignSelf: 'flex-start', maxHeight: '100vh', overflowY: 'auto',
       }}>
         <div style={{ padding: '0 1.25rem', marginBottom: '1.25rem' }}>
           <h2 style={{ fontSize: '.78rem', fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.07em' }}>Paramètres</h2>
