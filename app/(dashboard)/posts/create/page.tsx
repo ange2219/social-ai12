@@ -1082,9 +1082,19 @@ export default function CreatePage() {
 
             {/* Header : titre + objectif + live */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '.75rem' }}>
-              <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1.25rem', fontWeight: 700, color: 'var(--t1)', letterSpacing: '-.02em' }}>
-                Générer un post
-              </h1>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '.65rem' }}>
+                <button
+                  onClick={() => router.push('/posts')}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', display: 'flex', alignItems: 'center', padding: '4px', borderRadius: '6px', transition: '.12s' }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--t1)'; e.currentTarget.style.background = 'var(--s2)' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--t3)'; e.currentTarget.style.background = 'none' }}
+                >
+                  <ArrowLeft size={18} />
+                </button>
+                <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1.25rem', fontWeight: 700, color: 'var(--t1)', letterSpacing: '-.02em' }}>
+                  Générer un post
+                </h1>
+              </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
 
