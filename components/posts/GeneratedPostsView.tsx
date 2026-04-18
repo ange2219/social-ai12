@@ -732,8 +732,29 @@ export function GeneratedPostsView({
     })
   }, [variants, platforms])
 
+  const [activePlatforms, setActivePlatforms] = useState<Platform[]>(platforms)
   const [schedulerPlatform, setSchedulerPlatform] = useState<Platform | null>(null)
   const [loadingAction,     setLoadingAction]     = useState<string | null>(null)
+
+  function togglePlatform(p: Platform) {
+    setActivePlatforms(prev => {
+      if (prev.includes(p)) {
+        if (prev.length === 1) return prev // garder au moins une
+        return prev.filter(x => x !== p)
+      }
+      // Ajouter : init carte si pas encore créée
+      setCards(c => c[p] ? c : {
+        ...c,
+        [p]: {
+          content: variants[p] ? lowercaseHashtags(variants[p]!) : '',
+          imageUrl: initialImages?.[p] ?? null,
+          imageLoading: false,
+          scheduledAt: initialScheduledAt ?? null,
+        },
+      })
+      return [...prev, p]
+    })
+  }
 
   function updateCard(platform: Platform, partial: Partial<CardState>) {
     setCards(prev => ({ ...prev, [platform]: { ...prev[platform], ...partial } }))
@@ -837,22 +858,51 @@ export function GeneratedPostsView({
       isPro,
       isRewriting: loadingAction === `rewrite-${p}`,
       isActing:    loadingAction === `publish-${p}` || loadingAction === `draft-${p}` || loadingAction === `schedule-${p}`,
-      onClose:     onClose,
+      onClose:     activePlatforms.length > 1 ? () => togglePlatform(p) : undefined,
       userName,
     }
   }
 
+  const ALL_PLATFORMS_LIST: Platform[] = ['instagram', 'facebook', 'tiktok', 'twitter', 'linkedin', 'youtube', 'pinterest']
+
   return (
     <div>
+      {/* ── Sélecteur de plateformes ── */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.4rem', marginBottom: '1.25rem' }}>
+        {ALL_PLATFORMS_LIST.map(p => {
+          const isActive = activePlatforms.includes(p)
+          const color    = PLATFORM_COLORS[p]
+          return (
+            <button
+              key={p}
+              onClick={() => togglePlatform(p)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '.35rem',
+                padding: '.32rem .7rem', borderRadius: '8px', fontSize: '.76rem', fontWeight: 500,
+                border: `1px solid ${isActive ? color + '55' : 'var(--b1)'}`,
+                background: isActive ? color + '14' : 'var(--card)',
+                color: isActive ? color : 'var(--t3)',
+                cursor: 'pointer', transition: '.12s',
+              }}
+              onMouseEnter={e => { if (!isActive) { e.currentTarget.style.borderColor = color + '44'; e.currentTarget.style.color = color } }}
+              onMouseLeave={e => { if (!isActive) { e.currentTarget.style.borderColor = 'var(--b1)'; e.currentTarget.style.color = 'var(--t3)' } }}
+            >
+              <PlatformIcon platform={p} size={13} />
+              {PLATFORM_NAMES[p]}
+            </button>
+          )
+        })}
+      </div>
+
       {/* ── Cards ── */}
       <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '1.25rem' }}>
-        {platforms.map(p => (
+        {activePlatforms.map(p => (
           <div
             key={p}
             style={{
               width: '100%',
-              maxWidth: platforms.length === 1 ? '480px' : '440px',
-              flex: platforms.length === 1 ? '0 0 auto' : '1 1 340px',
+              maxWidth: activePlatforms.length === 1 ? '480px' : '440px',
+              flex: activePlatforms.length === 1 ? '0 0 auto' : '1 1 340px',
             }}
           >
             <PostPlatformCard {...cardProps(p)} />

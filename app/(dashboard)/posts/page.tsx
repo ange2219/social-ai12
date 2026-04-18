@@ -884,7 +884,17 @@ export default function PostsPage() {
                   Générer
                 </button>
                 <button
-                  onClick={() => { setPlusMenuOpen(false); router.push('/posts/create?mode=manual') }}
+                  onClick={() => {
+                    setPlusMenuOpen(false)
+                    try {
+                      sessionStorage.setItem('social_ia_results', JSON.stringify({
+                        variants: { facebook: '' },
+                        platforms: ['facebook'],
+                        objective: null, quotaUsed: 0, quotaLimit: 'unlimited', isPro: true,
+                      }))
+                    } catch {}
+                    router.push('/posts/results')
+                  }}
                   style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '.6rem', padding: '.55rem .75rem', borderRadius: '7px', border: 'none', background: 'transparent', color: 'var(--t1)', cursor: 'pointer', fontSize: '.82rem', textAlign: 'left' }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--s2)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
