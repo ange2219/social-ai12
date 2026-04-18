@@ -948,20 +948,23 @@ export default function PostsPage() {
 
       {/* Filters + view toggle */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', gap: '.5rem' }}>
-        <div className="mob-scroll" style={{ display: 'flex', gap: '.4rem', flex: 1, overflowX: 'auto' }}>
-          {(['all', 'published', 'draft', 'scheduled'] as const).map(f => (
-            <button key={f} onClick={() => setFilter(f)} style={{
-              padding: '.3rem .75rem', borderRadius: '6px', fontSize: '.75rem', fontWeight: 500, cursor: 'pointer',
-              border: filter === f ? '1px solid #4646FF' : '1px solid var(--b1)',
-              background: filter === f ? 'rgba(59,123,246,.12)' : 'var(--card)',
-              color: filter === f ? '#4646FF' : 'var(--t3)', transition: '.15s',
-              display: 'flex', alignItems: 'center', gap: '.3rem',
-            }}>
-              {f === 'all' ? 'Tous' : f === 'published' ? 'Publiés' : f === 'draft' ? `Brouillons${draftCount > 0 ? ` (${draftCount})` : ''}` : 'Programmés'}
-            </button>
-          ))}
+        {/* Statuts + filtre plateforme — le filtre plateforme est HORS du conteneur overflow:auto */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', flex: 1, minWidth: 0 }}>
+          <div className="mob-scroll" style={{ display: 'flex', gap: '.4rem', overflowX: 'auto' }}>
+            {(['all', 'published', 'draft', 'scheduled'] as const).map(f => (
+              <button key={f} onClick={() => setFilter(f)} style={{
+                padding: '.3rem .75rem', borderRadius: '6px', fontSize: '.75rem', fontWeight: 500, cursor: 'pointer',
+                border: filter === f ? '1px solid #4646FF' : '1px solid var(--b1)',
+                background: filter === f ? 'rgba(59,123,246,.12)' : 'var(--card)',
+                color: filter === f ? '#4646FF' : 'var(--t3)', transition: '.15s',
+                display: 'flex', alignItems: 'center', gap: '.3rem', whiteSpace: 'nowrap',
+              }}>
+                {f === 'all' ? 'Tous' : f === 'published' ? 'Publiés' : f === 'draft' ? `Brouillons${draftCount > 0 ? ` (${draftCount})` : ''}` : 'Programmés'}
+              </button>
+            ))}
+          </div>
 
-          {/* Filtre plateforme */}
+          {/* Filtre plateforme — en dehors du scroll pour que le dropdown ne soit pas coupé */}
           {availablePlatforms.length > 0 && (
             <div ref={pfMenuRef} style={{ position: 'relative', flexShrink: 0 }}>
               <button
@@ -971,7 +974,7 @@ export default function PostsPage() {
                   border: platformFilter ? '1px solid #4646FF' : '1px solid var(--b1)',
                   background: platformFilter ? 'rgba(59,123,246,.12)' : 'var(--card)',
                   color: platformFilter ? '#4646FF' : 'var(--t3)', transition: '.15s',
-                  display: 'flex', alignItems: 'center', gap: '.3rem',
+                  display: 'flex', alignItems: 'center', gap: '.3rem', whiteSpace: 'nowrap',
                 }}
               >
                 {platformFilter ? (
@@ -988,9 +991,9 @@ export default function PostsPage() {
 
               {pfMenuOpen && (
                 <div style={{
-                  position: 'absolute', top: 'calc(100% + 5px)', left: 0, zIndex: 80,
+                  position: 'absolute', top: 'calc(100% + 5px)', left: 0, zIndex: 200,
                   background: 'var(--card)', border: '1px solid var(--b1)', borderRadius: '10px',
-                  padding: '.3rem', minWidth: '140px', boxShadow: '0 8px 24px rgba(0,0,0,.4)',
+                  padding: '.3rem', minWidth: '150px', boxShadow: '0 8px 24px rgba(0,0,0,.5)',
                 }}>
                   {platformFilter && (
                     <>
@@ -1028,7 +1031,8 @@ export default function PostsPage() {
             </div>
           )}
         </div>
-        <div style={{ display: 'flex', gap: '.3rem', alignItems: 'center' }}>
+
+        <div style={{ display: 'flex', gap: '.3rem', alignItems: 'center', flexShrink: 0 }}>
           {(['grid', 'list'] as const).map(v => (
             <button key={v} onClick={() => setView(v)} style={{
               padding: '.3rem .5rem', borderRadius: '6px',
