@@ -69,5 +69,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL('/profile?error=erreur_base_de_données', req.url))
   }
 
-  return NextResponse.redirect(new URL(`/profile?social=connected&platform=${platform}`, req.url))
+  // Réponse popup : ferme la fenêtre et notifie le parent
+  const appOrigin = process.env.NEXT_PUBLIC_APP_URL || ''
+  const payload = JSON.stringify({ type: 'zernio_oauth', success: true, platform })
+    .replace(/</g, '\\u003c').replace(/>/g, '\\u003e')
+  const html = `<!DOCTYPE html><html><body><script>
+    var d = ${payload};
+    try { window.opener.postMessage(d, ${JSON.stringify(appOrigin)}) } catch(e) {}
+    try { localStorage.setItem('_oauth_result', JSON.stringify(d)) } catch(e) {}
+    window.close()
+  <\/script><p style="font-family:sans-serif;color:#aaa;text-align:center;margin-top:40px">Connexion en cours...</p></body></html>`
+  return new NextResponse(html, { headers: { 'Content-Type': 'text/html' } })
 }

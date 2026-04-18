@@ -97,6 +97,10 @@ export default function ProfilePage() {
         if (success) toast(`Instagram @${username} connecté !`, 'success')
         else if (error) toast(`Erreur Instagram : ${error}`, 'error')
         loadAccounts()
+      } else if (e.data.type === 'zernio_oauth') {
+        const { success, platform } = e.data
+        if (success) toast(`${platform ? platform.charAt(0).toUpperCase() + platform.slice(1) : 'Compte'} connecté !`, 'success')
+        loadAccounts()
       }
     }
     function handleStorage(e: StorageEvent) {
@@ -111,6 +115,9 @@ export default function ProfilePage() {
           if (d.success) toast(`Instagram @${d.username} connecté !`, 'success')
           else if (d.error) toast(`Erreur Instagram : ${d.error}`, 'error')
           loadAccounts()
+        } else if (d.type === 'zernio_oauth') {
+          if (d.success) toast(`${d.platform ? d.platform.charAt(0).toUpperCase() + d.platform.slice(1) : 'Compte'} connecté !`, 'success')
+          loadAccounts()
         }
       } catch {}
     }
@@ -118,6 +125,13 @@ export default function ProfilePage() {
     window.addEventListener('storage', handleStorage)
     return () => { window.removeEventListener('message', handleMessage); window.removeEventListener('storage', handleStorage) }
   }, [loadAccounts, toast])
+
+  function openOAuthPopup(platform: string) {
+    const w = 600, h = 700
+    const left = Math.round(window.screen.width / 2 - w / 2)
+    const top = Math.round(window.screen.height / 2 - h / 2)
+    window.open(`/api/social/start?platform=${platform}`, `${platform}_oauth`, `width=${w},height=${h},left=${left},top=${top}`)
+  }
 
   async function saveUserInfo() {
     setSavingUser(true)
@@ -249,9 +263,9 @@ export default function ProfilePage() {
               {([
                 { platform: 'facebook' as Platform, onConnect: () => window.open('/api/auth/meta/start', 'meta_oauth', `width=600,height=700,left=${window.screen.width/2-300},top=${window.screen.height/2-350}`) },
                 { platform: 'instagram' as Platform, onConnect: () => window.open('/api/auth/instagram/start', 'instagram_oauth', `width=600,height=700,left=${window.screen.width/2-300},top=${window.screen.height/2-350}`) },
-                { platform: 'tiktok' as Platform, onConnect: () => { window.location.href = '/api/social/start?platform=tiktok' } },
-                { platform: 'twitter' as Platform, onConnect: () => { window.location.href = '/api/social/start?platform=twitter' } },
-                { platform: 'linkedin' as Platform, onConnect: () => { window.location.href = '/api/social/start?platform=linkedin' } },
+                { platform: 'tiktok' as Platform, onConnect: () => openOAuthPopup('tiktok') },
+                { platform: 'twitter' as Platform, onConnect: () => openOAuthPopup('twitter') },
+                { platform: 'linkedin' as Platform, onConnect: () => openOAuthPopup('linkedin') },
               ]).map(({ platform, onConnect }, i, arr) => {
                 const acc = accounts.find(a => a.platform === platform)
                 return (
