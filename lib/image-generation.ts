@@ -182,26 +182,30 @@ export function buildImagePrompt(ctx: ImagePromptContext): string {
 
 // ─── Couche 3 : Providers ─────────────────────────────────────────────────────
 
-async function generateWithImagen3(prompt: string): Promise<string> {
-  const apiKey = process.env.GOOGLE_AI_API_KEY
-  if (!apiKey) throw new Error('GOOGLE_AI_API_KEY non configurée')
+async function generateWithGeminiFlash(prompt: string): Promise<string> {
+  const apiKey = process.env.GEMINI_API_KEY
+  if (!apiKey) throw new Error('GEMINI_API_KEY non configurée — ajoutez-la dans les variables d\'environnement Vercel')
 
   const genAI = new GoogleGenerativeAI(apiKey)
-  // Imagen 3 via l'API Gemini — modèle de génération d'images Google
-  const model = genAI.getGenerativeModel({ model: 'imagen-3.0-generate-002' } as any)
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp-image-generation' })
 
-  const result = await (model as any).generateImages({
-    prompt,
-    numberOfImages: 1,
-    aspectRatio: '1:1',
-    personGeneration: 'dont_allow',
+  const result = await model.generateContent({
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    generationConfig: {
+      // @ts-expect-error responseModalities non encore typé dans le SDK
+      responseModalities: ['image', 'text'],
+    },
   })
 
-  const imageBytes = result?.generatedImages?.[0]?.image?.imageBytes
-  if (!imageBytes) throw new Error('Imagen 3 : aucune image retournée')
-
-  // Retourne data URL base64 — uploadé vers Supabase Storage par l'appelant
-  return `data:image/png;base64,${imageBytes}`
+  const parts = result.response.candidates?.[0]?.content?.parts || []
+  for (const part of parts) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const p = part as any
+    if (p.inlineData?.mimeType?.startsWith('image/')) {
+      return `data:${p.inlineData.mimeType};base64,${p.inlineData.data}`
+    }
+  }
+  throw new Error('Gemini : aucune image retournée')
 }
 
 // ─── Export principal ─────────────────────────────────────────────────────────
@@ -213,6 +217,6 @@ export async function generateBrandedImage(
   const prompt = buildImagePrompt(ctx)
   console.log(`[image-generation] type=${ctx.imageType} platform=${ctx.platform}`)
 
-  const url = await generateWithImagen3(prompt)
+  const url = await generateWithGeminiFlash(prompt)
   return { url, provider: 'imagen3', imageType: ctx.imageType }
 }
