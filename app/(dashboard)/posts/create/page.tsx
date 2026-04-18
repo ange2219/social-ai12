@@ -990,12 +990,14 @@ export default function CreatePage() {
 
       {/* ── Mode manuel ────────────────────────────────────────────────── */}
       {mode === 'manual' && (
-        <div style={{ maxWidth: '560px' }}>
+        <div style={{ maxWidth: '480px' }}>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1.5rem' }}>
             <button
               onClick={() => setMode('ai')}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', display: 'flex', alignItems: 'center', padding: '4px' }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', display: 'flex', alignItems: 'center', padding: '4px', borderRadius: '6px', transition: '.12s' }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'var(--t1)'; e.currentTarget.style.background = 'var(--s2)' }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'var(--t3)'; e.currentTarget.style.background = 'none' }}
             >
               <ArrowLeft size={18} />
             </button>
@@ -1004,87 +1006,64 @@ export default function CreatePage() {
             </h1>
           </div>
 
-          <div className="manual-form">
-            {/* Plateformes */}
-            <div className="card p-5">
-              <label className="label">Plateformes</label>
-              <div className="flex flex-wrap gap-2">
-                {ALL_PLATFORMS.map(p => {
-                  const isLocked  = !isPro && !FREE_PLATFORMS.includes(p)
-                  const isSelected = selectedPlatforms.includes(p)
-                  return (
-                    <button
-                      key={p}
-                      onClick={() => {
-                        if (isLocked) return
-                        setSelectedPlatforms(prev =>
-                          prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]
-                        )
-                      }}
-                      className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-                        isLocked ? 'border-b1 text-t3 cursor-not-allowed opacity-50' :
-                        isSelected ? 'border-accent bg-accent/10 text-accent' :
-                        'border-b1 text-t2 hover:border-b2 hover:text-t1'
-                      }`}
-                    >
-                      {PLATFORM_NAMES[p]}
-                      {isLocked && <span className="ml-1 text-xs opacity-60">Pro</span>}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Contenu */}
-            <div className="card p-5">
-              <label className="label">Votre post</label>
-              <textarea
-                className="input resize-none"
-                rows={6}
-                placeholder="Rédigez votre contenu ici..."
-                value={manualContent}
-                onChange={e => setManualContent(e.target.value)}
-              />
-              <div style={{ fontSize: '.75rem', color: '#52525C', marginTop: '.4rem', textAlign: 'right' }}>
-                {manualContent.length} caractères
-              </div>
-            </div>
-
-            {/* Média */}
-            <div className="card p-5">
-              <label className="label">Image ou vidéo <span className="text-t3 font-normal text-xs">(optionnel)</span></label>
-              {manualPreviewUrl ? (
-                <div style={{ position: 'relative' }}>
-                  {manualFile?.type.startsWith('video')
-                    ? <video src={manualPreviewUrl} controls className="manual-preview-img" />
-                    : <img src={manualPreviewUrl} alt="Aperçu" className="manual-preview-img" />
-                  }
+          {/* Plateformes */}
+          <div style={{ background: 'var(--card)', border: '1px solid var(--b1)', borderRadius: '14px', padding: '1.25rem' }}>
+            <label style={{ display: 'block', fontSize: '.78rem', fontWeight: 600, color: 'var(--t2)', marginBottom: '.75rem' }}>
+              Choisissez vos plateformes
+            </label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.45rem', marginBottom: '1.25rem' }}>
+              {ALL_PLATFORMS.map(p => {
+                const isLocked   = !isPro && !FREE_PLATFORMS.includes(p)
+                const isSelected = selectedPlatforms.includes(p)
+                return (
                   <button
-                    onClick={() => { setManualFile(null); setManualPreviewUrl(null); setUploadedMediaUrl(null) }}
-                    style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,.7)', border: 'none', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff' }}
+                    key={p}
+                    onClick={() => {
+                      if (isLocked) return
+                      setSelectedPlatforms(prev =>
+                        prev.includes(p)
+                          ? prev.length > 1 ? prev.filter(x => x !== p) : prev
+                          : [...prev, p]
+                      )
+                    }}
+                    title={isLocked ? 'Plan Pro requis' : PLATFORM_NAMES[p]}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '.4rem',
+                      padding: '.35rem .75rem', borderRadius: '8px', fontSize: '.8rem', fontWeight: 500,
+                      border: `1px solid ${isLocked ? 'var(--b1)' : isSelected ? PLATFORM_COLORS[p] + '60' : 'var(--b1)'}`,
+                      background: isSelected && !isLocked ? PLATFORM_COLORS[p] + '12' : 'transparent',
+                      color: isLocked ? 'var(--t3)' : isSelected ? PLATFORM_COLORS[p] : 'var(--t2)',
+                      cursor: isLocked ? 'not-allowed' : 'pointer',
+                      opacity: isLocked ? .4 : 1, transition: '.12s',
+                    }}
                   >
-                    <X size={13} />
+                    <PlatformIcon platform={p} size={14} />
+                    {PLATFORM_NAMES[p]}
+                    {isLocked && <span style={{ fontSize: '.6rem', color: '#FBBF24', marginLeft: '.1rem' }}>Pro</span>}
                   </button>
-                </div>
-              ) : (
-                <label className="manual-upload">
-                  <input ref={fileRef} type="file" accept="image/*,video/*" onChange={handleFileChange} />
-                  <Upload size={22} color="#52525C" />
-                  <div className="manual-upload-label">Cliquez pour importer une image ou vidéo</div>
-                  <div style={{ fontSize: '.74rem', color: '#3f3f46', marginTop: '.25rem' }}>JPG, PNG, MP4, MOV — max 50 Mo</div>
-                </label>
-              )}
+                )
+              })}
             </div>
-
+            <p style={{ fontSize: '.73rem', color: 'var(--t3)', marginBottom: '1rem', lineHeight: 1.5 }}>
+              Vous rédigerez votre contenu directement dans l&apos;éditeur — une carte par plateforme.
+            </p>
             <button
-              onClick={handleManualSubmit}
-              disabled={uploadingFile}
-              className="btn-primary w-full flex items-center justify-center gap-2 py-3"
+              onClick={() => {
+                if (!selectedPlatforms.length) { toast('Sélectionnez au moins une plateforme', 'error'); return }
+                const variants: Partial<Record<string, string>> = {}
+                for (const p of selectedPlatforms) variants[p] = ''
+                try {
+                  sessionStorage.setItem('social_ia_results', JSON.stringify({
+                    variants, platforms: selectedPlatforms,
+                    objective: null, quotaUsed: 0, quotaLimit: 'unlimited', isPro: true,
+                  }))
+                } catch {}
+                router.push('/posts/results')
+              }}
+              className="btn-primary"
+              style={{ width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '.4rem', padding: '.7rem' }}
             >
-              {uploadingFile
-                ? <><div style={{ width: '14px', height: '14px', border: '2px solid rgba(255,255,255,.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />Upload en cours…</>
-                : <><Send size={14} />Continuer</>
-              }
+              <Send size={14} /> Ouvrir l&apos;éditeur
             </button>
           </div>
         </div>
