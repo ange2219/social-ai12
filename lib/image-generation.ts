@@ -5,7 +5,6 @@
  * Couche 3 : Multi-provider avec fallback (Imagen 3 → DALL-E 3)
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai'
 import type { Platform, Plan } from '@/types'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -182,91 +181,28 @@ export function buildImagePrompt(ctx: ImagePromptContext): string {
 
 // ─── Couche 3 : Providers ─────────────────────────────────────────────────────
 
-// Noms de modèles candidats pour la génération d'image — testés dans l'ordre
-const IMAGE_MODEL_CANDIDATES = [
-  'gemini-2.0-flash-preview-image-generation',
-  'gemini-2.0-flash-image-generation',
-  'gemini-2.0-flash',
-  'gemini-2.0-flash-exp',
-]
+/**
+ * Génération via Pollinations.ai — gratuit, sans clé API, modèle Flux.
+ * Retourne une URL permanente directement utilisable.
+ */
+async function generateWithPollinations(prompt: string): Promise<string> {
+  // Encode le prompt et construit l'URL Pollinations
+  const encoded = encodeURIComponent(prompt.slice(0, 1500))
+  const seed = Math.floor(Math.random() * 99999)
+  const url = `https://image.pollinations.ai/prompt/${encoded}?model=flux&width=1024&height=1024&seed=${seed}&nologo=true&enhance=true`
 
-async function findImageModel(apiKey: string): Promise<string> {
-  // Appel ListModels pour trouver dynamiquement un modèle supportant generateContent
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`)
-  if (!res.ok) {
-    console.warn('[gemini] ListModels failed, using first candidate')
-    return IMAGE_MODEL_CANDIDATES[0]
-  }
-  const data = await res.json() as { models?: Array<{ name: string; supportedGenerationMethods?: string[] }> }
-  const models = data.models || []
-  console.log('[gemini] Available models (image-related):', models
-    .filter(m => m.name.includes('flash') || m.name.includes('image'))
-    .map(m => m.name)
-  )
+  console.log('[pollinations] Requesting image generation...')
 
-  // Cherche un modèle candidat dans la liste disponible
-  for (const candidate of IMAGE_MODEL_CANDIDATES) {
-    const found = models.find(m => m.name === `models/${candidate}` || m.name.endsWith(candidate))
-    if (found && found.supportedGenerationMethods?.includes('generateContent')) {
-      console.log('[gemini] Selected model:', found.name)
-      return candidate
-    }
-  }
+  // Pollinations retourne directement le binaire de l'image
+  const res = await fetch(url, { signal: AbortSignal.timeout(55000) })
+  if (!res.ok) throw new Error(`Pollinations error: ${res.status} ${res.statusText}`)
 
-  // Fallback : premier modèle "flash" disponible
-  const flashModel = models.find(m => m.name.includes('flash') && m.supportedGenerationMethods?.includes('generateContent'))
-  if (flashModel) {
-    const name = flashModel.name.replace('models/', '')
-    console.log('[gemini] Fallback model:', name)
-    return name
-  }
+  const contentType = res.headers.get('content-type') || 'image/jpeg'
+  const buffer = await res.arrayBuffer()
+  const base64 = Buffer.from(buffer).toString('base64')
 
-  console.warn('[gemini] No model found via ListModels, using default candidate')
-  return IMAGE_MODEL_CANDIDATES[0]
-}
-
-async function generateWithGeminiFlash(prompt: string): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY
-  if (!apiKey) throw new Error('GEMINI_API_KEY non configurée — ajoutez-la dans les variables d\'environnement Vercel')
-
-  const modelName = await findImageModel(apiKey)
-  const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({ model: modelName })
-
-  console.log('[gemini] Generating with model:', modelName)
-
-  let result: Awaited<ReturnType<typeof model.generateContent>>
-  try {
-    result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {
-        // @ts-expect-error responseModalities non encore typé dans le SDK
-        responseModalities: ['IMAGE', 'TEXT'],
-      },
-    })
-  } catch (apiErr) {
-    console.error('[gemini] API call failed:', JSON.stringify(apiErr, null, 2))
-    throw apiErr
-  }
-
-  const candidate = result.response.candidates?.[0]
-  console.log('[gemini] finishReason:', candidate?.finishReason)
-
-  const parts = candidate?.content?.parts || []
-  for (const part of parts) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const p = part as any
-    if (p.inlineData?.mimeType?.startsWith('image/')) {
-      return `data:${p.inlineData.mimeType};base64,${p.inlineData.data}`
-    }
-  }
-
-  console.error('[gemini] No image in response:', JSON.stringify({
-    finishReason: candidate?.finishReason,
-    safetyRatings: candidate?.safetyRatings,
-    partTypes: parts.map((p: any) => p.inlineData?.mimeType ?? (p.text ? 'text' : 'unknown')),
-  }))
-  throw new Error(`Gemini: aucune image — modèle=${modelName}, finishReason=${candidate?.finishReason ?? 'unknown'}`)
+  console.log(`[pollinations] Image received: ${contentType}, ${buffer.byteLength} bytes`)
+  return `data:${contentType};base64,${base64}`
 }
 
 // ─── Export principal ─────────────────────────────────────────────────────────
@@ -277,7 +213,8 @@ export async function generateBrandedImage(
 ): Promise<ImageResult> {
   const prompt = buildImagePrompt(ctx)
   console.log(`[image-generation] type=${ctx.imageType} platform=${ctx.platform}`)
+  console.log(`[image-generation] prompt (200 chars): ${prompt.slice(0, 200)}`)
 
-  const url = await generateWithGeminiFlash(prompt)
+  const url = await generateWithPollinations(prompt)
   return { url, provider: 'imagen3', imageType: ctx.imageType }
 }
