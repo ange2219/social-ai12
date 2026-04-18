@@ -9,7 +9,7 @@ const CreatePostSchema = z.object({
   platforms:        z.array(z.enum(ALLOWED_PLATFORMS)).min(1).max(7),
   media_urls:       z.array(z.string().url()).max(10).optional(),
   ai_generated:     z.boolean().optional(),
-  status:           z.enum(['draft', 'failed', 'rejected']).optional(),
+  status:           z.enum(['draft', 'failed']).optional(),
   content_variants: z.record(z.string()).optional(),
 })
 

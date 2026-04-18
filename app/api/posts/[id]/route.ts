@@ -29,7 +29,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   const updates = Object.fromEntries(
     Object.entries(body).filter(([k]) => allowed.includes(k))
   )
-  if (updates.status !== undefined && !['draft', 'failed', 'scheduled', 'rejected'].includes(updates.status as string)) {
+  if (updates.status !== undefined && !['draft', 'failed', 'scheduled'].includes(updates.status as string)) {
     return NextResponse.json({ error: 'Statut invalide' }, { status: 400 })
   }
 
@@ -38,7 +38,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     .update(updates)
     .eq('id', params.id)
     .eq('user_id', user.id)
-    .in('status', ['draft', 'failed', 'scheduled', 'rejected'])
+    .in('status', ['draft', 'failed', 'scheduled'])
     .select()
     .single()
 

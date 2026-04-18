@@ -74,37 +74,7 @@ export async function POST(req: NextRequest) {
   try {
     const result = await generatePosts(body, plan)
 
-    // Sauvegarder chaque variante comme post 'rejeté' (sera mis à jour si l'utilisateur agit)
-    const inserts = Object.entries(result.variants || {})
-      .filter(([, content]) => !!content)
-      .map(([platform, content]) => ({
-        user_id: user.id,
-        content: content as string,
-        platforms: [platform],
-        media_urls: [] as string[],
-        ai_generated: true,
-        status: 'rejected' as const,
-      }))
-
-    const postIds: Partial<Record<string, string>> = {}
-    if (inserts.length > 0) {
-      const { data: savedPosts } = await supabase
-        .from('posts')
-        .insert(inserts)
-        .select('id, platforms')
-      for (const p of savedPosts || []) {
-        postIds[(p.platforms as string[])[0]] = p.id
-      }
-    }
-
-    // Compteur réel de posts générés (non supprimés)
-    const { count: totalGenerated } = await supabase
-      .from('posts')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .neq('status', 'deleted')
-
-    return NextResponse.json({ ...result, used: totalGenerated || 0, limit: 'unlimited', postIds })
+    return NextResponse.json({ ...result, used: 0, limit: 'unlimited' })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Generation failed'
     return NextResponse.json({ error: message }, { status: 500 })
