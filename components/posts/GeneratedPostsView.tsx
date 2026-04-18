@@ -349,6 +349,7 @@ interface PostPlatformCardProps {
   onPublish: () => void
   isPro: boolean
   isRewriting: boolean
+  isActing: boolean
   onClose?: () => void
   userName?: string | null
 }
@@ -359,7 +360,7 @@ function PostPlatformCard({
   onRewrite, onHashtags,
   onScheduleOpen, onPublishScheduled,
   onDraft, onPublish,
-  isPro, isRewriting, onClose, userName,
+  isPro, isRewriting, isActing, onClose, userName,
 }: PostPlatformCardProps) {
   const { content, imageUrl, imageLoading, scheduledAt } = cardState
   const limit       = CHAR_LIMITS[platform]
@@ -607,28 +608,34 @@ function PostPlatformCard({
       {/* ── Footer buttons ── */}
       <div style={{ display: 'flex', gap: '.6rem', padding: '.9rem 1rem', borderTop: '1px solid var(--b1)', borderRadius: '0 0 16px 16px' }}>
         <button
-          onClick={onDraft}
-          style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.35rem', padding: '.65rem', borderRadius: '10px', border: '1px solid var(--b1)', background: 'var(--s2)', color: 'var(--t2)', cursor: 'pointer', fontSize: '.82rem', fontWeight: 600, transition: '.12s' }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--b2)'; e.currentTarget.style.color = 'var(--t1)' }}
+          onClick={isActing ? undefined : onDraft}
+          disabled={isActing}
+          style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.35rem', padding: '.65rem', borderRadius: '10px', border: '1px solid var(--b1)', background: 'var(--s2)', color: 'var(--t2)', cursor: isActing ? 'not-allowed' : 'pointer', fontSize: '.82rem', fontWeight: 600, transition: '.12s', opacity: isActing ? .6 : 1 }}
+          onMouseEnter={e => { if (!isActing) { e.currentTarget.style.borderColor = 'var(--b2)'; e.currentTarget.style.color = 'var(--t1)' } }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--b1)'; e.currentTarget.style.color = 'var(--t2)' }}
         >
-          <Save size={14} /> Brouillons
+          {isActing ? <div style={{ width: '13px', height: '13px', border: '2px solid rgba(123,92,245,.2)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'rot .7s linear infinite', flexShrink: 0 }} /> : <Save size={14} />}
+          Brouillons
         </button>
         {scheduledAt ? (
           <button
-            onClick={onPublishScheduled}
+            onClick={isActing ? undefined : onPublishScheduled}
+            disabled={isActing}
             className="btn-primary"
-            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.35rem', padding: '.65rem', borderRadius: '10px', fontSize: '.82rem', fontWeight: 600 }}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.35rem', padding: '.65rem', borderRadius: '10px', fontSize: '.82rem', fontWeight: 600, opacity: isActing ? .6 : 1, cursor: isActing ? 'not-allowed' : 'pointer' }}
           >
-            <Clock size={14} /> Programmer
+            {isActing ? <div style={{ width: '13px', height: '13px', border: '2px solid rgba(255,255,255,.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'rot .7s linear infinite', flexShrink: 0 }} /> : <Clock size={14} />}
+            Programmer
           </button>
         ) : (
           <button
-            onClick={onPublish}
+            onClick={isActing ? undefined : onPublish}
+            disabled={isActing}
             className="btn-primary"
-            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.35rem', padding: '.65rem', borderRadius: '10px', fontSize: '.82rem', fontWeight: 600 }}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.35rem', padding: '.65rem', borderRadius: '10px', fontSize: '.82rem', fontWeight: 600, opacity: isActing ? .6 : 1, cursor: isActing ? 'not-allowed' : 'pointer' }}
           >
-            <Send size={14} /> Publier
+            {isActing ? <div style={{ width: '13px', height: '13px', border: '2px solid rgba(255,255,255,.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'rot .7s linear infinite', flexShrink: 0 }} /> : <Send size={14} />}
+            Publier
           </button>
         )}
       </div>
@@ -677,22 +684,23 @@ function QuotaBar({ textUsed, textLimit }: {
 // ─── Main GeneratedPostsView ──────────────────────────────────────────────────
 
 export interface GeneratedPostsViewProps {
-  platforms:    Platform[]
-  variants:     Partial<Record<Platform, string>>
-  objective:    PostObjective | null
-  quotaUsed:    number
-  quotaLimit:   number | 'unlimited'
-  isPro:        boolean
-  userName?:    string | null
-  onSaveDraft:  (platform: Platform, content: string, imageUrl: string | null) => Promise<void>
-  onPublish:    (platform: Platform, content: string, imageUrl: string | null) => Promise<void>
-  onSchedule:   (platform: Platform, content: string, imageUrl: string | null, scheduledAt: string) => Promise<void>
-  onClose?:     () => void
+  platforms:      Platform[]
+  variants:       Partial<Record<Platform, string>>
+  objective:      PostObjective | null
+  quotaUsed:      number
+  quotaLimit:     number | 'unlimited'
+  isPro:          boolean
+  userName?:      string | null
+  initialImages?: Partial<Record<Platform, string>>
+  onSaveDraft:    (platform: Platform, content: string, imageUrl: string | null) => Promise<void>
+  onPublish:      (platform: Platform, content: string, imageUrl: string | null) => Promise<void>
+  onSchedule:     (platform: Platform, content: string, imageUrl: string | null, scheduledAt: string) => Promise<void>
+  onClose?:       () => void
 }
 
 export function GeneratedPostsView({
   platforms, variants, objective,
-  quotaUsed, quotaLimit, isPro, userName,
+  quotaUsed, quotaLimit, isPro, userName, initialImages,
   onSaveDraft, onPublish, onSchedule, onClose,
 }: GeneratedPostsViewProps) {
   const { toast } = useToast()
@@ -701,7 +709,7 @@ export function GeneratedPostsView({
   const [cards, setCards] = useState<Record<string, CardState>>(() => {
     const init: Record<string, CardState> = {}
     for (const p of platforms) {
-      init[p] = { content: lowercaseHashtags(variants[p] || ''), imageUrl: null, imageLoading: false, scheduledAt: null }
+      init[p] = { content: lowercaseHashtags(variants[p] || ''), imageUrl: initialImages?.[p] || null, imageLoading: false, scheduledAt: null }
     }
     return init
   })
@@ -822,6 +830,7 @@ export function GeneratedPostsView({
       onPublish:          () => handlePublish(p),
       isPro,
       isRewriting: loadingAction === `rewrite-${p}`,
+      isActing:    loadingAction === `publish-${p}` || loadingAction === `draft-${p}` || loadingAction === `schedule-${p}`,
       onClose:     onClose,
       userName,
     }

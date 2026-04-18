@@ -288,7 +288,25 @@ export default function PostsPage() {
 
   function openPost(post: Post) {
     if (post.status === 'draft' || post.status === 'failed') {
-      router.push(`/posts/${post.id}/edit`)
+      const variants: Partial<Record<string, string>> = {}
+      const initialImages: Partial<Record<string, string>> = {}
+      for (const p of post.platforms) {
+        variants[p] = post.content
+        if (post.media_urls?.[0]) initialImages[p] = post.media_urls[0]
+      }
+      try {
+        sessionStorage.setItem('social_ia_results', JSON.stringify({
+          variants,
+          platforms: post.platforms,
+          objective: null,
+          quotaUsed: 0,
+          quotaLimit: 'unlimited',
+          isPro: true,
+          editPostId: post.id,
+          initialImages: Object.keys(initialImages).length > 0 ? initialImages : undefined,
+        }))
+      } catch {}
+      router.push('/posts/results')
       return
     }
     setSelectedPost(post)

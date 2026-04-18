@@ -915,7 +915,24 @@ export default function CreatePage() {
     } else if (uploadedMediaUrl) {
       mediaUrl = uploadedMediaUrl
     }
-    setActionModal({ content: manualContent, platforms: selectedPlatforms, mediaUrls: mediaUrl ? [mediaUrl] : [], aiGenerated: false })
+    const variants: Partial<Record<string, string>> = {}
+    const initialImages: Partial<Record<string, string>> = {}
+    for (const p of selectedPlatforms) {
+      variants[p] = manualContent
+      if (mediaUrl) initialImages[p] = mediaUrl
+    }
+    try {
+      sessionStorage.setItem('social_ia_results', JSON.stringify({
+        variants,
+        platforms: selectedPlatforms,
+        objective: null,
+        quotaUsed: 0,
+        quotaLimit: 'unlimited',
+        isPro: true,
+        initialImages: Object.keys(initialImages).length > 0 ? initialImages : undefined,
+      }))
+    } catch {}
+    router.push('/posts/results')
   }
 
   // ──────────────────────────────────────────────────────────────────────────

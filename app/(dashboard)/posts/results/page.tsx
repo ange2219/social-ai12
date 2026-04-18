@@ -8,12 +8,14 @@ import { ArrowLeft } from 'lucide-react'
 import type { Platform, PostObjective } from '@/types'
 
 interface ResultsData {
-  variants:   Partial<Record<Platform, string>>
-  platforms:  Platform[]
-  objective:  PostObjective | null
-  quotaUsed:  number
-  quotaLimit: number | 'unlimited'
-  isPro:      boolean
+  variants:       Partial<Record<Platform, string>>
+  platforms:      Platform[]
+  objective:      PostObjective | null
+  quotaUsed:      number
+  quotaLimit:     number | 'unlimited'
+  isPro:          boolean
+  editPostId?:    string
+  initialImages?: Partial<Record<Platform, string>>
 }
 
 export default function ResultsPage() {
@@ -47,6 +49,19 @@ export default function ResultsPage() {
     platform: Platform, content: string, mediaUrl: string | null,
     status: 'draft' | 'scheduled', scheduledAt?: string,
   ): Promise<string> {
+    if (data?.editPostId) {
+      const res = await fetch(`/api/posts/${data.editPostId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content, platforms: [platform],
+          media_urls: mediaUrl ? [mediaUrl] : [],
+          status, scheduled_at: scheduledAt,
+        }),
+      })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d.error || 'Erreur')
+      return data.editPostId
+    }
     const res = await fetch('/api/posts', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -123,6 +138,7 @@ export default function ResultsPage() {
         quotaLimit={data.quotaLimit}
         isPro={data.isPro}
         userName={userName}
+        initialImages={data.initialImages}
         onSaveDraft={handleSaveDraft}
         onPublish={handlePublish}
         onSchedule={handleSchedule}
