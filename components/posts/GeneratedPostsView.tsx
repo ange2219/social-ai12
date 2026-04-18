@@ -336,6 +336,7 @@ interface CardState {
 
 interface PostPlatformCardProps {
   platform: Platform
+  allPlatforms?: Platform[]   // unified mode: show all icons in header
   objective: PostObjective | null
   cardState: CardState
   onContentChange: (v: string) => void
@@ -355,7 +356,7 @@ interface PostPlatformCardProps {
 }
 
 function PostPlatformCard({
-  platform, objective, cardState,
+  platform, allPlatforms, objective, cardState,
   onContentChange, onImageSet, onImageLoad,
   onRewrite, onHashtags,
   onScheduleOpen, onPublishScheduled,
@@ -363,7 +364,14 @@ function PostPlatformCard({
   isPro, isRewriting, isActing, onClose, userName,
 }: PostPlatformCardProps) {
   const { content, imageUrl, imageLoading, scheduledAt } = cardState
-  const limit       = CHAR_LIMITS[platform]
+  const isUnifiedCard = allPlatforms && allPlatforms.length > 1
+  // In unified mode, use the most restrictive char limit
+  const limit = isUnifiedCard
+    ? (() => {
+        const limits = allPlatforms.map(p => CHAR_LIMITS[p]).filter((l): l is number => l !== undefined)
+        return limits.length > 0 ? Math.min(...limits) : undefined
+      })()
+    : CHAR_LIMITS[platform]
   const isOverLimit = limit ? content.length > limit : false
   const color       = PLATFORM_COLORS[platform]
 
@@ -424,14 +432,35 @@ function PostPlatformCard({
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: '.65rem 1rem', position: 'relative',
-        background: `${color}0d`, borderBottom: '1px solid var(--b1)',
+        background: isUnifiedCard ? 'var(--s2)' : `${color}0d`,
+        borderBottom: '1px solid var(--b1)',
         borderRadius: '16px 16px 0 0', overflow: 'hidden',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '.45rem' }}>
-          <PlatformIcon platform={platform} size={20} />
-          <span style={{ fontSize: '.92rem', fontWeight: 700, color: 'var(--t1)' }}>
-            {PLATFORM_NAMES[platform]}
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+          {isUnifiedCard ? (
+            <>
+              <div style={{ display: 'flex', gap: '3px' }}>
+                {allPlatforms!.slice(0, 6).map(p => (
+                  <div key={p} style={{ width: 22, height: 22, borderRadius: '5px', overflow: 'hidden', flexShrink: 0 }}>
+                    <PlatformIcon platform={p} size={22} />
+                  </div>
+                ))}
+                {allPlatforms!.length > 6 && (
+                  <span style={{ fontSize: '.72rem', color: 'var(--t3)', alignSelf: 'center', marginLeft: '2px' }}>+{allPlatforms!.length - 6}</span>
+                )}
+              </div>
+              <span style={{ fontSize: '.88rem', fontWeight: 700, color: 'var(--t1)' }}>
+                {allPlatforms!.length} plateformes
+              </span>
+            </>
+          ) : (
+            <>
+              <PlatformIcon platform={platform} size={20} />
+              <span style={{ fontSize: '.92rem', fontWeight: 700, color: 'var(--t1)' }}>
+                {PLATFORM_NAMES[platform]}
+              </span>
+            </>
+          )}
         </div>
         {onClose && (
           <button
@@ -694,6 +723,7 @@ export interface GeneratedPostsViewProps {
   initialImages?:        Partial<Record<Platform, string>>
   initialScheduledAt?:   string
   allowPlatformToggle?:  boolean   // true seulement pour création manuelle
+  unifiedMode?:          boolean   // true = une seule carte pour toutes les plateformes
   onSaveDraft:           (platform: Platform, content: string, imageUrl: string | null) => Promise<void>
   onPublish:             (platform: Platform, content: string, imageUrl: string | null) => Promise<void>
   onSchedule:            (platform: Platform, content: string, imageUrl: string | null, scheduledAt: string) => Promise<void>
@@ -703,7 +733,7 @@ export interface GeneratedPostsViewProps {
 export function GeneratedPostsView({
   platforms, variants, objective,
   quotaUsed, quotaLimit, isPro, userName, initialImages, initialScheduledAt,
-  allowPlatformToggle,
+  allowPlatformToggle, unifiedMode,
   onSaveDraft, onPublish, onSchedule, onClose,
 }: GeneratedPostsViewProps) {
   const { toast } = useToast()
@@ -843,9 +873,10 @@ export function GeneratedPostsView({
     finally { setLoadingAction(null) }
   }
 
-  function cardProps(p: Platform): PostPlatformCardProps {
+  function cardProps(p: Platform, allPlatformsOverride?: Platform[]): PostPlatformCardProps {
     return {
       platform:    p,
+      allPlatforms: allPlatformsOverride,
       objective,
       cardState:   cards[p] || { content: '', imageUrl: null, imageLoading: false, scheduledAt: null },
       onContentChange:    v       => updateCard(p, { content: v }),
@@ -899,20 +930,24 @@ export function GeneratedPostsView({
       )}
 
       {/* ── Cards ── */}
-      <div style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: '1rem',
-        maxWidth: '860px',
-        margin: '0 auto',
-        justifyContent: 'center',
-      }}>
-        {activePlatforms.map(p => (
-          <div key={p} style={{ width: activePlatforms.length === 1 ? 'min(420px, 100%)' : 'calc(50% - 0.5rem)' }}>
-            <PostPlatformCard {...cardProps(p)} />
-          </div>
-        ))}
-      </div>
+      {unifiedMode && activePlatforms.length > 0 ? (
+        // Mode unifié : une seule carte pour toutes les plateformes
+        <div style={{ maxWidth: '480px', margin: '0 auto' }}>
+          <PostPlatformCard {...cardProps(activePlatforms[0], activePlatforms)} />
+        </div>
+      ) : (
+        // Mode normal : une carte par plateforme
+        <div style={{
+          display: 'flex', flexWrap: 'wrap', gap: '1rem',
+          maxWidth: '860px', margin: '0 auto', justifyContent: 'center',
+        }}>
+          {activePlatforms.map(p => (
+            <div key={p} style={{ width: activePlatforms.length === 1 ? 'min(420px, 100%)' : 'calc(50% - 0.5rem)' }}>
+              <PostPlatformCard {...cardProps(p)} />
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Scheduler sheet */}
       {schedulerPlatform && (

@@ -19,6 +19,7 @@ interface ResultsData {
   initialScheduledAt?: string
   pageTitle?:          string
   allowPlatformToggle?: boolean
+  distributionMode?:   'unified' | 'custom'
 }
 
 export default function ResultsPage() {
@@ -48,6 +49,10 @@ export default function ResultsPage() {
     }).catch(() => {})
   }, [router])
 
+  const isUnified = (d: ResultsData | null) =>
+    d?.distributionMode === 'unified' && !d?.editPostId && (d?.platforms?.length ?? 0) > 1
+
+  // ── Crée un post (ou met à jour en mode édition) ──────────────────────────────
   async function savePost(
     platform: Platform, content: string, mediaUrl: string | null,
     status: 'draft' | 'scheduled', scheduledAt?: string,
@@ -78,24 +83,52 @@ export default function ResultsPage() {
     return d.id
   }
 
+  // ── Crée UN post multi-plateformes (mode unifié) ──────────────────────────────
+  async function saveUnifiedPost(
+    content: string, mediaUrl: string | null, status: 'draft' | 'scheduled',
+    scheduledAt?: string,
+  ): Promise<string> {
+    const res = await fetch('/api/posts', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content, platforms: data!.platforms,
+        media_urls: mediaUrl ? [mediaUrl] : [],
+        ai_generated: true, status, scheduled_at: scheduledAt,
+      }),
+    })
+    const d = await res.json()
+    if (!res.ok) throw new Error(d.error || 'Erreur')
+    return d.id
+  }
+
   function clearResults() {
     try { sessionStorage.removeItem('social_ia_results') } catch {}
   }
 
   async function handleSaveDraft(platform: Platform, content: string, imageUrl: string | null) {
-    await savePost(platform, content, imageUrl, 'draft')
+    if (isUnified(data)) {
+      await saveUnifiedPost(content, imageUrl, 'draft')
+    } else {
+      await savePost(platform, content, imageUrl, 'draft')
+    }
     clearResults()
     toast('Brouillon sauvegardé', 'success')
     router.replace('/posts')
   }
 
   async function handlePublish(platform: Platform, content: string, imageUrl: string | null) {
-    if (platform === 'instagram' && !imageUrl) {
-      toast('Veuillez ajouter une image pour Instagram.', 'warning'); return
+    if (isUnified(data)) {
+      const id = await saveUnifiedPost(content, imageUrl, 'draft')
+      const res = await fetch(`/api/posts/${id}/publish`, { method: 'POST' })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
+    } else {
+      if (platform === 'instagram' && !imageUrl) {
+        toast('Veuillez ajouter une image pour Instagram.', 'warning'); return
+      }
+      const id = await savePost(platform, content, imageUrl, 'draft')
+      const res = await fetch(`/api/posts/${id}/publish`, { method: 'POST' })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
     }
-    const id = await savePost(platform, content, imageUrl, 'draft')
-    const res = await fetch(`/api/posts/${id}/publish`, { method: 'POST' })
-    if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
     clearResults()
     toast('Post publié !', 'success')
     router.replace('/posts')
@@ -103,26 +136,40 @@ export default function ResultsPage() {
 
   async function handleSchedule(platform: Platform, content: string, imageUrl: string | null, scheduledAt: string) {
     if (new Date(scheduledAt) <= new Date()) throw new Error('La date doit être dans le futur')
-    const id = await savePost(platform, content, imageUrl, 'draft')
-    const res = await fetch(`/api/posts/${id}/schedule`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ scheduledAt }),
-    })
-    if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
+    if (isUnified(data)) {
+      const id = await saveUnifiedPost(content, imageUrl, 'draft')
+      const res = await fetch(`/api/posts/${id}/schedule`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scheduledAt }),
+      })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
+    } else {
+      const id = await savePost(platform, content, imageUrl, 'draft')
+      const res = await fetch(`/api/posts/${id}/schedule`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scheduledAt }),
+      })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
+    }
     clearResults()
     toast('Post programmé !', 'success')
     router.replace('/posts')
   }
 
-  // Popup retour — sauvegarder tous les variants en brouillon
+  // ── Popup retour ──────────────────────────────────────────────────────────────
   async function handleLeaveAsDraft() {
     if (!data) return
     setLeaveSaving(true)
     try {
-      const platforms = data.platforms.filter(p => !!data.variants[p])
-      await Promise.all(
-        platforms.map(p => savePost(p, data.variants[p]!, null, 'draft'))
-      )
+      if (isUnified(data)) {
+        const content = data.variants[data.platforms[0]] || ''
+        await saveUnifiedPost(content, null, 'draft')
+      } else {
+        const platforms = data.platforms.filter(p => !!data.variants[p])
+        await Promise.all(
+          platforms.map(p => savePost(p, data.variants[p]!, null, 'draft'))
+        )
+      }
       clearResults()
       toast('Posts sauvegardés en brouillon', 'success')
       router.replace('/posts')
@@ -162,8 +209,7 @@ export default function ResultsPage() {
           }}>
             <h2 style={{
               fontFamily: "'Bricolage Grotesque', sans-serif",
-              fontSize: '1.05rem', fontWeight: 700, color: 'var(--t1)',
-              marginBottom: '.4rem',
+              fontSize: '1.05rem', fontWeight: 700, color: 'var(--t1)', marginBottom: '.4rem',
             }}>
               Quitter sans sauvegarder ?
             </h2>
@@ -233,6 +279,7 @@ export default function ResultsPage() {
         initialImages={data.initialImages}
         initialScheduledAt={data.initialScheduledAt}
         allowPlatformToggle={data.allowPlatformToggle}
+        unifiedMode={isUnified(data)}
         onSaveDraft={handleSaveDraft}
         onPublish={handlePublish}
         onSchedule={handleSchedule}
