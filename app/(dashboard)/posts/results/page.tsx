@@ -135,6 +135,12 @@ export default function ResultsPage() {
 
   async function handlePublish(platform: Platform, content: string, imageUrl: string | null) {
     if (isUnified(data)) {
+      // En mode unifié le post va sur toutes les plateformes sélectionnées —
+      // bloquer si Instagram est inclus et qu'il n'y a pas d'image.
+      if (data!.platforms.includes('instagram') && !imageUrl) {
+        toast('Veuillez ajouter une image — Instagram n\'accepte pas les posts sans image.', 'warning')
+        return
+      }
       const id = await saveUnifiedPost(content, imageUrl, 'draft')
       const res = await fetch(`/api/posts/${id}/publish`, { method: 'POST' })
       if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
@@ -144,7 +150,7 @@ export default function ResultsPage() {
       return
     }
     if (platform === 'instagram' && !imageUrl) {
-      toast('Veuillez ajouter une image pour Instagram.', 'warning'); return
+      toast('Veuillez ajouter une image — Instagram n\'accepte pas les posts sans image.', 'warning'); return
     }
     const id = await savePost(platform, content, imageUrl, 'draft')
     const res = await fetch(`/api/posts/${id}/publish`, { method: 'POST' })

@@ -207,9 +207,7 @@ function PlatformPopup({
   function toggle(p: Platform) {
     const isLocked = !isPro && !FREE_PLATFORMS.includes(p)
     if (isLocked) return
-    setLocalSelected(prev =>
-      prev.includes(p) ? (prev.length > 1 ? prev.filter(x => x !== p) : prev) : [...prev, p]
-    )
+    setLocalSelected(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p])
   }
 
   function save() {
@@ -668,7 +666,7 @@ export default function CreatePage() {
     length: 'moyen', format: 'direct', tone: 'professionnel', cta: 'aucun',
   })
   const [distributionMode, setDistributionMode] = useState<DistributionMode>('unified')
-  const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(['instagram'])
+  const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>([])
 
   // ── Popups ──
   const [showParamsPopup,   setShowParamsPopup]   = useState(false)
@@ -804,7 +802,7 @@ export default function CreatePage() {
   }
 
   async function handleGenerate() {
-    if (!selectedPlatforms.length) { toast('Sélectionnez au moins une plateforme via "Plateforme"', 'error'); return }
+    if (!selectedPlatforms.length) { toast('Veuillez choisir au moins une plateforme avant de générer.', 'warning'); return }
     await runOverlay(STEPS_SINGLE, async () => {
       const res = await fetch('/api/ai/generate', {
         method: 'POST',

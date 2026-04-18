@@ -35,14 +35,16 @@ function stClass(s: string) {
   if (s === 'draft' || s === 'failed') return 'st st-p'
   if (s === 'scheduled') return 'st st-pub'
   if (s === 'published') return 'st st-a'
-  if (s === 'deleted') return 'st'
+  if (s === 'partial')   return 'st st-pub'
+  if (s === 'deleted')   return 'st'
   return 'st st-p'
 }
 function stLabel(s: string) {
   if (s === 'draft' || s === 'failed') return 'Brouillon'
   if (s === 'scheduled') return 'Programmé'
   if (s === 'published') return 'Publié'
-  if (s === 'deleted') return 'Supprimé'
+  if (s === 'partial')   return 'Partiel'
+  if (s === 'deleted')   return 'Supprimé'
   return 'Brouillon'
 }
 
@@ -149,6 +151,11 @@ export default function PostsPage() {
   const [plusMenuOpen, setPlusMenuOpen] = useState(false)
   const plusMenuRef = useRef<HTMLDivElement>(null)
 
+  // Filtre par plateforme
+  const [platformFilter, setPlatformFilter] = useState<string | null>(null)
+  const [pfMenuOpen, setPfMenuOpen] = useState(false)
+  const pfMenuRef = useRef<HTMLDivElement>(null)
+
   // Pending results banner
   const [hasPendingResults, setHasPendingResults] = useState(false)
 
@@ -161,6 +168,14 @@ export default function PostsPage() {
     if (plusMenuOpen) document.addEventListener('mousedown', handleOutsideClick)
     return () => document.removeEventListener('mousedown', handleOutsideClick)
   }, [plusMenuOpen])
+
+  useEffect(() => {
+    function handleOutsidePf(e: MouseEvent) {
+      if (pfMenuRef.current && !pfMenuRef.current.contains(e.target as Node)) setPfMenuOpen(false)
+    }
+    if (pfMenuOpen) document.addEventListener('mousedown', handleOutsidePf)
+    return () => document.removeEventListener('mousedown', handleOutsidePf)
+  }, [pfMenuOpen])
 
   function toggleSelect(id: string) {
     setSelectedIds(prev => {
@@ -491,11 +506,19 @@ export default function PostsPage() {
     }
   }
 
-  // Failed posts appear under "Brouillons" filter
-  const filtered =
-    filter === 'all'   ? posts.filter(p => p.status !== 'deleted') :
-    filter === 'draft' ? posts.filter(p => p.status === 'draft' || p.status === 'failed') :
+  // Unique platforms across all loaded posts (for the platform filter dropdown)
+  const availablePlatforms = [...new Set(posts.flatMap(p => p.platforms))].sort()
+
+  // Failed posts appear under "Brouillons" filter; partial appears under "Publiés"
+  const baseFiltered =
+    filter === 'all'       ? posts.filter(p => p.status !== 'deleted') :
+    filter === 'draft'     ? posts.filter(p => p.status === 'draft' || p.status === 'failed') :
+    filter === 'published' ? posts.filter(p => p.status === 'published' || p.status === 'partial') :
     posts.filter(p => p.status === filter)
+
+  const filtered = platformFilter
+    ? baseFiltered.filter(p => p.platforms.includes(platformFilter))
+    : baseFiltered
 
   const isDraft = selectedPost?.status === 'draft' || selectedPost?.status === 'failed'
   const isDeleted = selectedPost?.status === 'deleted'
@@ -937,6 +960,73 @@ export default function PostsPage() {
               {f === 'all' ? 'Tous' : f === 'published' ? 'Publiés' : f === 'draft' ? `Brouillons${draftCount > 0 ? ` (${draftCount})` : ''}` : 'Programmés'}
             </button>
           ))}
+
+          {/* Filtre plateforme */}
+          {availablePlatforms.length > 0 && (
+            <div ref={pfMenuRef} style={{ position: 'relative', flexShrink: 0 }}>
+              <button
+                onClick={() => setPfMenuOpen(o => !o)}
+                style={{
+                  padding: '.3rem .75rem', borderRadius: '6px', fontSize: '.75rem', fontWeight: 500, cursor: 'pointer',
+                  border: platformFilter ? '1px solid #4646FF' : '1px solid var(--b1)',
+                  background: platformFilter ? 'rgba(59,123,246,.12)' : 'var(--card)',
+                  color: platformFilter ? '#4646FF' : 'var(--t3)', transition: '.15s',
+                  display: 'flex', alignItems: 'center', gap: '.3rem',
+                }}
+              >
+                {platformFilter ? (
+                  <>
+                    <PlatformIcon platform={platformFilter} size={12} />
+                    {PLATFORM_SHORT[platformFilter] || platformFilter}
+                    <span
+                      onClick={e => { e.stopPropagation(); setPlatformFilter(null); setPfMenuOpen(false) }}
+                      style={{ marginLeft: '.15rem', opacity: .6, fontWeight: 700, lineHeight: 1, cursor: 'pointer' }}
+                    >×</span>
+                  </>
+                ) : 'Plateforme'}
+              </button>
+
+              {pfMenuOpen && (
+                <div style={{
+                  position: 'absolute', top: 'calc(100% + 5px)', left: 0, zIndex: 80,
+                  background: 'var(--card)', border: '1px solid var(--b1)', borderRadius: '10px',
+                  padding: '.3rem', minWidth: '140px', boxShadow: '0 8px 24px rgba(0,0,0,.4)',
+                }}>
+                  {platformFilter && (
+                    <>
+                      <button
+                        onClick={() => { setPlatformFilter(null); setPfMenuOpen(false) }}
+                        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '.5rem', padding: '.45rem .65rem', borderRadius: '7px', border: 'none', background: 'transparent', color: 'var(--t3)', cursor: 'pointer', fontSize: '.78rem', fontStyle: 'italic' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--s2)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                      >
+                        Toutes les plateformes
+                      </button>
+                      <div style={{ borderTop: '1px solid var(--b1)', margin: '.2rem 0' }} />
+                    </>
+                  )}
+                  {availablePlatforms.map(p => (
+                    <button
+                      key={p}
+                      onClick={() => { setPlatformFilter(p); setPfMenuOpen(false) }}
+                      style={{
+                        width: '100%', display: 'flex', alignItems: 'center', gap: '.5rem',
+                        padding: '.45rem .65rem', borderRadius: '7px', border: 'none',
+                        background: platformFilter === p ? 'rgba(59,123,246,.1)' : 'transparent',
+                        color: platformFilter === p ? '#4646FF' : 'var(--t1)',
+                        cursor: 'pointer', fontSize: '.78rem',
+                      }}
+                      onMouseEnter={e => { if (platformFilter !== p) e.currentTarget.style.background = 'var(--s2)' }}
+                      onMouseLeave={e => { if (platformFilter !== p) e.currentTarget.style.background = 'transparent' }}
+                    >
+                      <PlatformIcon platform={p} size={14} />
+                      {PLATFORM_SHORT[p] || p}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <div style={{ display: 'flex', gap: '.3rem', alignItems: 'center' }}>
           {(['grid', 'list'] as const).map(v => (
