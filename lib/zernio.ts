@@ -62,7 +62,10 @@ export async function createProfile(userId: string, name: string): Promise<strin
 export async function getConnectUrl(profileId: string, platform: string, redirectUrl: string): Promise<string> {
   const params = new URLSearchParams({ profileId, redirect_url: redirectUrl })
   const data = await zernioRequest(`/connect/${platform}?${params}`)
-  return (data.url || data.connectUrl) as string
+  console.log('[zernio] getConnectUrl response:', JSON.stringify(data))
+  const url = data.url || data.connectUrl || data.authUrl || data.link || data.redirectUrl || data.oauth_url
+  if (!url) throw new Error(`Zernio: champ URL introuvable dans la réponse: ${JSON.stringify(data)}`)
+  return url as string
 }
 
 /** Liste les comptes connectés d'un profil Zernio */
