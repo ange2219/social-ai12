@@ -120,7 +120,7 @@ export default function ResultsPage() {
   if (!ready || !data) return null
 
   return (
-    <div style={{ maxWidth: '960px', margin: '0 auto', padding: '0 0 4rem' }}>
+    <div style={{ padding: '0 0 4rem' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1.5rem' }}>
         <button
