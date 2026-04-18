@@ -17,6 +17,7 @@ interface ResultsData {
   editPostId?:         string
   initialImages?:      Partial<Record<Platform, string>>
   initialScheduledAt?: string
+  pageTitle?:          string
 }
 
 export default function ResultsPage() {
@@ -127,7 +128,7 @@ export default function ResultsPage() {
           <ArrowLeft size={18} />
         </button>
         <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1.25rem', fontWeight: 700, color: 'var(--t1)', letterSpacing: '-.02em' }}>
-          {data.editPostId ? 'Éditer le post' : 'Posts générés'}
+          {data.pageTitle ?? (data.editPostId ? 'Modifier le post' : 'Posts générés')}
         </h1>
       </div>
 

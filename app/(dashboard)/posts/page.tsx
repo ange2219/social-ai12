@@ -305,6 +305,7 @@ export default function PostsPage() {
           editPostId: post.id,
           initialImages: Object.keys(initialImages).length > 0 ? initialImages : undefined,
           initialScheduledAt: post.scheduled_at || undefined,
+          pageTitle: 'Modifier le post',
         }))
       } catch {}
       router.push('/posts/results')
@@ -891,6 +892,7 @@ export default function PostsPage() {
                         variants: { facebook: '' },
                         platforms: ['facebook'],
                         objective: null, quotaUsed: 0, quotaLimit: 'unlimited', isPro: true,
+                        pageTitle: 'Créer un post',
                       }))
                     } catch {}
                     router.push('/posts/results')

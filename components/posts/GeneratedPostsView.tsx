@@ -895,18 +895,16 @@ export function GeneratedPostsView({
       </div>
 
       {/* ── Cards ── */}
-      <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '1.25rem' }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: activePlatforms.length === 1
+          ? 'minmax(0, 480px)'
+          : 'repeat(2, minmax(0, 460px))',
+        gap: '1.25rem',
+        justifyContent: 'center',
+      }}>
         {activePlatforms.map(p => (
-          <div
-            key={p}
-            style={{
-              width: '100%',
-              maxWidth: activePlatforms.length === 1 ? '480px' : '440px',
-              flex: activePlatforms.length === 1 ? '0 0 auto' : '1 1 340px',
-            }}
-          >
-            <PostPlatformCard {...cardProps(p)} />
-          </div>
+          <PostPlatformCard key={p} {...cardProps(p)} />
         ))}
       </div>
 
