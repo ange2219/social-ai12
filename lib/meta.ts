@@ -15,8 +15,8 @@ export function getMetaOAuthUrl(state: string): string {
       'pages_read_engagement',
       'pages_show_list',
       'public_profile',
-      'read_insights',              // impressions + reach des posts Facebook
-      'instagram_manage_insights',  // impressions + reach des posts Instagram
+      'read_insights',  // impressions + reach des posts Facebook uniquement
+      // instagram_manage_insights retiré — Instagram se connecte avec sa propre app séparée
     ].join(','),
     response_type: 'code',
     state,
