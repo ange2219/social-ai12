@@ -6,7 +6,7 @@ import { ProgressionWidget } from '@/components/dashboard/ProgressionWidget'
 import { PostsTableCard } from '@/components/dashboard/PostsTableCard'
 import { ActivityChart } from '@/components/dashboard/ActivityChart'
 import { TypingGreeting } from '@/components/dashboard/TypingGreeting'
-import { PLAN_LIMITS, type Plan } from '@/types'
+import { type Plan } from '@/types'
 
 const PLATFORM_NAMES: Record<string, string> = {
   instagram: 'Instagram', facebook: 'Facebook', tiktok: 'TikTok',
@@ -110,7 +110,7 @@ export default async function DashboardPage() {
   const monthRes = await admin.from('posts').select('id', { count: 'exact' })
     .eq('user_id', authUser.id).gte('created_at', monthStart).neq('status', 'deleted')
   const monthCount = monthRes.count || 0
-  const planLimit  = PLAN_LIMITS[plan].generationsPerDay
+  const planLimit: number | 'unlimited' = 'unlimited'
 
   const aiTip = getAiTip(weeks, bestPlatform, avgPerWeek)
   const firstName = userData?.full_name?.split(' ')[0] || authUser.email?.split('@')[0] || 'vous'
