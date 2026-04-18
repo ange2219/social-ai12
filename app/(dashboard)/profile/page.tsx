@@ -41,6 +41,16 @@ export default function ProfilePage() {
     if (accRes.ok) setAccounts(await accRes.json())
   }, [])
 
+  // Affiche les erreurs de redirection OAuth (ex: ?error=ZERNIO_API_KEY+manquante)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const err = params.get('error')
+    if (err) {
+      toast(`Erreur connexion : ${decodeURIComponent(err)}`, 'error')
+      window.history.replaceState({}, '', '/profile')
+    }
+  }, [toast])
+
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()

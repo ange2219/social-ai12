@@ -27,24 +27,32 @@ export async function GET(req: NextRequest) {
     .eq('id', user.id)
     .single()
 
+  if (!process.env.ZERNIO_API_KEY) {
+    console.error('[social/start] ZERNIO_API_KEY non configurée')
+    return NextResponse.redirect(new URL('/profile?error=ZERNIO_API_KEY+manquante+dans+Vercel', req.url))
+  }
+
   try {
-    let profileId = profile?.zernio_profile_id
+    let profileId = (profile as any)?.zernio_profile_id as string | null | undefined
 
     if (!profileId) {
-      profileId = await createProfile(user.id, profile?.full_name || profile?.email || user.id)
-      await admin.from('users').update({ zernio_profile_id: profileId }).eq('id', user.id)
+      console.log('[social/start] Création profil Zernio pour', user.id)
+      profileId = await createProfile(user.id, (profile as any)?.full_name || (profile as any)?.email || user.id)
+      console.log('[social/start] Profil Zernio créé:', profileId)
+      await admin.from('users').update({ zernio_profile_id: profileId } as any).eq('id', user.id)
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL!
     const redirectUrl = `${appUrl}/api/social/callback?platform=${platform}&userId=${user.id}`
 
-    // Récupère l'URL OAuth depuis Zernio (côté serveur — invisible pour l'utilisateur)
+    console.log('[social/start] Récupération URL OAuth Zernio pour', platform)
     const connectUrl = await getConnectUrl(profileId, platform, redirectUrl)
+    console.log('[social/start] Redirection vers:', connectUrl.slice(0, 80))
 
-    // Redirige directement vers l'OAuth de la plateforme
     return NextResponse.redirect(connectUrl)
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Erreur de connexion'
+    console.error('[social/start] Erreur:', msg)
     return NextResponse.redirect(new URL(`/profile?error=${encodeURIComponent(msg)}`, req.url))
   }
 }
