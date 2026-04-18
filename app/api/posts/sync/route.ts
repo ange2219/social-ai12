@@ -54,18 +54,20 @@ export async function POST() {
 
     if (!current) return
 
-    const currentPlatforms = (current.platforms as string[]) || []
-    const currentMetaIds   = (current.meta_post_ids as Record<string, string>) || {}
+    const currentMetaIds = (current.meta_post_ids as Record<string, string>) || {}
 
-    const remainingPlatforms = currentPlatforms.filter(p => p !== platform)
-    const remainingMetaIds   = { ...currentMetaIds }
+    const remainingMetaIds = { ...currentMetaIds }
     delete remainingMetaIds[platform]
 
-    if (remainingPlatforms.length === 0) {
+    // Use meta_post_ids as the source of truth — platforms can drift out of sync
+    const remainingKeys = Object.keys(remainingMetaIds)
+
+    if (remainingKeys.length === 0) {
       await admin.from('posts').update({ status: 'deleted' }).eq('id', postId)
     } else {
       await admin.from('posts').update({
-        platforms:    remainingPlatforms,
+        // Re-derive platforms from meta_post_ids to fix any divergence
+        platforms:     remainingKeys,
         meta_post_ids: remainingMetaIds,
       }).eq('id', postId)
     }
