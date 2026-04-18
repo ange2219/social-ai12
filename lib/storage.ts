@@ -3,10 +3,19 @@
  * Convertit les URLs temporaires (DALL-E, Imagen3 base64) en URLs permanentes
  */
 
-import { createAdminClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 
 const BUCKET = 'post-media'
-const IMAGE_EXPIRY_SECONDS = 60 * 60 * 24 * 365 // 1 an
+
+// Client admin direct (service role) — bypass RLS pour Storage.
+// Ne pas utiliser createServerClient/@supabase/ssr ici : conçu pour les sessions
+// cookie et ne transmet pas correctement le service role key pour Storage.
+function getStorageAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const key = process.env.SUPABASE_SERVICE_KEY!
+  if (!key) throw new Error('SUPABASE_SERVICE_KEY non configurée')
+  return createClient(url, key, { auth: { persistSession: false } })
+}
 
 /**
  * Upload une image depuis une URL externe vers Supabase Storage.
@@ -26,7 +35,7 @@ export async function uploadImageFromUrl(
   const name = filename || `${Date.now()}.${ext}`
   const path = `${userId}/generated/${name}`
 
-  const admin = createAdminClient()
+  const admin = getStorageAdmin()
   const { error } = await admin.storage
     .from(BUCKET)
     .upload(path, buffer, { contentType, upsert: false })
@@ -55,7 +64,7 @@ export async function uploadImageFromBase64(
 
   const buffer = Buffer.from(base64, 'base64')
 
-  const admin = createAdminClient()
+  const admin = getStorageAdmin()
   const { error } = await admin.storage
     .from(BUCKET)
     .upload(path, buffer, { contentType, upsert: false })
@@ -83,7 +92,7 @@ export async function uploadPostMedia(
   const folder = postId ? `${userId}/${postId}` : `${userId}/uploads`
   const path = `${folder}/${Date.now()}.${ext}`
 
-  const admin = createAdminClient()
+  const admin = getStorageAdmin()
   const { error } = await admin.storage
     .from(BUCKET)
     .upload(path, file, { contentType, upsert: false })
@@ -118,7 +127,7 @@ export async function deleteStorageFile(url: string): Promise<void> {
     const bucket = rest.slice(0, slashIdx)
     const path = rest.slice(slashIdx + 1).split('?')[0] // enlève les query params éventuels
 
-    const admin = createAdminClient()
+    const admin = getStorageAdmin()
     await admin.storage.from(bucket).remove([path])
   } catch {
     // Non critique — on continue même si la suppression du fichier échoue
