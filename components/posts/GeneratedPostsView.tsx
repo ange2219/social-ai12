@@ -903,6 +903,8 @@ export function GeneratedPostsView({
         display: 'flex',
         flexWrap: 'wrap',
         gap: '1rem',
+        maxWidth: '960px',
+        margin: '0 auto',
       }}>
         {activePlatforms.map(p => (
           <div key={p} style={{ width: activePlatforms.length === 1 ? '100%' : 'calc(50% - 0.5rem)' }}>
