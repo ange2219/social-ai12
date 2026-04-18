@@ -278,37 +278,32 @@ export default function ProfilePage() {
             )
           })()}
 
-          {/* Autres plateformes (Zernio — plans payants) */}
+          {/* Autres plateformes (Zernio) */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
             {(['tiktok', 'twitter', 'linkedin'] as Platform[]).map(p => {
-              const isPaid = userPlan !== 'free'
               const acc = accounts.find(a => a.platform === p)
               return (
                 <div key={p} style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   padding: '.5rem .75rem', background: 'var(--bg)', borderRadius: '8px',
                   border: `1px solid ${acc ? 'rgba(34,197,94,.2)' : 'var(--b1)'}`,
-                  opacity: isPaid ? 1 : .5,
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem' }}>
-                    <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: acc ? PLATFORM_COLORS[p] : (isPaid ? '#3f3f46' : '#3f3f46') }} />
-                    <span style={{ fontSize: '.82rem', fontWeight: 500, color: isPaid ? 'var(--t1)' : 'var(--t3)' }}>{PLATFORM_NAMES[p]}</span>
-                    {!isPaid && <span style={{ fontSize: '.68rem', fontWeight: 600, background: 'rgba(251,191,36,.1)', color: '#FBBF24', border: '1px solid rgba(251,191,36,.2)', padding: '.1rem .4rem', borderRadius: '4px' }}>Pro</span>}
+                    <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: acc ? PLATFORM_COLORS[p] : '#3f3f46' }} />
+                    <span style={{ fontSize: '.82rem', fontWeight: 500, color: 'var(--t1)' }}>{PLATFORM_NAMES[p]}</span>
                     {acc && <span style={{ fontSize: '.75rem', color: '#22C55E', display: 'flex', alignItems: 'center', gap: '.25rem' }}><CheckCircle2 size={11} /> Connecté</span>}
                   </div>
-                  {isPaid && (
-                    acc ? (
-                      <button onClick={() => disconnect(acc.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '.3rem' }}>
-                        <Unlink size={12} /> Déconnecter
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => { window.location.href = `/api/social/start?platform=${p}` }}
-                        style={{ background: 'rgba(70,70,255,.1)', border: '1px solid rgba(70,70,255,.3)', cursor: 'pointer', color: '#4646FF', fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.3rem .7rem', borderRadius: '6px', fontWeight: 500 }}
-                      >
-                        <Link2 size={12} /> Connecter
-                      </button>
-                    )
+                  {acc ? (
+                    <button onClick={() => disconnect(acc.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '.3rem' }}>
+                      <Unlink size={12} /> Déconnecter
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => { window.location.href = `/api/social/start?platform=${p}` }}
+                      style={{ background: 'rgba(70,70,255,.1)', border: '1px solid rgba(70,70,255,.3)', cursor: 'pointer', color: '#4646FF', fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.3rem .7rem', borderRadius: '6px', fontWeight: 500 }}
+                    >
+                      <Link2 size={12} /> Connecter
+                    </button>
                   )}
                 </div>
               )
