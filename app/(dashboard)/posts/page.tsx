@@ -36,6 +36,7 @@ function stClass(s: string) {
   if (s === 'scheduled') return 'st st-pub'
   if (s === 'published') return 'st st-a'
   if (s === 'deleted') return 'st'
+  if (s === 'rejected') return 'st'
   return 'st st-p'
 }
 function stLabel(s: string) {
@@ -43,6 +44,7 @@ function stLabel(s: string) {
   if (s === 'scheduled') return 'Programmé'
   if (s === 'published') return 'Publié'
   if (s === 'deleted') return 'Supprimé'
+  if (s === 'rejected') return 'Rejeté'
   return 'Brouillon'
 }
 
@@ -108,7 +110,7 @@ export default function PostsPage() {
   const [posts, setPosts] = useState<Post[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<'all' | 'published' | 'draft' | 'scheduled'>('all')
+  const [filter, setFilter] = useState<'all' | 'published' | 'draft' | 'scheduled' | 'rejected'>('all')
   const [view, setView] = useState<'grid' | 'list'>('grid')
   const [publishing, setPublishing] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -287,7 +289,7 @@ export default function PostsPage() {
   }, [])
 
   function openPost(post: Post) {
-    if (post.status === 'draft' || post.status === 'failed' || post.status === 'scheduled') {
+    if (post.status === 'draft' || post.status === 'failed' || post.status === 'scheduled' || post.status === 'rejected') {
       const variants: Partial<Record<string, string>> = {}
       const initialImages: Partial<Record<string, string>> = {}
       for (const p of post.platforms) {
@@ -492,14 +494,16 @@ export default function PostsPage() {
 
   // Failed posts appear under "Brouillons" filter
   const filtered =
-    filter === 'all'      ? posts.filter(p => p.status !== 'deleted') :
+    filter === 'all'      ? posts.filter(p => p.status !== 'deleted' && p.status !== 'rejected') :
     filter === 'draft'    ? posts.filter(p => p.status === 'draft' || p.status === 'failed') :
+    filter === 'rejected' ? posts.filter(p => p.status === 'rejected') :
     posts.filter(p => p.status === filter)
 
-  const isDraft = selectedPost?.status === 'draft' || selectedPost?.status === 'failed'
+  const isDraft = selectedPost?.status === 'draft' || selectedPost?.status === 'failed' || selectedPost?.status === 'rejected'
   const isDeleted = selectedPost?.status === 'deleted'
   const draftCount = posts.filter(p => p.status === 'draft' || p.status === 'failed').length
-  const nonDeletedCount = posts.filter(p => p.status !== 'deleted').length
+  const rejectedCount = posts.filter(p => p.status === 'rejected').length
+  const nonDeletedCount = posts.filter(p => p.status !== 'deleted' && p.status !== 'rejected').length
 
   return (
     <div style={{ padding: '1.5rem 2rem 3rem' }}>
@@ -809,6 +813,10 @@ export default function PostsPage() {
       {selectedIds.size > 0 && (
         <div style={{ position: 'fixed', bottom: '1.5rem', left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: 'var(--s2)', border: '1px solid var(--b1)', borderRadius: '12px', padding: '.75rem 1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', boxShadow: '0 8px 32px rgba(0,0,0,.6)', backdropFilter: 'blur(8px)' }}>
           <span style={{ fontSize: '.82rem', color: 'var(--t3)' }}>{selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}</span>
+          <button onClick={toggleSelectAll}
+            style={{ display: 'flex', alignItems: 'center', gap: '.4rem', padding: '.45rem .9rem', borderRadius: '8px', border: '1px solid var(--b1)', background: 'transparent', color: 'var(--t2)', cursor: 'pointer', fontSize: '.8rem', fontWeight: 600 }}>
+            {selectedIds.size === filtered.length ? 'Désélectionner tout' : 'Tout sélectionner'}
+          </button>
           <button onClick={bulkDelete} disabled={bulkDeleting}
             style={{ display: 'flex', alignItems: 'center', gap: '.4rem', padding: '.45rem .9rem', borderRadius: '8px', border: 'none', background: '#EF4444', color: '#fff', cursor: 'pointer', fontSize: '.8rem', fontWeight: 600, opacity: bulkDeleting ? .6 : 1 }}>
             <Trash2 size={13} /> {bulkDeleting ? 'Suppression...' : 'Supprimer'}
@@ -916,7 +924,7 @@ export default function PostsPage() {
       {/* Filters + view toggle */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', gap: '.5rem' }}>
         <div className="mob-scroll" style={{ display: 'flex', gap: '.4rem', flex: 1, overflowX: 'auto' }}>
-          {(['all', 'published', 'draft', 'scheduled'] as const).map(f => (
+          {(['all', 'published', 'draft', 'scheduled', 'rejected'] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)} style={{
               padding: '.3rem .75rem', borderRadius: '6px', fontSize: '.75rem', fontWeight: 500, cursor: 'pointer',
               border: filter === f ? '1px solid #4646FF' : '1px solid var(--b1)',
@@ -924,7 +932,7 @@ export default function PostsPage() {
               color: filter === f ? '#4646FF' : 'var(--t3)', transition: '.15s',
               display: 'flex', alignItems: 'center', gap: '.3rem',
             }}>
-              {f === 'all' ? 'Tous' : f === 'published' ? 'Publiés' : f === 'draft' ? `Brouillons${draftCount > 0 ? ` (${draftCount})` : ''}` : 'Programmés'}
+              {f === 'all' ? 'Tous' : f === 'published' ? 'Publiés' : f === 'draft' ? `Brouillons${draftCount > 0 ? ` (${draftCount})` : ''}` : f === 'scheduled' ? 'Programmés' : `Rejetés${rejectedCount > 0 ? ` (${rejectedCount})` : ''}`}
             </button>
           ))}
         </div>

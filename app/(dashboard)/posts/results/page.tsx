@@ -15,6 +15,7 @@ interface ResultsData {
   quotaLimit:          number | 'unlimited'
   isPro:               boolean
   editPostId?:            string
+  postIds?:               Partial<Record<Platform, string>>
   initialImages?:         Partial<Record<Platform, string>>
   initialScheduledAt?:    string
   pageTitle?:             string
@@ -52,8 +53,10 @@ export default function ResultsPage() {
     platform: Platform, content: string, mediaUrl: string | null,
     status: 'draft' | 'scheduled', scheduledAt?: string,
   ): Promise<string> {
-    if (data?.editPostId) {
-      const res = await fetch(`/api/posts/${data.editPostId}`, {
+    // Use existing post ID (edit mode or pre-saved rejected post)
+    const existingId = data?.editPostId || data?.postIds?.[platform]
+    if (existingId) {
+      const res = await fetch(`/api/posts/${existingId}`, {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           content, platforms: [platform],
@@ -63,7 +66,7 @@ export default function ResultsPage() {
       })
       const d = await res.json()
       if (!res.ok) throw new Error(d.error || 'Erreur')
-      return data.editPostId
+      return existingId
     }
     const res = await fetch('/api/posts', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },

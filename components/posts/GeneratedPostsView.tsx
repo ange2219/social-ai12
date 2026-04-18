@@ -906,7 +906,7 @@ export function GeneratedPostsView({
         justifyContent: 'center',
       }}>
         {activePlatforms.map(p => (
-          <div key={p} style={{ width: 'min(400px, 100%)' }}>
+          <div key={p} style={{ width: activePlatforms.length === 1 ? 'min(400px, 100%)' : 'min(400px, calc(50% - 0.5rem))' }}>
             <PostPlatformCard {...cardProps(p)} />
           </div>
         ))}

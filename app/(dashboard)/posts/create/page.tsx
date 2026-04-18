@@ -838,6 +838,7 @@ export default function CreatePage() {
         quotaUsed:   data.used  ?? 0,
         quotaLimit:  data.limit ?? 'unlimited',
         isPro,
+        postIds:     data.postIds ?? {},
       }))
       setBrief('')
       setObjective(null)
