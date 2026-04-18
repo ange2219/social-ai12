@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Send, Clock, Save, ArrowLeft, X } from 'lucide-react'
 import { useToast } from '@/components/ui/Toast'
 
@@ -146,6 +147,7 @@ function PostActionModal({ content, imageUrl, onClose }: {
 
 export function GenerateButton({ compact }: { compact?: boolean } = {}) {
   const { toast } = useToast()
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [stepStates, setStepStates] = useState<string[]>(STEPS.map(() => ''))
   const [modal, setModal] = useState<{ content: string; imageUrl: string | null } | null>(null)
@@ -184,6 +186,7 @@ export function GenerateButton({ compact }: { compact?: boolean } = {}) {
     setOpen(false)
 
     if (result) {
+      router.refresh()
       setModal(result)
     } else {
       toast('Erreur de génération', 'error')

@@ -832,12 +832,13 @@ export default function CreatePage() {
       }
       // Enregistrer les résultats et naviguer vers la page dédiée
       sessionStorage.setItem('social_ia_results', JSON.stringify({
-        variants:    data.variants,
-        platforms:   selectedPlatforms,
+        variants:         data.variants,
+        platforms:        selectedPlatforms,
         objective,
-        quotaUsed:   data.used  ?? 0,
-        quotaLimit:  data.limit ?? 'unlimited',
+        quotaUsed:        data.used  ?? 0,
+        quotaLimit:       data.limit ?? 'unlimited',
         isPro,
+        distributionMode: distributionMode,
       }))
       setBrief('')
       setObjective(null)
