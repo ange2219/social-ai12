@@ -684,24 +684,26 @@ function QuotaBar({ textUsed, textLimit }: {
 // ─── Main GeneratedPostsView ──────────────────────────────────────────────────
 
 export interface GeneratedPostsViewProps {
-  platforms:            Platform[]
-  variants:             Partial<Record<Platform, string>>
-  objective:            PostObjective | null
-  quotaUsed:            number
-  quotaLimit:           number | 'unlimited'
-  isPro:                boolean
-  userName?:            string | null
-  initialImages?:       Partial<Record<Platform, string>>
-  initialScheduledAt?:  string
-  onSaveDraft:          (platform: Platform, content: string, imageUrl: string | null) => Promise<void>
-  onPublish:            (platform: Platform, content: string, imageUrl: string | null) => Promise<void>
-  onSchedule:           (platform: Platform, content: string, imageUrl: string | null, scheduledAt: string) => Promise<void>
-  onClose?:             () => void
+  platforms:             Platform[]
+  variants:              Partial<Record<Platform, string>>
+  objective:             PostObjective | null
+  quotaUsed:             number
+  quotaLimit:            number | 'unlimited'
+  isPro:                 boolean
+  userName?:             string | null
+  initialImages?:        Partial<Record<Platform, string>>
+  initialScheduledAt?:   string
+  allowPlatformToggle?:  boolean   // true seulement pour création manuelle
+  onSaveDraft:           (platform: Platform, content: string, imageUrl: string | null) => Promise<void>
+  onPublish:             (platform: Platform, content: string, imageUrl: string | null) => Promise<void>
+  onSchedule:            (platform: Platform, content: string, imageUrl: string | null, scheduledAt: string) => Promise<void>
+  onClose?:              () => void
 }
 
 export function GeneratedPostsView({
   platforms, variants, objective,
   quotaUsed, quotaLimit, isPro, userName, initialImages, initialScheduledAt,
+  allowPlatformToggle,
   onSaveDraft, onPublish, onSchedule, onClose,
 }: GeneratedPostsViewProps) {
   const { toast } = useToast()
@@ -858,7 +860,7 @@ export function GeneratedPostsView({
       isPro,
       isRewriting: loadingAction === `rewrite-${p}`,
       isActing:    loadingAction === `publish-${p}` || loadingAction === `draft-${p}` || loadingAction === `schedule-${p}`,
-      onClose:     activePlatforms.length > 1 ? () => togglePlatform(p) : undefined,
+      onClose:     allowPlatformToggle && activePlatforms.length > 1 ? () => togglePlatform(p) : undefined,
       userName,
     }
   }
@@ -867,7 +869,8 @@ export function GeneratedPostsView({
 
   return (
     <div>
-      {/* ── Sélecteur de plateformes ── */}
+      {/* ── Sélecteur de plateformes (création manuelle uniquement) ── */}
+      {allowPlatformToggle && (
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.4rem', marginBottom: '1.25rem' }}>
         {ALL_PLATFORMS_LIST.map(p => {
           const isActive = activePlatforms.includes(p)
@@ -893,6 +896,7 @@ export function GeneratedPostsView({
           )
         })}
       </div>
+      )}
 
       {/* ── Cards ── */}
       <div style={{

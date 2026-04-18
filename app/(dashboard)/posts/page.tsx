@@ -893,6 +893,7 @@ export default function PostsPage() {
                         platforms: ['facebook'],
                         objective: null, quotaUsed: 0, quotaLimit: 'unlimited', isPro: true,
                         pageTitle: 'Créer un post',
+                        allowPlatformToggle: true,
                       }))
                     } catch {}
                     router.push('/posts/results')

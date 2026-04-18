@@ -14,10 +14,11 @@ interface ResultsData {
   quotaUsed:           number
   quotaLimit:          number | 'unlimited'
   isPro:               boolean
-  editPostId?:         string
-  initialImages?:      Partial<Record<Platform, string>>
-  initialScheduledAt?: string
-  pageTitle?:          string
+  editPostId?:            string
+  initialImages?:         Partial<Record<Platform, string>>
+  initialScheduledAt?:    string
+  pageTitle?:             string
+  allowPlatformToggle?:   boolean
 }
 
 export default function ResultsPage() {
@@ -142,6 +143,7 @@ export default function ResultsPage() {
         userName={userName}
         initialImages={data.initialImages}
         initialScheduledAt={data.initialScheduledAt}
+        allowPlatformToggle={data.allowPlatformToggle}
         onSaveDraft={handleSaveDraft}
         onPublish={handlePublish}
         onSchedule={handleSchedule}

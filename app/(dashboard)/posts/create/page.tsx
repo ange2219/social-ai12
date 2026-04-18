@@ -930,6 +930,8 @@ export default function CreatePage() {
         quotaLimit: 'unlimited',
         isPro: true,
         initialImages: Object.keys(initialImages).length > 0 ? initialImages : undefined,
+        pageTitle: 'Créer un post',
+        allowPlatformToggle: true,
       }))
     } catch {}
     router.push('/posts/results')
@@ -1056,6 +1058,8 @@ export default function CreatePage() {
                   sessionStorage.setItem('social_ia_results', JSON.stringify({
                     variants, platforms: selectedPlatforms,
                     objective: null, quotaUsed: 0, quotaLimit: 'unlimited', isPro: true,
+                    pageTitle: 'Créer un post',
+                    allowPlatformToggle: true,
                   }))
                 } catch {}
                 router.push('/posts/results')
