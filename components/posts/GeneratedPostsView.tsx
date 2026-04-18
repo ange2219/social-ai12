@@ -869,6 +869,9 @@ export function GeneratedPostsView({
 
   return (
     <div>
+      {/* ── Quota ── */}
+      <QuotaBar textUsed={quotaUsed} textLimit={quotaLimit} />
+
       {/* ── Sélecteur de plateformes (création manuelle uniquement) ── */}
       {allowPlatformToggle && (
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.4rem', marginBottom: '1.25rem' }}>

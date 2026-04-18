@@ -14,10 +14,15 @@ export function AutoRefresh() {
     // Refresh immediately on mount (catches stale router-cache data)
     router.refresh()
 
-    // Refresh again whenever the tab regains focus
+    // Refresh again whenever the tab regains focus or becomes visible
     function onFocus() { router.refresh() }
+    function onVisible() { if (document.visibilityState === 'visible') router.refresh() }
     window.addEventListener('focus', onFocus)
-    return () => window.removeEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [router])
 
   return null

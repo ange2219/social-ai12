@@ -97,7 +97,14 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ ...result, used: 0, limit: 'unlimited', postIds })
+    // Compteur réel de posts générés (non supprimés)
+    const { count: totalGenerated } = await supabase
+      .from('posts')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .neq('status', 'deleted')
+
+    return NextResponse.json({ ...result, used: totalGenerated || 0, limit: 'unlimited', postIds })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Generation failed'
     return NextResponse.json({ error: message }, { status: 500 })
