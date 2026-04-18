@@ -130,10 +130,19 @@ export async function GET(req: NextRequest) {
           const res = await fetch(
             `${GRAPH}/${postId}?fields=likes.limit(0).summary(true),comments.limit(0).summary(true),shares&access_token=${acc.token}`
           )
-          if (res.status === 404) {
-            await removePlatformOrDeletePost(post.id, 'facebook'); return
+          if (!res.ok) {
+            if (res.status === 400 || res.status === 404) {
+              try {
+                const err = await res.clone().json()
+                const code = err?.error?.code
+                const subcode = err?.error?.error_subcode
+                if (code === 100 && subcode === 33 || code === 803 || res.status === 404) {
+                  await removePlatformOrDeletePost(post.id, 'facebook'); return
+                }
+              } catch { /* corps non-JSON — on ignore */ }
+            }
+            return
           }
-          if (!res.ok) return
           const data = await res.json()
 
           await clearPlatformError(post.id, 'facebook')
@@ -168,10 +177,19 @@ export async function GET(req: NextRequest) {
           const res = await fetch(
             `${IG_GRAPH}/${postId}?fields=like_count,comments_count&access_token=${acc.token}`
           )
-          if (res.status === 404) {
-            await removePlatformOrDeletePost(post.id, 'instagram'); return
+          if (!res.ok) {
+            if (res.status === 400 || res.status === 404) {
+              try {
+                const err = await res.clone().json()
+                const code = err?.error?.code
+                const subcode = err?.error?.error_subcode
+                if (code === 100 && subcode === 33 || code === 803 || res.status === 404) {
+                  await removePlatformOrDeletePost(post.id, 'instagram'); return
+                }
+              } catch { /* corps non-JSON — on ignore */ }
+            }
+            return
           }
-          if (!res.ok) return
           const data = await res.json()
 
           await clearPlatformError(post.id, 'instagram')

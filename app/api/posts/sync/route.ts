@@ -110,13 +110,22 @@ export async function POST() {
           const res = await fetch(
             `${GRAPH}/${postId}?fields=likes.limit(0).summary(true),comments.limit(0).summary(true),shares&access_token=${acc.token}`
           )
-          // Seul le 404 confirme que le post a été supprimé de la plateforme.
-          // Les 400/401/403 sont des erreurs d'API ou de config — on skip sans griser.
-          if (res.status === 404) {
-            await removePlatformOrDeletePost(post.id, 'facebook')
+          if (!res.ok) {
+            // Meta retourne 400 (code 100/803) quand un objet est introuvable, pas 404.
+            // On parse le corps pour distinguer "post supprimé" vs erreur de config/permission.
+            if (res.status === 400 || res.status === 404) {
+              try {
+                const err = await res.clone().json()
+                const code = err?.error?.code
+                const subcode = err?.error?.error_subcode
+                if (code === 100 && subcode === 33 || code === 803 || res.status === 404) {
+                  await removePlatformOrDeletePost(post.id, 'facebook')
+                }
+              } catch { /* corps non-JSON — erreur réseau, on ignore */ }
+            }
+            // Autres erreurs (401, 403, 429…) : erreur de config/token — on ne grise pas
             return
           }
-          if (!res.ok) return
           const data = await res.json()
 
           // Réponse 200 — si le post était incorrectement grisé, on réactive l'icône
@@ -156,12 +165,19 @@ export async function POST() {
           const res = await fetch(
             `${IG_GRAPH}/${postId}?fields=like_count,comments_count&access_token=${acc.token}`
           )
-          // Seul le 404 confirme que le post a été supprimé de la plateforme.
-          if (res.status === 404) {
-            await removePlatformOrDeletePost(post.id, 'instagram')
+          if (!res.ok) {
+            if (res.status === 400 || res.status === 404) {
+              try {
+                const err = await res.clone().json()
+                const code = err?.error?.code
+                const subcode = err?.error?.error_subcode
+                if (code === 100 && subcode === 33 || code === 803 || res.status === 404) {
+                  await removePlatformOrDeletePost(post.id, 'instagram')
+                }
+              } catch { /* corps non-JSON — on ignore */ }
+            }
             return
           }
-          if (!res.ok) return
           const data = await res.json()
 
           // Réponse 200 — si le post était incorrectement grisé, on réactive l'icône
