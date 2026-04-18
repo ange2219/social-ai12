@@ -1,98 +1,275 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
-import { formatDate } from '@/lib/utils'
-import { PLATFORM_NAMES, PLATFORM_COLORS } from '@/types'
-import type { Platform } from '@/types'
-import { Calendar, Clock } from 'lucide-react'
-import Link from 'next/link'
+'use client'
 
-export default async function CalendarPage() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+import { useState, useEffect, Fragment } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import {
+  IconInstagram, IconFacebook, IconTikTok,
+  IconTwitterX, IconLinkedIn, IconYouTube, IconPinterest,
+} from '@/components/icons/BrandIcons'
 
-  const admin = createAdminClient()
-  const { data: scheduled } = await admin
-    .from('posts')
-    .select('*')
-    .eq('user_id', user.id)
-    .in('status', ['scheduled', 'published'])
-    .order('scheduled_at', { ascending: true })
-    .limit(50)
+// ─── Constants ────────────────────────────────────────────────────────────────
 
-  const posts = scheduled || []
+const PLATFORM_COLORS: Record<string, string> = {
+  instagram: '#E1306C', facebook: '#1877F2', tiktok: '#9333EA',
+  twitter: '#1DA1F2', linkedin: '#0077B5', youtube: '#FF0000', pinterest: '#E60023',
+}
+const PLATFORM_SHORT: Record<string, string> = {
+  instagram: 'IG', facebook: 'FB', tiktok: 'TK',
+  twitter: 'X', linkedin: 'LI', youtube: 'YT', pinterest: 'PT',
+}
+const DAY_LABELS  = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
+const MONTH_NAMES = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc']
+const HOURS       = Array.from({ length: 15 }, (_, i) => i + 7)  // 07h → 21h
+const HOUR_H      = 64  // px per hour row
 
-  // Grouper par date
-  const grouped = posts.reduce<Record<string, typeof posts>>((acc, post) => {
-    const date = formatDate(post.scheduled_at || post.published_at || post.created_at)
-    if (!acc[date]) acc[date] = []
-    acc[date].push(post)
-    return acc
-  }, {})
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function getWeekStart(date: Date): Date {
+  const d   = new Date(date)
+  const day = d.getDay()
+  d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day))
+  d.setHours(0, 0, 0, 0)
+  return d
+}
+
+function formatWeekRange(start: Date): string {
+  const end = new Date(start)
+  end.setDate(end.getDate() + 6)
+  const year = end.getFullYear()
+  return start.getMonth() === end.getMonth()
+    ? `${start.getDate()} – ${end.getDate()} ${MONTH_NAMES[end.getMonth()]} ${year}`
+    : `${start.getDate()} ${MONTH_NAMES[start.getMonth()]} – ${end.getDate()} ${MONTH_NAMES[end.getMonth()]} ${year}`
+}
+
+function sameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() &&
+         a.getMonth()    === b.getMonth()    &&
+         a.getDate()     === b.getDate()
+}
+
+function PlatformIcon({ platform, size = 11 }: { platform: string; size?: number }) {
+  switch (platform) {
+    case 'instagram': return <IconInstagram size={size} />
+    case 'facebook':  return <IconFacebook  size={size} />
+    case 'tiktok':    return <IconTikTok    size={size} />
+    case 'twitter':   return <IconTwitterX  size={size} />
+    case 'linkedin':  return <IconLinkedIn  size={size} />
+    case 'youtube':   return <IconYouTube   size={size} />
+    case 'pinterest': return <IconPinterest size={size} />
+    default:          return null
+  }
+}
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface Post {
+  id:           string
+  content:      string
+  platforms:    string[]
+  status:       string
+  scheduled_at: string | null
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default function CalendarPage() {
+  const [weekStart, setWeekStart] = useState(() => getWeekStart(new Date()))
+  const [view,      setView]      = useState<'week' | 'month'>('week')
+  const [posts,     setPosts]     = useState<Post[]>([])
+
+  useEffect(() => {
+    fetch('/api/posts?limit=200')
+      .then(r => r.json())
+      .then(d => setPosts((d.posts || []).filter((p: Post) => p.scheduled_at)))
+      .catch(() => {})
+  }, [])
+
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekStart)
+    d.setDate(weekStart.getDate() + i)
+    return d
+  })
+  const weekEnd = new Date(weekStart)
+  weekEnd.setDate(weekStart.getDate() + 7)
+
+  const weekPosts = posts.filter(p => {
+    const d = new Date(p.scheduled_at!)
+    return d >= weekStart && d < weekEnd
+  })
+
+  const todayMidnight = new Date()
+  todayMidnight.setHours(0, 0, 0, 0)
+
+  function prevWeek() { const d = new Date(weekStart); d.setDate(d.getDate() - 7); setWeekStart(d) }
+  function nextWeek() { const d = new Date(weekStart); d.setDate(d.getDate() + 7); setWeekStart(d) }
+  function goToday()  { setWeekStart(getWeekStart(new Date())) }
+
+  // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-t1">Calendrier</h1>
-          <p className="text-t3 text-sm mt-0.5">Posts programmés et publiés</p>
-        </div>
-        <Link href="/posts/create" className="btn-primary flex items-center gap-2">
-          <Calendar size={16} />
-          Programmer un post
-        </Link>
-      </div>
+    <div style={{ margin: '-20px', display: 'flex', flexDirection: 'column' }}>
 
-      {posts.length === 0 ? (
-        <div className="card flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-14 h-14 rounded-xl bg-s2 flex items-center justify-center mb-4">
-            <Calendar size={24} className="text-t3" />
+      {/* ── Top bar ── */}
+      <div style={{
+        position: 'sticky', top: '-20px', zIndex: 20,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '.9rem 1.5rem', borderBottom: '1px solid var(--b1)',
+        background: 'var(--bg)',
+      }}>
+        {/* Left */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
+          <span style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1.1rem', fontWeight: 700, color: 'var(--t1)' }}>
+            Calendrier
+          </span>
+          <div style={{ display: 'flex', gap: '.2rem' }}>
+            {[prevWeek, nextWeek].map((fn, i) => (
+              <button
+                key={i} onClick={fn}
+                style={{ display: 'flex', padding: '5px 6px', borderRadius: '7px', border: '1px solid var(--b1)', background: 'var(--card)', cursor: 'pointer', color: 'var(--t3)', transition: '.12s' }}
+                onMouseEnter={e => { e.currentTarget.style.color = 'var(--t1)'; e.currentTarget.style.borderColor = 'var(--b2)' }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'var(--t3)'; e.currentTarget.style.borderColor = 'var(--b1)' }}
+              >
+                {i === 0 ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+              </button>
+            ))}
           </div>
-          <p className="text-t2 font-medium mb-1">Aucun post programmé</p>
-          <p className="text-t3 text-sm mb-4">Créez des posts et programmez-les à l'avance</p>
-          <Link href="/posts/create" className="btn-primary text-sm">Créer un post</Link>
+          <span style={{ fontSize: '.88rem', fontWeight: 600, color: 'var(--t1)' }}>
+            {formatWeekRange(weekStart)}
+          </span>
+          <button
+            onClick={goToday}
+            style={{ padding: '.25rem .6rem', borderRadius: '6px', border: '1px solid var(--b1)', background: 'transparent', color: 'var(--t3)', fontSize: '.73rem', fontWeight: 500, cursor: 'pointer', transition: '.12s' }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--t1)' }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--t3)' }}
+          >
+            Aujourd&apos;hui
+          </button>
         </div>
-      ) : (
-        <div className="space-y-6">
-          {Object.entries(grouped).map(([date, datePosts]) => (
-            <div key={date}>
-              <h3 className="text-t3 text-sm font-medium mb-3 flex items-center gap-2">
-                <Calendar size={14} />
-                {date}
-              </h3>
-              <div className="space-y-2">
-                {datePosts.map(post => (
-                  <div key={post.id} className="card p-4 flex items-start gap-4">
-                    <div className="flex items-center gap-1.5 text-t3 text-xs shrink-0 w-16">
-                      <Clock size={12} />
-                      {post.scheduled_at
-                        ? new Date(post.scheduled_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-                        : '—'}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-t2 text-sm line-clamp-2">{post.content}</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        {(post.platforms as Platform[]).map(p => (
-                          <span
-                            key={p}
-                            className="text-xs px-2 py-0.5 rounded-md font-medium"
-                            style={{ background: PLATFORM_COLORS[p] + '20', color: PLATFORM_COLORS[p] }}
-                          >
-                            {PLATFORM_NAMES[p]}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <span className={`badge shrink-0 ${post.status === 'published' ? 'badge-green' : 'badge-yellow'}`}>
-                      {post.status === 'published' ? 'Publié' : 'Programmé'}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+
+        {/* Right: Semaine / Mois */}
+        <div style={{ display: 'flex', background: 'var(--s2)', border: '1px solid var(--b1)', borderRadius: '8px', padding: '3px', gap: '3px' }}>
+          {(['week', 'month'] as const).map(v => (
+            <button
+              key={v} onClick={() => setView(v)}
+              style={{
+                padding: '.28rem .75rem', borderRadius: '6px', border: 'none',
+                background: view === v ? 'var(--card)' : 'transparent',
+                color: view === v ? 'var(--t1)' : 'var(--t3)',
+                fontSize: '.8rem', fontWeight: 600, cursor: 'pointer', transition: '.12s',
+                boxShadow: view === v ? '0 1px 3px rgba(0,0,0,.25)' : 'none',
+              }}
+            >
+              {v === 'week' ? 'Semaine' : 'Mois'}
+            </button>
           ))}
         </div>
-      )}
+      </div>
+
+      {/* ── Grid ── */}
+      <div style={{ overflowX: 'auto' }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '52px repeat(7, 1fr)',
+          minWidth: '680px',
+        }}>
+
+          {/* Day header cells */}
+          <div style={{ height: 52, borderBottom: '1px solid var(--b1)' }} />
+          {weekDays.map((day, i) => {
+            const isToday = sameDay(day, todayMidnight)
+            return (
+              <div
+                key={i}
+                style={{
+                  height: 52,
+                  display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', justifyContent: 'center',
+                  borderBottom: '1px solid var(--b1)',
+                  borderLeft: '1px solid var(--b1)',
+                }}
+              >
+                <span style={{
+                  fontSize: '.66rem', fontWeight: 500, textTransform: 'uppercase',
+                  letterSpacing: '.06em',
+                  color: isToday ? 'var(--accent)' : 'var(--t3)',
+                }}>
+                  {DAY_LABELS[day.getDay()]} {day.getDate()}
+                </span>
+              </div>
+            )
+          })}
+
+          {/* Hour rows */}
+          {HOURS.map(hour => (
+            <Fragment key={hour}>
+              {/* Time label */}
+              <div style={{
+                height: HOUR_H, borderBottom: '1px solid var(--b1)',
+                padding: '.35rem .5rem 0 0', textAlign: 'right',
+                fontSize: '.63rem', fontWeight: 500, color: 'var(--t3)',
+                userSelect: 'none',
+              }}>
+                {`${String(hour).padStart(2, '0')}:00`}
+              </div>
+
+              {/* Day cells */}
+              {weekDays.map((day, di) => {
+                const isToday = sameDay(day, todayMidnight)
+                const cellPosts = weekPosts.filter(p => {
+                  const d = new Date(p.scheduled_at!)
+                  return sameDay(d, day) && d.getHours() === hour
+                })
+                return (
+                  <div
+                    key={`${hour}-${di}`}
+                    style={{
+                      height: HOUR_H,
+                      borderBottom: '1px solid var(--b1)',
+                      borderLeft: '1px solid var(--b1)',
+                      background: isToday ? 'rgba(123,92,245,.025)' : 'transparent',
+                      padding: '3px 5px',
+                    }}
+                  >
+                    {cellPosts.map(post => {
+                      const platform = post.platforms[0] || 'instagram'
+                      const color    = PLATFORM_COLORS[platform] || '#7B5CF5'
+                      const short    = PLATFORM_SHORT[platform] || platform
+                      const words    = post.content.trim().split(/\s+/)
+                      const topic    = words.slice(0, 2).join(' ')
+                      return (
+                        <div
+                          key={post.id}
+                          title={post.content}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: '.28rem',
+                            padding: '.22rem .4rem',
+                            background: color + '1c',
+                            borderLeft: `3px solid ${color}`,
+                            borderRadius: '4px',
+                            fontSize: '.71rem', fontWeight: 600,
+                            marginBottom: '2px',
+                            cursor: 'pointer',
+                            overflow: 'hidden', whiteSpace: 'nowrap',
+                            transition: '.1s',
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.background = color + '30' }}
+                          onMouseLeave={e => { e.currentTarget.style.background = color + '1c' }}
+                        >
+                          <PlatformIcon platform={platform} size={11} />
+                          <span style={{ color, flexShrink: 0 }}>{short}</span>
+                          <span style={{ color: 'var(--t2)', fontWeight: 400, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            · {topic}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })}
+            </Fragment>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
