@@ -770,6 +770,11 @@ export function GeneratedPostsView({
   const [schedulerPlatform, setSchedulerPlatform] = useState<Platform | null>(null)
   const [loadingAction,     setLoadingAction]     = useState<string | null>(null)
 
+  // Sync active platforms when parent removes a platform (e.g. after per-platform action)
+  useEffect(() => {
+    setActivePlatforms(prev => prev.filter(p => platforms.includes(p)))
+  }, [platforms])
+
   function togglePlatform(p: Platform) {
     setActivePlatforms(prev => {
       if (prev.includes(p)) {

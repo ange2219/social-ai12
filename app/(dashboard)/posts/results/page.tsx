@@ -30,6 +30,8 @@ export default function ResultsPage() {
   const [userName, setUserName]   = useState<string | null>(null)
   const [showLeaveModal, setShowLeaveModal] = useState(false)
   const [leaveSaving, setLeaveSaving]       = useState(false)
+  // Plateformes déjà traitées (brouillon/publié/programmé) — retirées de la vue
+  const [actedPlatforms, setActedPlatforms] = useState<Set<Platform>>(new Set())
 
   useEffect(() => {
     try {
@@ -105,15 +107,30 @@ export default function ResultsPage() {
     try { sessionStorage.removeItem('social_ia_results') } catch {}
   }
 
+  function markPlatformActed(platform: Platform) {
+    setActedPlatforms(prev => {
+      const next = new Set(prev)
+      next.add(platform)
+      const remaining = (data?.platforms || []).filter(p => !!data?.variants[p] && !next.has(p))
+      if (remaining.length === 0) {
+        clearResults()
+        router.replace('/posts')
+      }
+      return next
+    })
+  }
+
   async function handleSaveDraft(platform: Platform, content: string, imageUrl: string | null) {
     if (isUnified(data)) {
       await saveUnifiedPost(content, imageUrl, 'draft')
-    } else {
-      await savePost(platform, content, imageUrl, 'draft')
+      clearResults()
+      toast('Brouillon sauvegardé', 'success')
+      router.replace('/posts')
+      return
     }
-    clearResults()
+    await savePost(platform, content, imageUrl, 'draft')
     toast('Brouillon sauvegardé', 'success')
-    router.replace('/posts')
+    markPlatformActed(platform)
   }
 
   async function handlePublish(platform: Platform, content: string, imageUrl: string | null) {
@@ -121,17 +138,19 @@ export default function ResultsPage() {
       const id = await saveUnifiedPost(content, imageUrl, 'draft')
       const res = await fetch(`/api/posts/${id}/publish`, { method: 'POST' })
       if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
-    } else {
-      if (platform === 'instagram' && !imageUrl) {
-        toast('Veuillez ajouter une image pour Instagram.', 'warning'); return
-      }
-      const id = await savePost(platform, content, imageUrl, 'draft')
-      const res = await fetch(`/api/posts/${id}/publish`, { method: 'POST' })
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
+      clearResults()
+      toast('Post publié !', 'success')
+      router.replace('/posts')
+      return
     }
-    clearResults()
+    if (platform === 'instagram' && !imageUrl) {
+      toast('Veuillez ajouter une image pour Instagram.', 'warning'); return
+    }
+    const id = await savePost(platform, content, imageUrl, 'draft')
+    const res = await fetch(`/api/posts/${id}/publish`, { method: 'POST' })
+    if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
     toast('Post publié !', 'success')
-    router.replace('/posts')
+    markPlatformActed(platform)
   }
 
   async function handleSchedule(platform: Platform, content: string, imageUrl: string | null, scheduledAt: string) {
@@ -143,17 +162,19 @@ export default function ResultsPage() {
         body: JSON.stringify({ scheduledAt }),
       })
       if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
-    } else {
-      const id = await savePost(platform, content, imageUrl, 'draft')
-      const res = await fetch(`/api/posts/${id}/schedule`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scheduledAt }),
-      })
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
+      clearResults()
+      toast('Post programmé !', 'success')
+      router.replace('/posts')
+      return
     }
-    clearResults()
+    const id = await savePost(platform, content, imageUrl, 'draft')
+    const res = await fetch(`/api/posts/${id}/schedule`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scheduledAt }),
+    })
+    if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
     toast('Post programmé !', 'success')
-    router.replace('/posts')
+    markPlatformActed(platform)
   }
 
   // ── Popup retour ──────────────────────────────────────────────────────────────
@@ -165,9 +186,9 @@ export default function ResultsPage() {
         const content = data.variants[data.platforms[0]] || ''
         await saveUnifiedPost(content, null, 'draft')
       } else {
-        const platforms = data.platforms.filter(p => !!data.variants[p])
+        const remaining = data.platforms.filter(p => !!data.variants[p] && !actedPlatforms.has(p))
         await Promise.all(
-          platforms.map(p => savePost(p, data.variants[p]!, null, 'draft'))
+          remaining.map(p => savePost(p, data.variants[p]!, null, 'draft'))
         )
       }
       clearResults()
@@ -269,7 +290,7 @@ export default function ResultsPage() {
       </div>
 
       <GeneratedPostsView
-        platforms={data.platforms.filter(p => !!data.variants[p])}
+        platforms={data.platforms.filter(p => !!data.variants[p] && !actedPlatforms.has(p))}
         variants={data.variants}
         objective={data.objective}
         quotaUsed={data.quotaUsed}
