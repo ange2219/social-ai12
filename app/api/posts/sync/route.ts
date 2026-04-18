@@ -14,7 +14,7 @@ export async function POST() {
   const [{ data: posts }, { data: accounts }] = await Promise.all([
     admin
       .from('posts')
-      .select('id, meta_post_ids, platforms')
+      .select('id, meta_post_ids, platforms, status')
       .eq('user_id', user.id)
       .eq('status', 'published')
       .not('meta_post_ids', 'eq', '{}')
@@ -43,7 +43,32 @@ export async function POST() {
   const GRAPH = 'https://graph.facebook.com/v19.0'
   const IG_GRAPH = 'https://graph.instagram.com/v19.0'
 
-  async function syncPost(post: { id: string; meta_post_ids: Record<string, string> }) {
+  // Track which platforms were found to be deleted, per post
+  const deletedPlatforms: Record<string, Set<string>> = {}
+
+  async function removePlatformOrDeletePost(
+    post: { id: string; meta_post_ids: Record<string, string>; platforms: string[] },
+    platform: string,
+  ) {
+    if (!deletedPlatforms[post.id]) deletedPlatforms[post.id] = new Set()
+    deletedPlatforms[post.id].add(platform)
+
+    const remainingMetaIds = { ...post.meta_post_ids }
+    delete remainingMetaIds[platform]
+
+    const remainingPlatforms = post.platforms.filter(p => !deletedPlatforms[post.id].has(p))
+
+    if (remainingPlatforms.length === 0) {
+      await admin.from('posts').update({ status: 'deleted' }).eq('id', post.id)
+    } else {
+      await admin.from('posts').update({
+        platforms: remainingPlatforms,
+        meta_post_ids: remainingMetaIds,
+      }).eq('id', post.id)
+    }
+  }
+
+  async function syncPost(post: { id: string; meta_post_ids: Record<string, string>; platforms: string[] }) {
     const tasks: Promise<void>[] = []
 
     for (const [platform, postId] of Object.entries(post.meta_post_ids)) {
@@ -56,7 +81,7 @@ export async function POST() {
             `${GRAPH}/${postId}?fields=likes.limit(0).summary(true),comments.limit(0).summary(true),shares&access_token=${acc.token}`
           )
           if (res.status === 404 || res.status === 400) {
-            await admin.from('posts').update({ status: 'deleted' }).eq('id', post.id)
+            await removePlatformOrDeletePost(post, 'facebook')
             return
           }
           if (!res.ok) return
@@ -79,7 +104,7 @@ export async function POST() {
             `${IG_GRAPH}/${postId}?fields=like_count,comments_count&access_token=${acc.token}`
           )
           if (res.status === 404 || res.status === 400) {
-            await admin.from('posts').update({ status: 'deleted' }).eq('id', post.id)
+            await removePlatformOrDeletePost(post, 'instagram')
             return
           }
           if (!res.ok) return
@@ -101,7 +126,7 @@ export async function POST() {
   }
 
   const results = await Promise.allSettled(
-    posts.map(p => syncPost({ id: p.id, meta_post_ids: p.meta_post_ids as Record<string, string> }))
+    posts.map(p => syncPost({ id: p.id, meta_post_ids: p.meta_post_ids as Record<string, string>, platforms: (p.platforms as string[]) || [] }))
   )
 
   const updated = results.filter(r => r.status === 'fulfilled').length
