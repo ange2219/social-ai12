@@ -43,28 +43,31 @@ export async function POST() {
   const GRAPH = 'https://graph.facebook.com/v19.0'
   const IG_GRAPH = 'https://graph.instagram.com/v19.0'
 
-  // Track which platforms were found to be deleted, per post
-  const deletedPlatforms: Record<string, Set<string>> = {}
+  // Re-fetch the current DB state before deciding to remove a platform,
+  // avoiding stale-snapshot or race-condition bugs.
+  async function removePlatformOrDeletePost(postId: string, platform: string) {
+    const { data: current } = await admin
+      .from('posts')
+      .select('platforms, meta_post_ids')
+      .eq('id', postId)
+      .single()
 
-  async function removePlatformOrDeletePost(
-    post: { id: string; meta_post_ids: Record<string, string>; platforms: string[] },
-    platform: string,
-  ) {
-    if (!deletedPlatforms[post.id]) deletedPlatforms[post.id] = new Set()
-    deletedPlatforms[post.id].add(platform)
+    if (!current) return
 
-    const remainingMetaIds = { ...post.meta_post_ids }
+    const currentPlatforms = (current.platforms as string[]) || []
+    const currentMetaIds   = (current.meta_post_ids as Record<string, string>) || {}
+
+    const remainingPlatforms = currentPlatforms.filter(p => p !== platform)
+    const remainingMetaIds   = { ...currentMetaIds }
     delete remainingMetaIds[platform]
 
-    const remainingPlatforms = post.platforms.filter(p => !deletedPlatforms[post.id].has(p))
-
     if (remainingPlatforms.length === 0) {
-      await admin.from('posts').update({ status: 'deleted' }).eq('id', post.id)
+      await admin.from('posts').update({ status: 'deleted' }).eq('id', postId)
     } else {
       await admin.from('posts').update({
-        platforms: remainingPlatforms,
+        platforms:    remainingPlatforms,
         meta_post_ids: remainingMetaIds,
-      }).eq('id', post.id)
+      }).eq('id', postId)
     }
   }
 
@@ -81,7 +84,7 @@ export async function POST() {
             `${GRAPH}/${postId}?fields=likes.limit(0).summary(true),comments.limit(0).summary(true),shares&access_token=${acc.token}`
           )
           if (res.status === 404 || res.status === 400) {
-            await removePlatformOrDeletePost(post, 'facebook')
+            await removePlatformOrDeletePost(post.id, 'facebook')
             return
           }
           if (!res.ok) return
@@ -104,7 +107,7 @@ export async function POST() {
             `${IG_GRAPH}/${postId}?fields=like_count,comments_count&access_token=${acc.token}`
           )
           if (res.status === 404 || res.status === 400) {
-            await removePlatformOrDeletePost(post, 'instagram')
+            await removePlatformOrDeletePost(post.id, 'instagram')
             return
           }
           if (!res.ok) return
