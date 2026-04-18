@@ -1223,7 +1223,7 @@ export default function CreatePage() {
                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--b1)'; e.currentTarget.style.color = 'var(--t2)' }}
               >
                 <Settings2 size={14} />
-                Autres paramètres
+                Paramètres
               </button>
 
               <button

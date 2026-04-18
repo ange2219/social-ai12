@@ -903,7 +903,7 @@ export function GeneratedPostsView({
         display: 'grid',
         gridTemplateColumns: activePlatforms.length === 1
           ? 'minmax(0, 400px)'
-          : 'repeat(auto-fill, minmax(320px, 380px))',
+          : 'repeat(2, minmax(0, 400px))',
         gap: '1rem',
         justifyContent: 'center',
       }}>
