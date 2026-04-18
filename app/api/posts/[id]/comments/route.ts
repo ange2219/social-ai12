@@ -63,10 +63,14 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     if (igAccount) {
       try {
         const token = decryptToken(igAccount.access_token)
-        const comments = await getInstagramComments(metaIds.instagram, token)
-        results.push({ platform: 'instagram', comments })
+        const { comments, error: igError } = await getInstagramComments(metaIds.instagram, token)
+        if (igError) {
+          results.push({ platform: 'instagram', comments: [], error: igError })
+        } else {
+          results.push({ platform: 'instagram', comments })
+        }
       } catch {
-        // Token malformé — compte ignoré
+        results.push({ platform: 'instagram', comments: [], error: 'Token invalide — reconnectez Instagram' })
       }
     }
   }

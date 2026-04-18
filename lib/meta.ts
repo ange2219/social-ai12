@@ -243,17 +243,29 @@ export async function replyToFacebookComment(commentId: string, message: string,
 }
 
 /** Récupère les commentaires d'un média Instagram */
-export async function getInstagramComments(mediaId: string, token: string): Promise<MetaComment[]> {
+export async function getInstagramComments(mediaId: string, token: string): Promise<{ comments: MetaComment[]; error?: string }> {
   const IG_GRAPH = 'https://graph.instagram.com/v19.0'
   const res = await fetch(`${IG_GRAPH}/${mediaId}/comments?fields=id,text,username,timestamp&access_token=${token}`)
-  if (!res.ok) return []
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    const msg: string = err?.error?.message || `Erreur ${res.status}`
+    const isPermission = err?.error?.code === 10 || msg.toLowerCase().includes('permission')
+    return {
+      comments: [],
+      error: isPermission
+        ? 'Permission manquante — reconnectez votre compte Instagram pour activer la lecture des commentaires'
+        : msg,
+    }
+  }
   const data = await res.json()
-  return (data.data || []).map((c: any) => ({
-    id: c.id,
-    message: c.text,
-    from: { id: '', name: c.username || 'Utilisateur' },
-    created_time: c.timestamp,
-  })) as MetaComment[]
+  return {
+    comments: (data.data || []).map((c: any) => ({
+      id: c.id,
+      message: c.text,
+      from: { id: '', name: c.username || 'Utilisateur' },
+      created_time: c.timestamp,
+    })) as MetaComment[],
+  }
 }
 
 /** Répond à un commentaire Instagram */

@@ -140,6 +140,7 @@ export default function PostsPage() {
   const [showComments, setShowComments] = useState(false)
   const [commentsData, setCommentsData] = useState<Array<{ platform: string; comments: any[] }>>([])
   const [commentsLoading, setCommentsLoading] = useState(false)
+  const [commentsError, setCommentsError] = useState<string | null>(null)
   const [replyTexts, setReplyTexts] = useState<Record<string, string>>({})
   const [replying, setReplying] = useState<string | null>(null)
 
@@ -246,9 +247,9 @@ export default function PostsPage() {
     }
   }
 
-  function loadPosts() {
+  function loadPosts(): Promise<void> {
     setLoading(true)
-    fetch('/api/posts?limit=100&includeDeleted=true')
+    return fetch('/api/posts?limit=100&includeDeleted=true')
       .then(r => r.json())
       .then(d => { setPosts(d.posts || []); setTotal(d.total || 0); setLoading(false) })
       .catch(() => setLoading(false))
@@ -294,7 +295,13 @@ export default function PostsPage() {
   }
 
   useEffect(() => {
-    loadPosts()
+    loadPosts().then(() => {
+      // Auto-sync analytics silently on first load
+      fetch('/api/posts/sync', { method: 'POST' })
+        .then(r => r.json())
+        .then(d => { if (d.updated > 0) loadPosts() })
+        .catch(() => {})
+    })
     fetch('/api/auth/me').then(r => r.json()).then(d => { if (d) setUserPlan('business') }).catch(() => {})
     // Check for pending generated results in sessionStorage
     try {
@@ -341,6 +348,7 @@ export default function PostsPage() {
     setFbEditMode(false)
     setShowComments(false)
     setCommentsData([])
+    setCommentsError(null)
     setReplyTexts({})
   }
 
@@ -383,12 +391,16 @@ export default function PostsPage() {
 
   async function loadComments(postId: string) {
     setCommentsLoading(true)
+    setCommentsError(null)
     try {
       const res = await fetch(`/api/posts/${postId}/comments`)
       const d = await res.json()
       setCommentsData(d.results || [])
+      // Surface first error from any platform
+      const firstError = (d.results || []).find((r: any) => r.error)?.error
+      if (firstError) setCommentsError(firstError)
     } catch {
-      toast('Impossible de charger les commentaires', 'error')
+      setCommentsError('Impossible de charger les commentaires')
     } finally {
       setCommentsLoading(false)
     }
@@ -728,6 +740,10 @@ export default function PostsPage() {
                     <div>
                       {commentsLoading ? (
                         <div style={{ textAlign: 'center', padding: '1rem 0', color: 'var(--t3)', fontSize: '.78rem' }}>Chargement...</div>
+                      ) : commentsError ? (
+                        <div style={{ padding: '.65rem .85rem', background: 'rgba(239,68,68,.06)', border: '1px solid rgba(239,68,68,.18)', borderRadius: '8px', fontSize: '.75rem', color: '#ef4444', lineHeight: 1.5 }}>
+                          ⚠️ {commentsError}
+                        </div>
                       ) : commentsData.length === 0 || commentsData.every(p => p.comments.length === 0) ? (
                         <div style={{ textAlign: 'center', padding: '.75rem 0', color: '#3f3f46', fontSize: '.75rem' }}>Aucun commentaire pour le moment.</div>
                       ) : (
