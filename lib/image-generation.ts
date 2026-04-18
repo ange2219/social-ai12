@@ -182,12 +182,58 @@ export function buildImagePrompt(ctx: ImagePromptContext): string {
 
 // ─── Couche 3 : Providers ─────────────────────────────────────────────────────
 
+// Noms de modèles candidats pour la génération d'image — testés dans l'ordre
+const IMAGE_MODEL_CANDIDATES = [
+  'gemini-2.0-flash-preview-image-generation',
+  'gemini-2.0-flash-image-generation',
+  'gemini-2.0-flash',
+  'gemini-2.0-flash-exp',
+]
+
+async function findImageModel(apiKey: string): Promise<string> {
+  // Appel ListModels pour trouver dynamiquement un modèle supportant generateContent
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`)
+  if (!res.ok) {
+    console.warn('[gemini] ListModels failed, using first candidate')
+    return IMAGE_MODEL_CANDIDATES[0]
+  }
+  const data = await res.json() as { models?: Array<{ name: string; supportedGenerationMethods?: string[] }> }
+  const models = data.models || []
+  console.log('[gemini] Available models (image-related):', models
+    .filter(m => m.name.includes('flash') || m.name.includes('image'))
+    .map(m => m.name)
+  )
+
+  // Cherche un modèle candidat dans la liste disponible
+  for (const candidate of IMAGE_MODEL_CANDIDATES) {
+    const found = models.find(m => m.name === `models/${candidate}` || m.name.endsWith(candidate))
+    if (found && found.supportedGenerationMethods?.includes('generateContent')) {
+      console.log('[gemini] Selected model:', found.name)
+      return candidate
+    }
+  }
+
+  // Fallback : premier modèle "flash" disponible
+  const flashModel = models.find(m => m.name.includes('flash') && m.supportedGenerationMethods?.includes('generateContent'))
+  if (flashModel) {
+    const name = flashModel.name.replace('models/', '')
+    console.log('[gemini] Fallback model:', name)
+    return name
+  }
+
+  console.warn('[gemini] No model found via ListModels, using default candidate')
+  return IMAGE_MODEL_CANDIDATES[0]
+}
+
 async function generateWithGeminiFlash(prompt: string): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) throw new Error('GEMINI_API_KEY non configurée — ajoutez-la dans les variables d\'environnement Vercel')
 
+  const modelName = await findImageModel(apiKey)
   const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp-image-generation' })
+  const model = genAI.getGenerativeModel({ model: modelName })
+
+  console.log('[gemini] Generating with model:', modelName)
 
   let result: Awaited<ReturnType<typeof model.generateContent>>
   try {
@@ -205,26 +251,22 @@ async function generateWithGeminiFlash(prompt: string): Promise<string> {
 
   const candidate = result.response.candidates?.[0]
   console.log('[gemini] finishReason:', candidate?.finishReason)
-  console.log('[gemini] parts count:', candidate?.content?.parts?.length ?? 0)
 
   const parts = candidate?.content?.parts || []
   for (const part of parts) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const p = part as any
-    console.log('[gemini] part type:', p.inlineData ? 'inlineData' : p.text ? 'text' : 'unknown', p.inlineData?.mimeType)
     if (p.inlineData?.mimeType?.startsWith('image/')) {
       return `data:${p.inlineData.mimeType};base64,${p.inlineData.data}`
     }
   }
 
-  // Log full response for debugging
-  console.error('[gemini] No image in response. Full response:', JSON.stringify({
+  console.error('[gemini] No image in response:', JSON.stringify({
     finishReason: candidate?.finishReason,
     safetyRatings: candidate?.safetyRatings,
-    parts: parts.map((p: any) => ({ hasInlineData: !!p.inlineData, mimeType: p.inlineData?.mimeType, hasText: !!p.text, textSnippet: p.text?.slice(0, 100) })),
-  }, null, 2))
-
-  throw new Error(`Gemini : aucune image retournée (finishReason=${candidate?.finishReason ?? 'unknown'})`)
+    partTypes: parts.map((p: any) => p.inlineData?.mimeType ?? (p.text ? 'text' : 'unknown')),
+  }))
+  throw new Error(`Gemini: aucune image — modèle=${modelName}, finishReason=${candidate?.finishReason ?? 'unknown'}`)
 }
 
 // ─── Export principal ─────────────────────────────────────────────────────────
