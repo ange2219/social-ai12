@@ -41,15 +41,21 @@ export default function ProfilePage() {
     if (accRes.ok) setAccounts(await accRes.json())
   }, [])
 
-  // Affiche les erreurs de redirection OAuth (ex: ?error=ZERNIO_API_KEY+manquante)
+  // Gère les retours OAuth (?social=connected ou ?error=...)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const err = params.get('error')
+    const connected = params.get('social')
+    const platform = params.get('platform')
     if (err) {
       toast(`Erreur connexion : ${decodeURIComponent(err)}`, 'error')
       window.history.replaceState({}, '', '/profile')
+    } else if (connected === 'connected' && platform) {
+      toast(`${platform.charAt(0).toUpperCase() + platform.slice(1)} connecté !`, 'success')
+      loadAccounts()
+      window.history.replaceState({}, '', '/profile')
     }
-  }, [toast])
+  }, [toast, loadAccounts])
 
   useEffect(() => {
     async function load() {
