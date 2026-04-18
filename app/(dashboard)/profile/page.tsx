@@ -243,37 +243,37 @@ export default function ProfilePage() {
         {active === 'social' && (
           <div>
             <div style={{ borderBottom: '1px solid var(--b1)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--t1)', letterSpacing: '-.01em' }}>Réseaux sociaux</h2>
-              <p style={{ fontSize: '.8rem', color: 'var(--t3)', marginTop: '.3rem' }}>Connectez vos comptes pour publier directement depuis Social IA.</p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <h2 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--t1)', letterSpacing: '-.01em' }}>Réseaux sociaux</h2>
+                  <p style={{ fontSize: '.8rem', color: 'var(--t3)', marginTop: '.3rem' }}>Connectez vos comptes pour publier directement depuis Social IA.</p>
+                </div>
+                <button onClick={loadAccounts} title="Rafraîchir" style={{ background: 'none', border: '1px solid var(--b1)', cursor: 'pointer', color: 'var(--t3)', padding: '6px', display: 'flex', borderRadius: '7px' }}>
+                  <RefreshCw size={14} />
+                </button>
+              </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '.75rem' }}>
-              {/* Facebook — Meta OAuth */}
-              <PlatformRow
-                platform="facebook"
-                acc={accounts.find(a => a.platform === 'facebook')}
-                onConnect={() => window.open('/api/auth/meta/start', 'meta_oauth', `width=600,height=700,left=${window.screen.width/2-300},top=${window.screen.height/2-350}`)}
-                onDisconnect={disconnect}
-                onRefresh={loadAccounts}
-                showRefresh
-              />
-              {/* Instagram — Meta OAuth */}
-              <PlatformRow
-                platform="instagram"
-                acc={accounts.find(a => a.platform === 'instagram')}
-                onConnect={() => window.open('/api/auth/instagram/start', 'instagram_oauth', `width=600,height=700,left=${window.screen.width/2-300},top=${window.screen.height/2-350}`)}
-                onDisconnect={disconnect}
-              />
-              {/* Zernio platforms */}
-              {(['tiktok', 'twitter', 'linkedin'] as Platform[]).map(p => (
-                <PlatformRow
-                  key={p}
-                  platform={p}
-                  acc={accounts.find(a => a.platform === p)}
-                  onConnect={() => { window.location.href = `/api/social/start?platform=${p}` }}
-                  onDisconnect={disconnect}
-                />
-              ))}
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {([
+                { platform: 'facebook' as Platform, onConnect: () => window.open('/api/auth/meta/start', 'meta_oauth', `width=600,height=700,left=${window.screen.width/2-300},top=${window.screen.height/2-350}`) },
+                { platform: 'instagram' as Platform, onConnect: () => window.open('/api/auth/instagram/start', 'instagram_oauth', `width=600,height=700,left=${window.screen.width/2-300},top=${window.screen.height/2-350}`) },
+                { platform: 'tiktok' as Platform, onConnect: () => { window.location.href = '/api/social/start?platform=tiktok' } },
+                { platform: 'twitter' as Platform, onConnect: () => { window.location.href = '/api/social/start?platform=twitter' } },
+                { platform: 'linkedin' as Platform, onConnect: () => { window.location.href = '/api/social/start?platform=linkedin' } },
+              ]).map(({ platform, onConnect }, i, arr) => {
+                const acc = accounts.find(a => a.platform === platform)
+                return (
+                  <AccountListItem
+                    key={platform}
+                    platform={platform}
+                    acc={acc}
+                    onConnect={onConnect}
+                    onDisconnect={disconnect}
+                    isLast={i === arr.length - 1}
+                  />
+                )
+              })}
             </div>
           </div>
         )}
@@ -358,67 +358,106 @@ function Row({ label, desc, children }: { label: string; desc?: string; children
   )
 }
 
-function PlatformRow({ platform, acc, onConnect, onDisconnect, onRefresh, showRefresh }: {
+function AccountListItem({ platform, acc, onConnect, onDisconnect, isLast }: {
   platform: Platform
   acc: SocialAccount | undefined
   onConnect: () => void
   onDisconnect: (id: string) => void
-  onRefresh?: () => void
-  showRefresh?: boolean
+  isLast?: boolean
 }) {
   const path = PLATFORM_ICONS[platform]
   const color = PLATFORM_COLORS[platform]
+  const username = acc?.platform_username && acc.platform_username !== platform ? acc.platform_username : null
+  const accountType = platform === 'facebook' ? 'Page' : platform === 'instagram' ? 'Compte' : platform === 'tiktok' ? 'Compte' : platform === 'twitter' ? 'Compte' : 'Compte'
 
   return (
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '.85rem 1rem', borderRadius: '10px',
-      border: `1px solid ${acc ? 'rgba(34,197,94,.18)' : 'var(--b1)'}`,
-      background: acc ? 'rgba(34,197,94,.03)' : 'var(--bg)',
-      transition: '.15s',
+      padding: '1rem 0',
+      borderBottom: isLast ? 'none' : '1px solid var(--b1)',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
-        {/* Icône SVG plateforme */}
-        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: acc ? `${color}18` : 'var(--b1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill={acc ? color : '#52525b'}>
-            <path d={path} />
-          </svg>
+      {/* Avatar + badge plateforme */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          {acc ? (
+            /* Avatar connecté — cercle plein avec initiale */
+            <div style={{
+              width: '48px', height: '48px', borderRadius: '50%',
+              background: `${color}22`, border: `2px solid ${color}40`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '1rem', fontWeight: 700, color,
+            }}>
+              {(username || platform).slice(0, 1).toUpperCase()}
+            </div>
+          ) : (
+            /* Cercle pointillé — non connecté */
+            <div style={{
+              width: '48px', height: '48px', borderRadius: '50%',
+              border: '2px dashed var(--b1)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--t3)">
+                <path d={path} />
+              </svg>
+            </div>
+          )}
+          {/* Badge plateforme en bas à droite */}
+          {acc && (
+            <div style={{
+              position: 'absolute', bottom: '-2px', right: '-2px',
+              width: '20px', height: '20px', borderRadius: '50%',
+              background: color, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              border: '2px solid var(--s1)',
+            }}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff">
+                <path d={path} />
+              </svg>
+            </div>
+          )}
         </div>
+
+        {/* Infos */}
         <div>
-          <div style={{ fontSize: '.83rem', fontWeight: 600, color: 'var(--t1)' }}>{PLATFORM_NAMES[platform]}</div>
-          {acc
-            ? <div style={{ fontSize: '.72rem', color: '#22C55E', display: 'flex', alignItems: 'center', gap: '.25rem', marginTop: '.1rem' }}><CheckCircle2 size={10} /> {acc.platform_username && acc.platform_username !== platform ? `@${acc.platform_username}` : 'Connecté'}</div>
-            : <div style={{ fontSize: '.72rem', color: 'var(--t3)', marginTop: '.1rem' }}>Non connecté</div>
-          }
+          {acc ? (
+            <>
+              <div style={{ fontSize: '.88rem', fontWeight: 600, color: 'var(--t1)' }}>
+                {username ? `@${username}` : PLATFORM_NAMES[platform]}
+              </div>
+              <div style={{ fontSize: '.75rem', color: 'var(--t3)', marginTop: '.1rem' }}>{accountType}</div>
+            </>
+          ) : (
+            <>
+              <div style={{ fontSize: '.88rem', fontWeight: 500, color: 'var(--t3)' }}>
+                Connecter {PLATFORM_NAMES[platform]}
+              </div>
+              <div style={{ fontSize: '.75rem', color: 'var(--t3)', marginTop: '.1rem', opacity: .6 }}>Non connecté</div>
+            </>
+          )}
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '.4rem', alignItems: 'center' }}>
-        {showRefresh && (
-          <button onClick={onRefresh} title="Rafraîchir" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', padding: '4px', display: 'flex', borderRadius: '5px' }}>
-            <RefreshCw size={13} />
-          </button>
-        )}
-        {acc ? (
-          <button onClick={() => onDisconnect(acc.id)} style={{
-            display: 'flex', alignItems: 'center', gap: '.3rem',
-            padding: '.35rem .75rem', borderRadius: '6px',
-            border: '1px solid rgba(239,68,68,.25)', background: 'rgba(239,68,68,.06)',
-            color: '#ef4444', cursor: 'pointer', fontSize: '.75rem', fontWeight: 500,
-          }}>
-            <Unlink size={12} /> Déconnecter
-          </button>
-        ) : (
-          <button onClick={onConnect} style={{
-            display: 'flex', alignItems: 'center', gap: '.3rem',
-            padding: '.35rem .75rem', borderRadius: '6px',
-            border: '1px solid rgba(70,70,255,.3)', background: 'rgba(70,70,255,.07)',
-            color: '#4646FF', cursor: 'pointer', fontSize: '.75rem', fontWeight: 500,
-          }}>
-            <Link2 size={12} /> Connecter
-          </button>
-        )}
-      </div>
+      {/* Action */}
+      {acc ? (
+        <button onClick={() => onDisconnect(acc.id)} style={{
+          display: 'flex', alignItems: 'center', gap: '.3rem',
+          padding: '.4rem .85rem', borderRadius: '7px',
+          border: '1px solid rgba(239,68,68,.22)', background: 'transparent',
+          color: '#ef4444', cursor: 'pointer', fontSize: '.78rem', fontWeight: 500,
+          transition: '.15s',
+        }}>
+          <Unlink size={12} /> Déconnecter
+        </button>
+      ) : (
+        <button onClick={onConnect} style={{
+          display: 'flex', alignItems: 'center', gap: '.3rem',
+          padding: '.4rem .85rem', borderRadius: '7px',
+          border: '1px solid var(--b1)', background: 'transparent',
+          color: 'var(--t1)', cursor: 'pointer', fontSize: '.78rem', fontWeight: 500,
+          transition: '.15s',
+        }}>
+          <Link2 size={12} /> Connecter
+        </button>
+      )}
     </div>
   )
 }

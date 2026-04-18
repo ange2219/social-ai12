@@ -38,8 +38,8 @@ export default function SettingsPage() {
       if (u?.plan) setUserPlan(u.plan)
       if (u?.email) setUserEmail(u.email)
     })
-    const saved = localStorage.getItem('theme')
-    if (saved === 'light') setTheme('light')
+    const saved = localStorage.getItem('theme') || document.documentElement.getAttribute('data-theme') || 'dark'
+    setTheme(saved as 'dark' | 'light')
   }, [])
 
   async function verifyCurrentPassword() {
@@ -125,7 +125,7 @@ export default function SettingsPage() {
             <SettingRow label="Thème" desc="Choisissez entre le mode sombre et clair.">
               <div style={{ display: 'flex', gap: '.6rem' }}>
                 {(['dark', 'light'] as const).map(t => (
-                  <button key={t} onClick={() => { setTheme(t); localStorage.setItem('theme', t); toast('Bientôt disponible', 'success') }} style={{
+                  <button key={t} onClick={() => { setTheme(t); localStorage.setItem('theme', t); document.documentElement.setAttribute('data-theme', t) }} style={{
                     display: 'flex', alignItems: 'center', gap: '.5rem',
                     padding: '.5rem .9rem', borderRadius: '8px', cursor: 'pointer',
                     border: `1px solid ${theme === t ? '#4646FF' : 'var(--b1)'}`,
