@@ -122,7 +122,7 @@ export default function ResultsPage() {
   return (
     <div style={{ padding: '0 0 4rem' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1.5rem', maxWidth: '960px', margin: '0 auto 1.5rem' }}>
         <button
           onClick={() => { clearResults(); router.push('/posts') }}
           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', display: 'flex', alignItems: 'center', padding: '4px', borderRadius: '6px', transition: '.12s' }}
