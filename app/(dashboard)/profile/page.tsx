@@ -371,7 +371,10 @@ function AccountListItem({ platform, acc, onConnect, onDisconnect, isLast }: {
   isLast?: boolean
 }) {
   const color = PLATFORM_COLORS[platform]
-  const username = acc?.platform_username && acc.platform_username !== platform ? acc.platform_username : null
+  const rawName = acc?.platform_username && acc.platform_username !== platform ? acc.platform_username : null
+  // Facebook Pages ont un nom propre (ex: "Social AI"), les autres ont un @username
+  const isPageName = platform === 'facebook'
+  const displayName = rawName ? (isPageName ? rawName : `@${rawName}`) : null
   const accountType = platform === 'facebook' ? 'Page' : 'Compte'
 
   return (
@@ -386,7 +389,7 @@ function AccountListItem({ platform, acc, onConnect, onDisconnect, isLast }: {
           {acc ? (
             <AvatarWithFallback
               avatarUrl={(acc as any).platform_avatar_url}
-              label={username || platform}
+              label={rawName || platform}
               color={color}
             />
           ) : (
@@ -418,7 +421,7 @@ function AccountListItem({ platform, acc, onConnect, onDisconnect, isLast }: {
           {acc ? (
             <>
               <div style={{ fontSize: '.88rem', fontWeight: 600, color: 'var(--t1)' }}>
-                {username ? `@${username}` : PLATFORM_NAMES[platform]}
+                {displayName || PLATFORM_NAMES[platform]}
               </div>
               <div style={{ fontSize: '.75rem', color: 'var(--t3)', marginTop: '.1rem' }}>{accountType}</div>
             </>

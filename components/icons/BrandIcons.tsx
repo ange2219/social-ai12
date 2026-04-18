@@ -1,75 +1,89 @@
-// Logos officiels des plateformes sociales en SVG
+// Logos officiels des plateformes sociales — SVGs exacts fournis
 
-export function IconInstagram({ size = 20 }: { size?: number }) {
+export function IconFacebook({ size = 20 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <defs>
-        <radialGradient id="ig-grad" cx="30%" cy="107%" r="150%">
-          <stop offset="0%" stopColor="#fdf497"/>
-          <stop offset="5%" stopColor="#fdf497"/>
-          <stop offset="45%" stopColor="#fd5949"/>
-          <stop offset="60%" stopColor="#d6249f"/>
-          <stop offset="90%" stopColor="#285AEB"/>
-        </radialGradient>
-      </defs>
-      <rect x="2" y="2" width="20" height="20" rx="5.5" fill="url(#ig-grad)"/>
-      <circle cx="12" cy="12" r="4.5" stroke="white" strokeWidth="1.8" fill="none"/>
-      <circle cx="17.2" cy="6.8" r="1.2" fill="white"/>
+    <svg width={size} height={size} viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+      <rect width="512" height="512" rx="15%" fill="#1877f2"/>
+      <path d="M355.6 330l11.4-74h-71v-48c0-20.2 9.9-40 41.7-40H370v-63s-29.3-5-57.3-5c-58.5 0-96.7 35.4-96.7 99.6V256h-65v74h65v182h80V330h59.6z" fill="#fff"/>
     </svg>
   )
 }
 
-export function IconFacebook({ size = 20 }: { size?: number }) {
+export function IconInstagram({ size = 20 }: { size?: number }) {
+  const id = `ig${size}`
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <rect width="24" height="24" rx="5" fill="#1877F2"/>
-      <path d="M16 8h-2a1 1 0 0 0-1 1v2h3l-.5 3H13v7h-3v-7H8v-3h2V9a4 4 0 0 1 4-4h2v3z" fill="white"/>
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id={`${id}a`} cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(12 23) rotate(-55.3758) scale(25.5196)">
+          <stop stopColor="#B13589"/>
+          <stop offset="0.793" stopColor="#C62F94"/>
+          <stop offset="1" stopColor="#8A3AC8"/>
+        </radialGradient>
+        <radialGradient id={`${id}b`} cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(11 31) rotate(-65.1363) scale(22.5942)">
+          <stop stopColor="#E0E8B7"/>
+          <stop offset="0.445" stopColor="#FB8A2E"/>
+          <stop offset="0.715" stopColor="#E2425C"/>
+          <stop offset="1" stopColor="#E2425C" stopOpacity="0"/>
+        </radialGradient>
+        <radialGradient id={`${id}c`} cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(0.5 3) rotate(-8.1301) scale(38.8909 8.31836)">
+          <stop offset="0.157" stopColor="#406ADC"/>
+          <stop offset="0.468" stopColor="#6A45BE"/>
+          <stop offset="1" stopColor="#6A45BE" stopOpacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect x="2" y="2" width="28" height="28" rx="6" fill={`url(#${id}a)`}/>
+      <rect x="2" y="2" width="28" height="28" rx="6" fill={`url(#${id}b)`}/>
+      <rect x="2" y="2" width="28" height="28" rx="6" fill={`url(#${id}c)`}/>
+      <path d="M23 10.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z" fill="white"/>
+      <path fillRule="evenodd" clipRule="evenodd" d="M16 21a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" fill="white"/>
+      <path fillRule="evenodd" clipRule="evenodd" d="M6 15.6C6 12.24 6 10.56 6.654 9.276A6 6 0 0 1 9.276 6.654C10.56 6 12.24 6 15.6 6h.8c3.36 0 5.04 0 6.324.654a6 6 0 0 1 2.622 2.622C26 10.56 26 12.24 26 15.6v.8c0 3.36 0 5.04-.654 6.324a6 6 0 0 1-2.622 2.622C21.44 26 19.76 26 16.4 26h-.8c-3.36 0-5.04 0-6.324-.654a6 6 0 0 1-2.622-2.622C6 21.44 6 19.76 6 16.4v-.8zm9.6-7.6h.8c1.713 0 2.878.002 3.778.075.88.072 1.328.205 1.641.364a4 4 0 0 1 1.748 1.748c.16.313.292.761.364 1.641C23.998 12.723 24 13.888 24 15.6v.8c0 1.713-.002 2.878-.075 3.778-.072.88-.205 1.328-.364 1.641a4 4 0 0 1-1.748 1.748c-.313.16-.761.292-1.641.364C19.277 23.998 18.113 24 16.4 24h-.8c-1.713 0-2.878-.002-3.778-.075-.88-.072-1.328-.205-1.641-.364a4 4 0 0 1-1.748-1.748c-.16-.313-.292-.761-.364-1.641C8.002 19.277 8 18.113 8 16.4v-.8c0-1.713.002-2.878.075-3.778.072-.88.205-1.328.364-1.641a4 4 0 0 1 1.748-1.748c.313-.16.761-.292 1.641-.364C12.723 8.002 13.888 8 15.6 8z" fill="white"/>
     </svg>
   )
 }
 
 export function IconTikTok({ size = 20 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <rect width="24" height="24" rx="5" fill="#000000"/>
-      <path d="M16.5 5.5c.4.9 1.1 1.6 2 2v2c-.9 0-1.8-.3-2.5-.8v5.3c0 2.5-2 4.5-4.5 4.5S7 16.5 7 14s2-4.5 4.5-4.5c.2 0 .4 0 .5.1v2.1c-.2 0-.3-.1-.5-.1-1.4 0-2.5 1.1-2.5 2.5s1.1 2.5 2.5 2.5 2.5-1.1 2.5-2.5V5.5h2z" fill="white"/>
-      <path d="M16.5 5.5c.4.9 1.1 1.6 2 2v2c-.9 0-1.8-.3-2.5-.8v5.3c0 2.5-2 4.5-4.5 4.5S7 16.5 7 14s2-4.5 4.5-4.5c.2 0 .4 0 .5.1v2.1c-.2 0-.3-.1-.5-.1-1.4 0-2.5 1.1-2.5 2.5s1.1 2.5 2.5 2.5 2.5-1.1 2.5-2.5V5.5h2z" fill="#69C9D0" opacity="0.5"/>
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="32" height="32" rx="6" fill="#010101"/>
+      <path d="M8.451 19.793c.156-1.294.687-2.018 1.687-2.761 1.431-1.006 3.218-.437 3.218-.437v-3.375c.435-.011.87.015 1.3.079v4.343s-1.787-.569-3.218.437c-1 .742-1.531 1.467-1.687 2.761-.006.703.126 1.621.732 2.415a6.3 6.3 0 0 1-.46-.232c-1.337-.899-1.58-2.246-1.573-3.23z" fill="#EE1D52"/>
+      <path d="M22.035 6.979c-.984-1.079-1.357-2.168-1.491-2.933h1.238s-.247 2.006 1.552 3.978l.025.027a5.5 5.5 0 0 1-1.324-.072zM28 10.037v4.256s-1.58-.062-2.749-.36c-1.633-.415-2.682-1.053-2.682-1.053s-.725-.455-.783-.487v8.79c0 .489-.134 1.712-.543 2.731-.533 1.334-1.356 2.209-1.507 2.388 0 0-1.001 1.183-2.767 1.98-1.592.718-2.99.7-3.408.718 0 0-2.416.096-4.59-1.317a9.3 9.3 0 0 1-.993-.627l.011.008c2.175 1.413 4.59 1.317 4.59 1.317.418-.018 1.816 0 3.408-.718 1.766-.797 2.767-1.98 2.767-1.98.15-.179.974-1.054 1.507-2.388.408-1.019.543-2.242.543-2.731v-8.79c.058.032.783.487.783.487s1.05.638 2.682 1.053c1.17.297 2.749.36 2.749.36V9.913c.54.121 1.001.154 1.3.124z" fill="#EE1D52"/>
+      <path d="M26.7 9.913v3.33s-1.58-.062-2.749-.36c-1.632-.415-2.682-1.053-2.682-1.053s-.725-.455-.783-.487v8.79c0 .489-.134 1.712-.543 2.731-.533 1.334-1.357 2.209-1.507 2.388 0 0-1 1.183-2.767 1.98-1.592.718-2.99.7-3.408.718 0 0-2.416.096-4.59-1.317L7.66 26.629a9.3 9.3 0 0 1-1.001-1.003c-.694-.844-1.118-1.844-1.229-2.137v-.003c-.172-.496-.534-1.688-.483-2.842.087-2.036.803-3.286.993-3.599a8.7 8.7 0 0 1 2.631-2.558 8.4 8.4 0 0 1 3.297-1.237c.835-.14 1.688-.152 2.527-.038v3.375s-1.787-.569-3.218.437c-1 .742-1.531 1.467-1.687 2.761-.006.703.126 1.621.732 2.415.233.303.517.568.84.783 1.306.826 2.4.884 3.799.347.932-.359 1.634-1.167 1.96-2.063.204-.56.202-1.123.202-1.706V4.046h3.255c.135.765.507 1.854 1.491 2.933.395.407.84.767 1.325 1.072.143.148.875.881 1.816 1.33.486.233.999.411 1.528.532z" fill="#000"/>
+      <path d="M10.513 13.792a8.4 8.4 0 0 0-3.297 1.237 8.7 8.7 0 0 0-2.631 2.558c-.19.313-.906 1.563-.993 3.599-.05 1.154.311 2.346.483 2.842v.003c-.173-.375-.538-1.375-.645-2.433-.05-1.154.311-2.346.483-2.842a8.7 8.7 0 0 1 2.631-2.558 8.4 8.4 0 0 1 3.297-1.237c.554-.094 1.118-.137 1.683-.13v.962a8.4 8.4 0 0 0-1.011-.001z" fill="#69C9D0"/>
+      <path d="M20.544 4.046h-3.256v16.57c0 .582.002 1.145-.202 1.705-.326.897-1.028 1.705-1.96 2.063-1.399.537-2.493.48-3.799-.347a3.4 3.4 0 0 1-.84-.783c1.112.568 2.107.558 3.34.093.932-.359 1.634-1.167 1.96-2.063.204-.56.202-1.123.202-1.706V3h3.744s-.05.412.062 1.046zm6.157 4.945v.967a6.3 6.3 0 0 1-1.528-.532c-.941-.45-1.673-1.183-1.816-1.33.485.305.93.665 1.324 1.072.486.233.999.411 1.528.532.164.037.329.063.492.291z" fill="#69C9D0"/>
     </svg>
   )
 }
 
 export function IconTwitterX({ size = 20 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <rect width="24" height="24" rx="5" fill="#000000"/>
-      <path d="M17.5 5.5h2.5L14.5 11.5 21 19h-4.5L12.5 14 7.5 19H5l5.5-6.5L5 5.5h4.5l3.5 5 4.5-5z" fill="white"/>
+    <svg width={size} height={size} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <rect width="24" height="24" rx="5" fill="#000"/>
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.736l7.737-8.848L1.254 2.25H8.08l4.259 5.632zm-1.161 17.52h1.833L7.084 4.126H5.117z" fill="white" transform="scale(0.72) translate(4.5, 4)"/>
     </svg>
   )
 }
 
 export function IconLinkedIn({ size = 20 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <rect width="24" height="24" rx="5" fill="#0077B5"/>
-      <path d="M7 10h2v7H7v-7zm1-1.5a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5z" fill="white"/>
-      <path d="M11 10h2v1c.5-.8 1.4-1.2 2-1.2 2 0 3 1.2 3 3.2V17h-2v-3.5c0-1-.4-1.7-1.3-1.7-.9 0-1.7.7-1.7 1.8V17h-2v-7z" fill="white"/>
+    <svg width={size} height={size} viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="none">
+      <rect width="16" height="16" rx="3" fill="#0A66C2"/>
+      <path fill="white" d="M12.225 12.225h-1.778V9.44c0-.664-.012-1.519-.925-1.519-.926 0-1.068.724-1.068 1.47v2.834H6.676V6.498h1.707v.783h.024c.348-.594.996-.95 1.684-.925 1.802 0 2.135 1.185 2.135 2.728l-.001 3.14zM4.67 5.715a1.037 1.037 0 01-1.032-1.031c0-.566.466-1.032 1.032-1.032.566 0 1.031.466 1.032 1.032 0 .566-.466 1.032-1.032 1.032zm.889 6.51h-1.78V6.498h1.78v5.727z"/>
     </svg>
   )
 }
 
 export function IconYouTube({ size = 20 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <rect width="24" height="24" rx="5" fill="#FF0000"/>
-      <path d="M19.5 8.5s-.2-1.3-.8-1.8c-.7-.8-1.5-.8-1.9-.8C14.7 5.8 12 5.8 12 5.8s-2.7 0-4.8.1c-.4 0-1.2.1-1.9.8-.6.6-.8 1.8-.8 1.8S4.3 9.9 4.3 11.3v1.3c0 1.4.2 2.8.2 2.8s.2 1.3.8 1.8c.7.8 1.7.7 2.1.8 1.5.1 6.4.2 6.4.2s2.7 0 4.8-.2c.4 0 1.2-.1 1.9-.8.6-.6.8-1.8.8-1.8s.2-1.4.2-2.8v-1.3c0-1.4-.2-2.8-.2-2.8z" fill="#FF0000"/>
-      <path d="M10.5 14.5v-5l4.5 2.5-4.5 2.5z" fill="white"/>
+    <svg width={size} height={size} viewBox="0 -38 256 256" xmlns="http://www.w3.org/2000/svg">
+      <path d="M250.346 28.075A32.18 32.18 0 0 0 227.69 5.418C207.824 0 127.868 0 127.868 0S47.913.164 28.047 5.582a32.18 32.18 0 0 0-22.656 22.656C-.615 63.537-2.947 117.322 5.555 151.21a32.18 32.18 0 0 0 22.656 22.656c19.866 5.418 99.821 5.418 99.821 5.418s79.955 0 99.821-5.418a32.18 32.18 0 0 0 22.656-22.656c6.338-35.348 8.291-89.096-.163-123.135z" fill="#FF0000"/>
+      <polygon fill="#FFFFFF" points="102.421 128.06 168.749 89.642 102.421 51.224"/>
     </svg>
   )
 }
 
 export function IconPinterest({ size = 20 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <svg width={size} height={size} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
       <rect width="24" height="24" rx="5" fill="#E60023"/>
       <path d="M12 4C7.6 4 4 7.6 4 12c0 3.4 2.1 6.3 5 7.6-.1-.6-.1-1.6.1-2.3l1-4s-.3-.5-.3-1.3c0-1.2.7-2.1 1.6-2.1.8 0 1.1.6 1.1 1.2 0 .8-.5 1.9-.7 2.9-.2.9.4 1.6 1.3 1.6 1.5 0 2.7-1.6 2.7-3.9 0-2-1.5-3.5-3.6-3.5-2.4 0-3.8 1.8-3.8 3.7 0 .7.3 1.5.6 1.9.1.1.1.2 0 .3l-.2 1c0 .1-.1.2-.2.1-1.3-.6-2.1-2.5-2.1-4C7 8.7 9.4 6 13 6c3 0 5 2.1 5 4.8 0 3-1.8 5.3-4.4 5.3-.9 0-1.7-.4-1.9-1l-.5 2c-.2.7-.6 1.5-.9 2 .7.2 1.4.3 2.1.3 4.4 0 8-3.6 8-8s-3.6-8-8-8z" fill="white"/>
     </svg>
