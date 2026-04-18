@@ -189,23 +189,42 @@ async function generateWithGeminiFlash(prompt: string): Promise<string> {
   const genAI = new GoogleGenerativeAI(apiKey)
   const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp-image-generation' })
 
-  const result = await model.generateContent({
-    contents: [{ role: 'user', parts: [{ text: prompt }] }],
-    generationConfig: {
-      // @ts-expect-error responseModalities non encore typé dans le SDK
-      responseModalities: ['image', 'text'],
-    },
-  })
+  let result: Awaited<ReturnType<typeof model.generateContent>>
+  try {
+    result = await model.generateContent({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: {
+        // @ts-expect-error responseModalities non encore typé dans le SDK
+        responseModalities: ['IMAGE', 'TEXT'],
+      },
+    })
+  } catch (apiErr) {
+    console.error('[gemini] API call failed:', JSON.stringify(apiErr, null, 2))
+    throw apiErr
+  }
 
-  const parts = result.response.candidates?.[0]?.content?.parts || []
+  const candidate = result.response.candidates?.[0]
+  console.log('[gemini] finishReason:', candidate?.finishReason)
+  console.log('[gemini] parts count:', candidate?.content?.parts?.length ?? 0)
+
+  const parts = candidate?.content?.parts || []
   for (const part of parts) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const p = part as any
+    console.log('[gemini] part type:', p.inlineData ? 'inlineData' : p.text ? 'text' : 'unknown', p.inlineData?.mimeType)
     if (p.inlineData?.mimeType?.startsWith('image/')) {
       return `data:${p.inlineData.mimeType};base64,${p.inlineData.data}`
     }
   }
-  throw new Error('Gemini : aucune image retournée')
+
+  // Log full response for debugging
+  console.error('[gemini] No image in response. Full response:', JSON.stringify({
+    finishReason: candidate?.finishReason,
+    safetyRatings: candidate?.safetyRatings,
+    parts: parts.map((p: any) => ({ hasInlineData: !!p.inlineData, mimeType: p.inlineData?.mimeType, hasText: !!p.text, textSnippet: p.text?.slice(0, 100) })),
+  }, null, 2))
+
+  throw new Error(`Gemini : aucune image retournée (finishReason=${candidate?.finishReason ?? 'unknown'})`)
 }
 
 // ─── Export principal ─────────────────────────────────────────────────────────
