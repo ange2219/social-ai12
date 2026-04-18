@@ -903,12 +903,12 @@ export function GeneratedPostsView({
         display: 'flex',
         flexWrap: 'wrap',
         gap: '1rem',
-        maxWidth: '960px',
+        maxWidth: '860px',
         margin: '0 auto',
         justifyContent: 'center',
       }}>
         {activePlatforms.map(p => (
-          <div key={p} style={{ width: activePlatforms.length === 1 ? '100%' : 'calc(50% - 0.5rem)' }}>
+          <div key={p} style={{ width: activePlatforms.length === 1 ? 'min(420px, 100%)' : 'calc(50% - 0.5rem)' }}>
             <PostPlatformCard {...cardProps(p)} />
           </div>
         ))}
