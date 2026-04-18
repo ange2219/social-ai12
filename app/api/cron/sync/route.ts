@@ -94,6 +94,21 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // Si un post était incorrectement grisé (ex: erreur 400 transitoire), on réactive l'icône.
+  async function clearPlatformError(postId: string, platform: string) {
+    const { data: current } = await admin
+      .from('posts')
+      .select('platform_errors')
+      .eq('id', postId)
+      .single()
+    if (!current) return
+    const errs = (current.platform_errors as Record<string, string>) || {}
+    if (errs[platform] !== 'removed_externally') return
+    const updated = { ...errs }
+    delete updated[platform]
+    await admin.from('posts').update({ platform_errors: updated }).eq('id', postId)
+  }
+
   let synced = 0
 
   await Promise.allSettled(posts.map(async post => {
@@ -115,11 +130,13 @@ export async function GET(req: NextRequest) {
           const res = await fetch(
             `${GRAPH}/${postId}?fields=likes.limit(0).summary(true),comments.limit(0).summary(true),shares&access_token=${acc.token}`
           )
-          if (res.status === 404 || res.status === 400) {
+          if (res.status === 404) {
             await removePlatformOrDeletePost(post.id, 'facebook'); return
           }
           if (!res.ok) return
           const data = await res.json()
+
+          await clearPlatformError(post.id, 'facebook')
 
           let impressions = 0, reach = 0
           try {
@@ -151,11 +168,13 @@ export async function GET(req: NextRequest) {
           const res = await fetch(
             `${IG_GRAPH}/${postId}?fields=like_count,comments_count&access_token=${acc.token}`
           )
-          if (res.status === 404 || res.status === 400) {
+          if (res.status === 404) {
             await removePlatformOrDeletePost(post.id, 'instagram'); return
           }
           if (!res.ok) return
           const data = await res.json()
+
+          await clearPlatformError(post.id, 'instagram')
 
           let impressions = 0, reach = 0
           try {

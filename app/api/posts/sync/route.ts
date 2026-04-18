@@ -79,6 +79,22 @@ export async function POST() {
     }
   }
 
+  // If a platform was wrongly marked removed_externally (e.g. due to a transient API error),
+  // clear the flag so the icon becomes active again.
+  async function clearPlatformError(postId: string, platform: string) {
+    const { data: current } = await admin
+      .from('posts')
+      .select('platform_errors')
+      .eq('id', postId)
+      .single()
+    if (!current) return
+    const errs = (current.platform_errors as Record<string, string>) || {}
+    if (errs[platform] !== 'removed_externally') return
+    const updated = { ...errs }
+    delete updated[platform]
+    await admin.from('posts').update({ platform_errors: updated }).eq('id', postId)
+  }
+
   async function syncPost(post: { id: string; meta_post_ids: Record<string, string>; platforms: string[]; platform_errors?: Record<string, string> | null }) {
     const tasks: Promise<void>[] = []
 
@@ -94,12 +110,17 @@ export async function POST() {
           const res = await fetch(
             `${GRAPH}/${postId}?fields=likes.limit(0).summary(true),comments.limit(0).summary(true),shares&access_token=${acc.token}`
           )
-          if (res.status === 404 || res.status === 400) {
+          // Seul le 404 confirme que le post a été supprimé de la plateforme.
+          // Les 400/401/403 sont des erreurs d'API ou de config — on skip sans griser.
+          if (res.status === 404) {
             await removePlatformOrDeletePost(post.id, 'facebook')
             return
           }
           if (!res.ok) return
           const data = await res.json()
+
+          // Réponse 200 — si le post était incorrectement grisé, on réactive l'icône
+          await clearPlatformError(post.id, 'facebook')
 
           // Impressions + reach via l'endpoint Insights (requiert read_insights)
           let impressions = 0
@@ -135,12 +156,16 @@ export async function POST() {
           const res = await fetch(
             `${IG_GRAPH}/${postId}?fields=like_count,comments_count&access_token=${acc.token}`
           )
-          if (res.status === 404 || res.status === 400) {
+          // Seul le 404 confirme que le post a été supprimé de la plateforme.
+          if (res.status === 404) {
             await removePlatformOrDeletePost(post.id, 'instagram')
             return
           }
           if (!res.ok) return
           const data = await res.json()
+
+          // Réponse 200 — si le post était incorrectement grisé, on réactive l'icône
+          await clearPlatformError(post.id, 'instagram')
 
           // Impressions + reach via l'endpoint Insights IG (requiert instagram_manage_insights)
           let impressions = 0
