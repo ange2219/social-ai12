@@ -380,15 +380,11 @@ function AccountListItem({ platform, acc, onConnect, onDisconnect, isLast }: {
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <div style={{ position: 'relative', flexShrink: 0 }}>
           {acc ? (
-            /* Avatar connecté — cercle plein avec initiale */
-            <div style={{
-              width: '48px', height: '48px', borderRadius: '50%',
-              background: `${color}22`, border: `2px solid ${color}40`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '1rem', fontWeight: 700, color,
-            }}>
-              {(username || platform).slice(0, 1).toUpperCase()}
-            </div>
+            <AvatarWithFallback
+              avatarUrl={(acc as any).platform_avatar_url}
+              label={username || platform}
+              color={color}
+            />
           ) : (
             /* Cercle pointillé — non connecté */
             <div style={{
@@ -458,6 +454,30 @@ function AccountListItem({ platform, acc, onConnect, onDisconnect, isLast }: {
           <Link2 size={12} /> Connecter
         </button>
       )}
+    </div>
+  )
+}
+
+function AvatarWithFallback({ avatarUrl, label, color }: { avatarUrl?: string | null; label: string; color: string }) {
+  const [imgFailed, setImgFailed] = useState(false)
+  if (avatarUrl && !imgFailed) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={label}
+        style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: `2px solid ${color}40`, display: 'block' }}
+        onError={() => setImgFailed(true)}
+      />
+    )
+  }
+  return (
+    <div style={{
+      width: '48px', height: '48px', borderRadius: '50%',
+      background: `${color}22`, border: `2px solid ${color}40`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: '1rem', fontWeight: 700, color,
+    }}>
+      {label.slice(0, 1).toUpperCase()}
     </div>
   )
 }

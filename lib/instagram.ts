@@ -58,8 +58,8 @@ export async function getInstagramLongLivedTokenWithExpiry(shortToken: string): 
   }
 }
 
-export async function getInstagramUser(accessToken: string): Promise<{ id: string; username: string }> {
-  const res = await fetch(`https://graph.instagram.com/me?fields=id,username&access_token=${accessToken}`)
+export async function getInstagramUser(accessToken: string): Promise<{ id: string; username: string; profile_picture_url?: string }> {
+  const res = await fetch(`https://graph.instagram.com/me?fields=id,username,profile_picture_url&access_token=${accessToken}`)
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
     throw new Error(`Récupération profil Instagram échouée : ${err?.error?.message || res.status}`)

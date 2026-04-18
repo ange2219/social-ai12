@@ -28,17 +28,34 @@ export async function GET(req: NextRequest) {
     let fbId: string
     let fbName: string
     let fbToken: string
+    let fbAvatar: string | null = null
 
     if (pages.length > 0) {
       const page = pages[0]
       fbId = page.id
       fbName = page.name
       fbToken = page.access_token
+      // Photo de la Page Facebook
+      try {
+        const picRes = await fetch(`https://graph.facebook.com/${fbId}/picture?redirect=false&type=large&access_token=${fbToken}`)
+        if (picRes.ok) {
+          const picData = await picRes.json()
+          fbAvatar = picData?.data?.url || null
+        }
+      } catch { /* non critique */ }
     } else {
       const profile = await getPersonalProfile(longToken)
       fbId = profile.id
       fbName = profile.name
       fbToken = longToken
+      // Photo profil personnel
+      try {
+        const picRes = await fetch(`https://graph.facebook.com/${fbId}/picture?redirect=false&type=large&access_token=${fbToken}`)
+        if (picRes.ok) {
+          const picData = await picRes.json()
+          fbAvatar = picData?.data?.url || null
+        }
+      } catch { /* non critique */ }
     }
 
     const tokenExpiresAt = longTokenData.expires_at
@@ -48,6 +65,7 @@ export async function GET(req: NextRequest) {
       platform: 'facebook',
       platform_user_id: fbId,
       platform_username: fbName,
+      platform_avatar_url: fbAvatar,
       access_token: encryptToken(fbToken),
       token_expires_at: tokenExpiresAt.toISOString(),
       connected_via: 'meta_direct',

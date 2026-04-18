@@ -8,7 +8,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('social_accounts')
-    .select('id, platform, platform_username, connected_via, is_active, created_at')
+    .select('id, platform, platform_username, platform_avatar_url, connected_via, is_active, created_at')
     .eq('user_id', user.id)
     .eq('is_active', true)
     .order('created_at', { ascending: true })
