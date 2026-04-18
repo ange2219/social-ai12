@@ -14,7 +14,7 @@ export async function POST() {
   const [{ data: posts }, { data: accounts }] = await Promise.all([
     admin
       .from('posts')
-      .select('id, meta_post_ids, platforms, status')
+      .select('id, meta_post_ids, platforms, status, platform_errors')
       .eq('user_id', user.id)
       .eq('status', 'published')
       .not('meta_post_ids', 'eq', '{}')
@@ -43,42 +43,51 @@ export async function POST() {
   const GRAPH = 'https://graph.facebook.com/v19.0'
   const IG_GRAPH = 'https://graph.instagram.com/v19.0'
 
-  // Re-fetch the current DB state before deciding to remove a platform,
-  // avoiding stale-snapshot or race-condition bugs.
+  // When a post is not found on a platform (deleted directly from the platform),
+  // we keep the post visible in the app but mark the platform as removed in
+  // platform_errors. The platform icon is grayed out in the UI.
+  // Only sets status:'deleted' when ALL published platforms are gone.
   async function removePlatformOrDeletePost(postId: string, platform: string) {
     const { data: current } = await admin
       .from('posts')
-      .select('platforms, meta_post_ids')
+      .select('platforms, meta_post_ids, platform_errors')
       .eq('id', postId)
       .single()
 
     if (!current) return
 
     const currentMetaIds = (current.meta_post_ids as Record<string, string>) || {}
+    const currentErrors  = (current.platform_errors as Record<string, string>) || {}
 
-    const remainingMetaIds = { ...currentMetaIds }
-    delete remainingMetaIds[platform]
+    // Remove the meta post ID so future syncs don't re-check this platform
+    const updatedMetaIds = { ...currentMetaIds }
+    delete updatedMetaIds[platform]
 
-    // Use meta_post_ids as the source of truth — platforms can drift out of sync
-    const remainingKeys = Object.keys(remainingMetaIds)
+    // Mark the platform as removed externally (keeps it in `platforms` array for UI)
+    const updatedErrors = { ...currentErrors, [platform]: 'removed_externally' }
 
-    if (remainingKeys.length === 0) {
+    // If no more active meta IDs remain, the post is fully gone from all platforms
+    if (Object.keys(updatedMetaIds).length === 0) {
       await admin.from('posts').update({ status: 'deleted' }).eq('id', postId)
     } else {
       await admin.from('posts').update({
-        // Re-derive platforms from meta_post_ids to fix any divergence
-        platforms:     remainingKeys,
-        meta_post_ids: remainingMetaIds,
+        meta_post_ids:   updatedMetaIds,
+        platform_errors: updatedErrors,
+        // platforms array is intentionally left intact — the UI uses platform_errors
+        // to show which platforms have been removed, keeping the grayed-out icon
       }).eq('id', postId)
     }
   }
 
-  async function syncPost(post: { id: string; meta_post_ids: Record<string, string>; platforms: string[] }) {
+  async function syncPost(post: { id: string; meta_post_ids: Record<string, string>; platforms: string[]; platform_errors?: Record<string, string> | null }) {
     const tasks: Promise<void>[] = []
 
     for (const [platform, postId] of Object.entries(post.meta_post_ids)) {
       const acc = accountByPlatform[platform]
       if (!acc?.token || !postId) continue
+
+      // Skip platforms already marked as removed externally
+      if (post.platform_errors?.[platform] === 'removed_externally') continue
 
       if (platform === 'facebook') {
         tasks.push((async () => {
@@ -131,7 +140,7 @@ export async function POST() {
   }
 
   const results = await Promise.allSettled(
-    posts.map(p => syncPost({ id: p.id, meta_post_ids: p.meta_post_ids as Record<string, string>, platforms: (p.platforms as string[]) || [] }))
+    posts.map(p => syncPost({ id: p.id, meta_post_ids: p.meta_post_ids as Record<string, string>, platforms: (p.platforms as string[]) || [], platform_errors: p.platform_errors as Record<string, string> | null }))
   )
 
   const updated = results.filter(r => r.status === 'fulfilled').length

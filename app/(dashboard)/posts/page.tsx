@@ -64,6 +64,7 @@ interface Post {
   scheduled_at: string | null
   analytics: PostAnalytics | null
   meta_post_ids?: Record<string, string> | null
+  platform_errors?: Record<string, string> | null
 }
 
 function InsightsBadge({ a }: { a: PostAnalytics | null }) {
@@ -581,6 +582,7 @@ export default function PostsPage() {
                   {(isDraft ? ALL_PLATFORMS : selectedPost.platforms).map(p => {
                     const isPlanLocked = isDraft && userPlan === 'free' && !FREE_PLATFORMS.includes(p)
                     const active = isDraft ? editPlatforms.includes(p) : true
+                    const removed = !isDraft && selectedPost.platform_errors?.[p] === 'removed_externally'
                     return (
                       <button
                         key={p}
@@ -588,19 +590,23 @@ export default function PostsPage() {
                           if (!isDraft || isPlanLocked) return
                           setEditPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p])
                         }}
-                        title={isPlanLocked ? 'Plan Pro requis' : undefined}
+                        title={removed ? `Supprimé directement de ${PLATFORM_SHORT[p]}` : isPlanLocked ? 'Plan Pro requis' : undefined}
                         style={{
                           padding: '.25rem .65rem', borderRadius: '6px', fontSize: '.73rem', fontWeight: 600,
-                          border: `1px solid ${isPlanLocked ? '#1E1E24' : active ? PLATFORM_COLORS[p] + '60' : 'var(--b1)'}`,
-                          background: isPlanLocked ? 'transparent' : active ? PLATFORM_COLORS[p] + '18' : 'transparent',
-                          color: isPlanLocked ? '#2a2a30' : active ? PLATFORM_COLORS[p] : '#3f3f46',
+                          border: `1px solid ${isPlanLocked ? '#1E1E24' : removed ? 'rgba(239,68,68,.25)' : active ? PLATFORM_COLORS[p] + '60' : 'var(--b1)'}`,
+                          background: isPlanLocked ? 'transparent' : removed ? 'rgba(239,68,68,.06)' : active ? PLATFORM_COLORS[p] + '18' : 'transparent',
+                          color: isPlanLocked ? '#2a2a30' : removed ? '#6b6b75' : active ? PLATFORM_COLORS[p] : '#3f3f46',
                           cursor: isPlanLocked ? 'not-allowed' : isDraft ? 'pointer' : 'default',
                           transition: '.12s', position: 'relative',
+                          opacity: removed ? 0.55 : 1,
+                          filter: removed ? 'grayscale(.8)' : 'none',
+                          display: 'flex', alignItems: 'center', gap: '.25rem',
                         }}
                       >
                         <PlatformIcon platform={p} size={14} />
-                        <span style={{ marginLeft: '.25rem' }}>{PLATFORM_SHORT[p]}</span>
-                        {isPlanLocked && <span style={{ fontSize: '.5rem', marginLeft: '.2rem', opacity: .6 }}>Pro</span>}
+                        <span>{PLATFORM_SHORT[p]}</span>
+                        {isPlanLocked && <span style={{ fontSize: '.5rem', opacity: .6 }}>Pro</span>}
+                        {removed && <span style={{ fontSize: '.55rem', color: '#EF4444', opacity: .9 }}>✕</span>}
                       </button>
                     )
                   })}
@@ -998,11 +1004,14 @@ export default function PostsPage() {
                 }
                 {post.status === 'published' && <InsightsBadge a={post.analytics} />}
                 <div style={{ position: 'absolute', top: '5px', right: '5px', display: 'flex', gap: '3px', zIndex: 6 }}>
-                  {post.platforms.slice(0, 3).map(p => (
-                    <div key={p} style={{ width: '18px', height: '18px', borderRadius: '4px', overflow: 'hidden', flexShrink: 0 }}>
-                      <PlatformIcon platform={p} size={18} />
-                    </div>
-                  ))}
+                  {post.platforms.slice(0, 3).map(p => {
+                    const removed = post.platform_errors?.[p] === 'removed_externally'
+                    return (
+                      <div key={p} title={removed ? `Supprimé de ${p}` : p} style={{ width: '18px', height: '18px', borderRadius: '4px', overflow: 'hidden', flexShrink: 0, opacity: removed ? 0.35 : 1, filter: removed ? 'grayscale(1)' : 'none' }}>
+                        <PlatformIcon platform={p} size={18} />
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
               <div style={{ padding: '.55rem .6rem' }}>
@@ -1057,11 +1066,14 @@ export default function PostsPage() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: '.8rem', color: 'var(--t1)', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{post.content}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginTop: '.3rem' }}>
-                  {post.platforms.map(p => (
-                    <div key={p} style={{ width: '16px', height: '16px', borderRadius: '3px', overflow: 'hidden', flexShrink: 0 }}>
-                      <PlatformIcon platform={p} size={16} />
-                    </div>
-                  ))}
+                  {post.platforms.map(p => {
+                    const removed = post.platform_errors?.[p] === 'removed_externally'
+                    return (
+                      <div key={p} title={removed ? `Supprimé de ${p}` : p} style={{ width: '16px', height: '16px', borderRadius: '3px', overflow: 'hidden', flexShrink: 0, opacity: removed ? 0.35 : 1, filter: removed ? 'grayscale(1)' : 'none' }}>
+                        <PlatformIcon platform={p} size={16} />
+                      </div>
+                    )
+                  })}
                   <span style={{ fontSize: '.7rem', color: '#3f3f46' }}>
                     {new Date(post.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
                   </span>
