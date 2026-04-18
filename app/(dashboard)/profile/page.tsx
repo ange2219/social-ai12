@@ -371,10 +371,8 @@ function AccountListItem({ platform, acc, onConnect, onDisconnect, isLast }: {
   isLast?: boolean
 }) {
   const color = PLATFORM_COLORS[platform]
-  const rawName = acc?.platform_username && acc.platform_username !== platform ? acc.platform_username : null
-  // Facebook Pages ont un nom propre (ex: "Social AI"), les autres ont un @username
-  const isPageName = platform === 'facebook'
-  const displayName = rawName ? (isPageName ? rawName : `@${rawName}`) : null
+  const displayName = acc?.platform_username && acc.platform_username !== platform ? acc.platform_username : null
+  const rawName = displayName
   const accountType = platform === 'facebook' ? 'Page' : 'Compte'
 
   return (

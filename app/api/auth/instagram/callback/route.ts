@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
       user_id: userId,
       platform: 'instagram',
       platform_user_id: igUser.id,
-      platform_username: igUser.username,
+      platform_username: igUser.name || igUser.username,
       platform_avatar_url: igUser.profile_picture_url || null,
       access_token: encryptToken(longToken),
       token_expires_at: tokenExpiresAt.toISOString(),

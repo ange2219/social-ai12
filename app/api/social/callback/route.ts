@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
 
       if (match) {
         finalAccountId = finalAccountId || match._id || match.id || match.accountId
-        platformUsername = match.username || match.name || match.handle || platform
+        platformUsername = match.displayName || match.name || match.display_name || match.username || match.handle || platform
         platformAvatarUrl = match.avatar || match.profilePicture || match.picture || match.avatarUrl || match.profile_picture_url || null
       }
     } catch (err) {
