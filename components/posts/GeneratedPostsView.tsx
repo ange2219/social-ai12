@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useToast } from '@/components/ui/Toast'
 import {
   Platform, PostObjective,
@@ -45,8 +45,8 @@ const OBJ_COLORS: Record<string, string> = {
   inspirer: '#F59E0B', annoncer: '#10B981', fideliser: '#EC4899',
 }
 
-function ObjIcon({ objective, size = 10, active = true }: { objective: string; size?: number; active?: boolean }) {
-  const color = OBJ_COLORS[objective] || (active ? 'var(--accent)' : 'var(--t3)')
+function ObjIcon({ objective, size = 10 }: { objective: string; size?: number }) {
+  const color = OBJ_COLORS[objective] || 'var(--t3)'
   const s = size
   switch (objective) {
     case 'vendre':    return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
@@ -486,6 +486,28 @@ function PostPlatformCard({
         </div>
       </div>
 
+      {/* ── Réécrire / Hashtags ── */}
+      <div style={{ display: 'flex', gap: '.4rem', padding: '.15rem 1rem .6rem' }}>
+        <button
+          onClick={isRewriting ? undefined : onRewrite}
+          disabled={isRewriting}
+          style={{ display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.28rem .6rem', borderRadius: '6px', border: '1px solid var(--b1)', background: 'transparent', color: isRewriting ? 'var(--accent)' : 'var(--t3)', cursor: isRewriting ? 'not-allowed' : 'pointer', fontSize: '.7rem', fontWeight: 500, transition: '.12s', opacity: isRewriting ? .7 : 1 }}
+          onMouseEnter={e => { if (!isRewriting) { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' } }}
+          onMouseLeave={e => { if (!isRewriting) { e.currentTarget.style.borderColor = 'var(--b1)'; e.currentTarget.style.color = 'var(--t3)' } }}
+        >
+          {isRewriting ? <div style={{ width: '9px', height: '9px', border: '1.5px solid rgba(123,92,245,.25)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'rot .7s linear infinite', flexShrink: 0 }} /> : <RotateCcw size={10} />}
+          Réécrire
+        </button>
+        <button
+          onClick={onHashtags}
+          style={{ display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.28rem .6rem', borderRadius: '6px', border: '1px solid var(--b1)', background: 'transparent', color: 'var(--t3)', cursor: 'pointer', fontSize: '.7rem', fontWeight: 500, transition: '.12s' }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = '#06B6D4'; e.currentTarget.style.color = '#06B6D4' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--b1)'; e.currentTarget.style.color = 'var(--t3)' }}
+        >
+          <Hash size={10} /> Hashtags
+        </button>
+      </div>
+
       {/* ── Image loading ── */}
       {imageLoading && (
         <div style={{ margin: '0 1rem .6rem', borderRadius: '12px', aspectRatio: '16/9', background: 'var(--s2)', border: '1px solid var(--b1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -525,28 +547,6 @@ function PostPlatformCard({
           )}
         </div>
       )}
-
-      {/* ── Réécrire / Hashtags ── */}
-      <div style={{ display: 'flex', gap: '.4rem', padding: '.15rem 1rem .6rem' }}>
-        <button
-          onClick={isRewriting ? undefined : onRewrite}
-          disabled={isRewriting}
-          style={{ display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.28rem .6rem', borderRadius: '6px', border: '1px solid var(--b1)', background: 'transparent', color: isRewriting ? 'var(--accent)' : 'var(--t3)', cursor: isRewriting ? 'not-allowed' : 'pointer', fontSize: '.7rem', fontWeight: 500, transition: '.12s', opacity: isRewriting ? .7 : 1 }}
-          onMouseEnter={e => { if (!isRewriting) { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' } }}
-          onMouseLeave={e => { if (!isRewriting) { e.currentTarget.style.borderColor = 'var(--b1)'; e.currentTarget.style.color = 'var(--t3)' } }}
-        >
-          {isRewriting ? <div style={{ width: '9px', height: '9px', border: '1.5px solid rgba(123,92,245,.25)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'rot .7s linear infinite', flexShrink: 0 }} /> : <RotateCcw size={10} />}
-          Réécrire
-        </button>
-        <button
-          onClick={onHashtags}
-          style={{ display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.28rem .6rem', borderRadius: '6px', border: '1px solid var(--b1)', background: 'transparent', color: 'var(--t3)', cursor: 'pointer', fontSize: '.7rem', fontWeight: 500, transition: '.12s' }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = '#06B6D4'; e.currentTarget.style.color = '#06B6D4' }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--b1)'; e.currentTarget.style.color = 'var(--t3)' }}
-        >
-          <Hash size={10} /> Hashtags
-        </button>
-      </div>
 
       {/* ── Action rows ── */}
       <div style={{ borderTop: '1px solid var(--b1)' }}>
@@ -720,6 +720,8 @@ export function GeneratedPostsView({
 
   const [schedulerPlatform, setSchedulerPlatform] = useState<Platform | null>(null)
   const [loadingAction,     setLoadingAction]     = useState<string | null>(null)
+  const [activeIdx,         setActiveIdx]         = useState(0)
+  const sliderRef = useRef<HTMLDivElement>(null)
 
   function updateCard(platform: Platform, partial: Partial<CardState>) {
     setCards(prev => ({ ...prev, [platform]: { ...prev[platform], ...partial } }))
@@ -827,26 +829,81 @@ export function GeneratedPostsView({
     }
   }
 
+  const scrollToIdx = useCallback((idx: number) => {
+    const el = sliderRef.current
+    if (!el) return
+    const child = el.children[idx] as HTMLElement | undefined
+    if (child) child.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    setActiveIdx(idx)
+  }, [])
+
+  function handleSliderScroll() {
+    const el = sliderRef.current
+    if (!el) return
+    const center = el.scrollLeft + el.offsetWidth / 2
+    let closest = 0
+    let minDist = Infinity
+    Array.from(el.children).forEach((child, i) => {
+      const c = child as HTMLElement
+      const childCenter = c.offsetLeft + c.offsetWidth / 2
+      const dist = Math.abs(center - childCenter)
+      if (dist < minDist) { minDist = dist; closest = i }
+    })
+    setActiveIdx(closest)
+  }
+
   return (
     <div>
-      {/* Cards — centred, max 480px each */}
-      <div style={{
-        display: 'flex', justifyContent: 'center',
-        flexWrap: 'wrap', gap: '1.25rem',
-      }}>
+      {/* ── Slider ── */}
+      <div
+        ref={sliderRef}
+        onScroll={handleSliderScroll}
+        style={{
+          display: 'flex',
+          overflowX: platforms.length > 1 ? 'auto' : 'visible',
+          scrollSnapType: platforms.length > 1 ? 'x mandatory' : 'none',
+          gap: '1rem',
+          padding: platforms.length > 1 ? '0 calc(50% - 220px) .5rem' : '0',
+          scrollbarWidth: 'none',
+          justifyContent: platforms.length === 1 ? 'center' : 'flex-start',
+        } as React.CSSProperties}
+      >
         {platforms.map(p => (
           <div
             key={p}
             style={{
+              flexShrink: 0,
               width: '100%',
-              maxWidth: platforms.length === 1 ? '480px' : '440px',
-              flex: platforms.length === 1 ? '0 0 auto' : '1 1 340px',
+              maxWidth: '440px',
+              scrollSnapAlign: 'center',
             }}
           >
             <PostPlatformCard {...cardProps(p)} />
           </div>
         ))}
       </div>
+
+      {/* ── Nav bar (dots) — seulement si plusieurs cartes ── */}
+      {platforms.length > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '.4rem', marginTop: '.75rem' }}>
+          {platforms.map((p, i) => (
+            <button
+              key={p}
+              onClick={() => scrollToIdx(i)}
+              style={{
+                height: '4px',
+                width: i === activeIdx ? '24px' : '8px',
+                borderRadius: '2px',
+                border: 'none',
+                cursor: 'pointer',
+                background: i === activeIdx ? 'var(--accent)' : 'var(--b1)',
+                padding: 0,
+                transition: 'width .2s ease, background .2s ease',
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Scheduler sheet */}
       {schedulerPlatform && (

@@ -105,11 +105,12 @@ export default async function DashboardPage() {
   }
   const bestPlatform = Object.entries(platformEng).sort((a, b) => b[1] - a[1])[0]?.[0] || null
 
+  const plan = (userData?.plan || 'free') as Plan
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
   const monthRes = await admin.from('posts').select('id', { count: 'exact' })
     .eq('user_id', authUser.id).gte('created_at', monthStart).neq('status', 'deleted')
   const monthCount = monthRes.count || 0
-  const planLimit: number | 'unlimited' = 'unlimited'
+  const planLimit  = PLAN_LIMITS[plan].generationsPerDay
 
   const aiTip = getAiTip(weeks, bestPlatform, avgPerWeek)
   const firstName = userData?.full_name?.split(' ')[0] || authUser.email?.split('@')[0] || 'vous'
