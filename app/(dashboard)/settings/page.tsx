@@ -5,9 +5,18 @@ import { useToast } from '@/components/ui/Toast'
 import { createClient } from '@/lib/supabase/client'
 import { Moon, Sun, Globe, Bell, CreditCard, Trash2, Lock, ExternalLink, CheckCircle } from 'lucide-react'
 
+const NAV_ITEMS = [
+  { id: 'appearance', label: 'Apparence', icon: Moon },
+  { id: 'language', label: 'Langue & Notifications', icon: Globe },
+  { id: 'password', label: 'Mot de passe', icon: Lock },
+  { id: 'billing', label: 'Abonnement', icon: CreditCard },
+  { id: 'danger', label: 'Zone dangereuse', icon: Trash2, danger: true },
+]
+
 export default function SettingsPage() {
   const { toast } = useToast()
   const supabase = createClient()
+  const [active, setActive] = useState('appearance')
 
   const [theme, setTheme] = useState<'dark' | 'light'>('dark')
   const [lang, setLang] = useState<'fr' | 'en'>('fr')
@@ -15,7 +24,6 @@ export default function SettingsPage() {
   const [userPlan, setUserPlan] = useState<'free' | 'premium' | 'business'>('free')
   const [userEmail, setUserEmail] = useState('')
 
-  // Mot de passe — 3 champs
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -41,7 +49,7 @@ export default function SettingsPage() {
     setSavingPwd(false)
     if (error) { toast('Mot de passe actuel incorrect', 'error'); return }
     setPwdStep('verified')
-    toast('Mot de passe vérifié', 'success')
+    toast('Identité vérifiée', 'success')
   }
 
   async function changePassword() {
@@ -56,10 +64,7 @@ export default function SettingsPage() {
   }
 
   async function handleUpgrade(plan: 'premium' | 'business') {
-    const res = await fetch('/api/billing/checkout', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan }),
-    })
+    const res = await fetch('/api/billing/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ plan }) })
     const data = await res.json()
     if (data.url) window.location.href = data.url
   }
@@ -76,280 +81,303 @@ export default function SettingsPage() {
   const strengthColor = ['', '#EF4444', '#F59E0B', '#22C55E']
 
   return (
-    <div style={{ padding: '2rem 2rem 3rem' }}>
-      <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '1.4rem', fontWeight: 700, color: 'var(--t1)', letterSpacing: '-.02em' }}>
-          Paramètres
-        </h1>
-        <p style={{ color: 'var(--t3)', fontSize: '.83rem', marginTop: '.2rem' }}>Préférences de l'application et gestion du compte</p>
-      </div>
-
-      {/* Grille principale 2 colonnes */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
-
-        {/* Apparence */}
-        <section className="card p-5">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '1rem' }}>
-            <Moon size={16} style={{ color: '#4646FF' }} />
-            <span style={{ fontSize: '.9rem', fontWeight: 600, color: 'var(--t1)' }}>Apparence</span>
-          </div>
-          <div style={{ display: 'flex', gap: '.75rem' }}>
-            {(['dark', 'light'] as const).map(t => (
-              <button
-                key={t}
-                onClick={() => { setTheme(t); localStorage.setItem('theme', t); toast('Bientôt disponible', 'success') }}
-                style={{
-                  flex: 1, padding: '.85rem', borderRadius: '10px',
-                  border: `1px solid ${theme === t ? '#4646FF' : 'var(--b1)'}`,
-                  background: theme === t ? 'rgba(59,123,246,.08)' : '#111113',
-                  color: theme === t ? '#4646FF' : 'var(--t3)', cursor: 'pointer',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.4rem', transition: '.15s',
-                }}
-              >
-                {t === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
-                <span style={{ fontSize: '.8rem', fontWeight: 500 }}>{t === 'dark' ? 'Sombre' : 'Clair'}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        {/* Langue + Notifications empilés */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-
-          {/* Langue */}
-          <section className="card p-5">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '1rem' }}>
-              <Globe size={16} style={{ color: '#4646FF' }} />
-              <span style={{ fontSize: '.9rem', fontWeight: 600, color: 'var(--t1)' }}>Langue</span>
-            </div>
-            <div style={{ display: 'flex', gap: '.5rem' }}>
-              {([['fr', '🇫🇷 Français'], ['en', '🇬🇧 English']] as const).map(([code, label]) => (
-                <button
-                  key={code}
-                  onClick={() => { setLang(code); toast('Bientôt disponible', 'success') }}
-                  style={{
-                    flex: 1, padding: '.6rem', borderRadius: '8px',
-                    border: `1px solid ${lang === code ? '#4646FF' : 'var(--b1)'}`,
-                    background: lang === code ? 'rgba(59,123,246,.08)' : 'transparent',
-                    color: lang === code ? '#4646FF' : 'var(--t3)', cursor: 'pointer',
-                    fontSize: '.8rem', fontWeight: 500, transition: '.15s',
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </section>
-
-          {/* Notifications */}
-          <section className="card p-5" style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '1rem' }}>
-              <Bell size={16} style={{ color: '#4646FF' }} />
-              <span style={{ fontSize: '.9rem', fontWeight: 600, color: 'var(--t1)' }}>Notifications</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.65rem .75rem', background: 'var(--bg)', borderRadius: '8px', border: '1px solid var(--b1)' }}>
-              <div>
-                <div style={{ fontSize: '.83rem', fontWeight: 500, color: 'var(--t1)' }}>Notifications email</div>
-                <div style={{ fontSize: '.75rem', color: 'var(--t3)', marginTop: '.15rem' }}>Résumés hebdomadaires, rappels</div>
-              </div>
-              <button
-                onClick={() => setEmailNotifs(p => !p)}
-                style={{
-                  width: '42px', height: '22px', borderRadius: '999px', border: 'none', cursor: 'pointer',
-                  background: emailNotifs ? '#4646FF' : 'var(--b1)', transition: '.2s', position: 'relative', flexShrink: 0,
-                }}
-              >
-                <div style={{
-                  width: '16px', height: '16px', borderRadius: '50%', background: '#fff',
-                  position: 'absolute', top: '3px', transition: '.2s',
-                  left: emailNotifs ? '23px' : '3px',
-                }} />
-              </button>
-            </div>
-          </section>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-page, #0d0d0f)' }}>
+      {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
+      <aside style={{
+        width: '240px', flexShrink: 0,
+        borderRight: '1px solid var(--b1)',
+        padding: '2rem 0',
+        position: 'sticky', top: 0, height: '100vh', overflowY: 'auto',
+      }}>
+        <div style={{ padding: '0 1.25rem', marginBottom: '1.25rem' }}>
+          <h2 style={{ fontSize: '.78rem', fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.07em' }}>Paramètres</h2>
         </div>
-      </div>
 
-      {/* Grille 2 colonnes — Mot de passe + Abonnement */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
+        <nav>
+          {NAV_ITEMS.map(item => {
+            const Icon = item.icon
+            const isActive = active === item.id
+            const dangerColor = '#ef4444'
+            return (
+              <button key={item.id} onClick={() => setActive(item.id)} style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: '.6rem',
+                padding: '.55rem 1.25rem', background: 'none', border: 'none',
+                borderLeft: isActive ? `2px solid ${item.danger ? dangerColor : '#4646FF'}` : '2px solid transparent',
+                color: isActive ? (item.danger ? dangerColor : 'var(--t1)') : (item.danger ? dangerColor : 'var(--t3)'),
+                cursor: 'pointer', fontSize: '.83rem', fontWeight: isActive ? 600 : 400,
+                transition: '.15s', textAlign: 'left', opacity: item.danger && !isActive ? .7 : 1,
+              }}>
+                <Icon size={14} style={{ flexShrink: 0, color: isActive ? (item.danger ? dangerColor : '#4646FF') : (item.danger ? dangerColor : 'var(--t3)') }} />
+                {item.label}
+              </button>
+            )
+          })}
+        </nav>
+      </aside>
 
-        {/* Mot de passe */}
-        <section className="card p-5">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '1rem' }}>
-            <Lock size={16} style={{ color: '#4646FF' }} />
-            <span style={{ fontSize: '.9rem', fontWeight: 600, color: 'var(--t1)' }}>Mot de passe</span>
-            {pwdStep === 'verified' && (
-              <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '.3rem', fontSize: '.75rem', color: '#22C55E' }}>
-                <CheckCircle size={13} /> Identité vérifiée
-              </span>
-            )}
+      {/* ── Contenu ──────────────────────────────────────────────────────────── */}
+      <main style={{ flex: 1, padding: '2rem 2.5rem', maxWidth: '680px' }}>
+
+        {/* ── Apparence ─────────────────────────────────────────── */}
+        {active === 'appearance' && (
+          <div>
+            <SectionHeader title="Apparence" desc="Personnalisez l'affichage de l'application." />
+            <SettingRow label="Thème" desc="Choisissez entre le mode sombre et clair.">
+              <div style={{ display: 'flex', gap: '.6rem' }}>
+                {(['dark', 'light'] as const).map(t => (
+                  <button key={t} onClick={() => { setTheme(t); localStorage.setItem('theme', t); toast('Bientôt disponible', 'success') }} style={{
+                    display: 'flex', alignItems: 'center', gap: '.5rem',
+                    padding: '.5rem .9rem', borderRadius: '8px', cursor: 'pointer',
+                    border: `1px solid ${theme === t ? '#4646FF' : 'var(--b1)'}`,
+                    background: theme === t ? 'rgba(70,70,255,.08)' : 'transparent',
+                    color: theme === t ? '#4646FF' : 'var(--t3)',
+                    fontSize: '.8rem', fontWeight: 500, transition: '.15s',
+                  }}>
+                    {t === 'dark' ? <Moon size={14} /> : <Sun size={14} />}
+                    {t === 'dark' ? 'Sombre' : 'Clair'}
+                  </button>
+                ))}
+              </div>
+            </SettingRow>
           </div>
+        )}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '.75rem' }}>
+        {/* ── Langue & Notifications ────────────────────────────── */}
+        {active === 'language' && (
+          <div>
+            <SectionHeader title="Langue & Notifications" desc="Préférences linguistiques et alertes email." />
+            <SettingRow label="Langue" desc="Langue de l'interface.">
+              <div style={{ display: 'flex', gap: '.5rem' }}>
+                {([['fr', '🇫🇷 Français'], ['en', '🇬🇧 English']] as const).map(([code, label]) => (
+                  <button key={code} onClick={() => { setLang(code); toast('Bientôt disponible', 'success') }} style={{
+                    padding: '.45rem .85rem', borderRadius: '7px', cursor: 'pointer',
+                    border: `1px solid ${lang === code ? '#4646FF' : 'var(--b1)'}`,
+                    background: lang === code ? 'rgba(70,70,255,.08)' : 'transparent',
+                    color: lang === code ? '#4646FF' : 'var(--t3)',
+                    fontSize: '.8rem', fontWeight: 500, transition: '.15s',
+                  }}>{label}</button>
+                ))}
+              </div>
+            </SettingRow>
+            <SettingRow label="Notifications email" desc="Résumés hebdomadaires, rappels de publication.">
+              <Toggle value={emailNotifs} onChange={setEmailNotifs} />
+            </SettingRow>
+          </div>
+        )}
+
+        {/* ── Mot de passe ─────────────────────────────────────── */}
+        {active === 'password' && (
+          <div>
+            <SectionHeader
+              title="Mot de passe"
+              desc="Modifiez votre mot de passe de connexion."
+              badge={pwdStep === 'verified' ? <span style={{ display: 'flex', alignItems: 'center', gap: '.3rem', fontSize: '.73rem', color: '#22C55E', background: 'rgba(34,197,94,.08)', border: '1px solid rgba(34,197,94,.2)', padding: '.2rem .55rem', borderRadius: '999px' }}><CheckCircle size={11} /> Identité vérifiée</span> : undefined}
+            />
+
             {pwdStep === 'idle' ? (
               <>
-                <div>
-                  <label className="label">Mot de passe actuel</label>
-                  <input
-                    className="input"
-                    type="password"
-                    placeholder="Votre mot de passe actuel"
-                    value={currentPassword}
-                    onChange={e => setCurrentPassword(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && verifyCurrentPassword()}
-                  />
+                <SettingRow label="Mot de passe actuel" desc="Confirmez votre identité avant de changer de mot de passe.">
+                  <input className="input" type="password" style={{ maxWidth: '280px' }} placeholder="Mot de passe actuel" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && verifyCurrentPassword()} />
+                </SettingRow>
+                <div style={{ borderTop: '1px solid var(--b1)', paddingTop: '1.25rem' }}>
+                  <button onClick={verifyCurrentPassword} disabled={savingPwd || !currentPassword} className="btn-primary flex items-center gap-2" style={{ opacity: !currentPassword ? .45 : 1 }}>
+                    <Lock size={14} /> {savingPwd ? 'Vérification...' : 'Vérifier mon identité'}
+                  </button>
                 </div>
-                <button
-                  onClick={verifyCurrentPassword}
-                  disabled={savingPwd || !currentPassword}
-                  className="btn-primary flex items-center gap-2"
-                  style={{ opacity: !currentPassword ? .5 : 1 }}
-                >
-                  <Lock size={14} /> {savingPwd ? 'Vérification...' : 'Vérifier mon identité'}
-                </button>
-                <p style={{ fontSize: '.75rem', color: 'var(--t3)' }}>
-                  Vous devez d'abord confirmer votre identité avant de changer le mot de passe.
-                </p>
               </>
             ) : (
               <>
-                <div>
-                  <label className="label">Nouveau mot de passe</label>
-                  <input
-                    className="input"
-                    type="password"
-                    placeholder="8 caractères minimum"
-                    value={newPassword}
-                    onChange={e => setNewPassword(e.target.value)}
-                  />
-                  {newPassword.length > 0 && (
-                    <div style={{ marginTop: '.4rem', display: 'flex', alignItems: 'center', gap: '.5rem' }}>
-                      <div style={{ flex: 1, height: '3px', borderRadius: '999px', background: 'var(--b1)', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${(strength / 3) * 100}%`, background: strengthColor[strength], transition: '.3s', borderRadius: '999px' }} />
+                <SettingRow label="Nouveau mot de passe" desc="8 caractères minimum.">
+                  <div style={{ maxWidth: '280px' }}>
+                    <input className="input" type="password" placeholder="Nouveau mot de passe" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+                    {newPassword.length > 0 && (
+                      <div style={{ marginTop: '.4rem', display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+                        <div style={{ flex: 1, height: '3px', borderRadius: '999px', background: 'var(--b1)', overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${(strength / 3) * 100}%`, background: strengthColor[strength], transition: '.3s', borderRadius: '999px' }} />
+                        </div>
+                        <span style={{ fontSize: '.7rem', color: strengthColor[strength], fontWeight: 600, flexShrink: 0 }}>{strengthLabel[strength]}</span>
                       </div>
-                      <span style={{ fontSize: '.72rem', color: strengthColor[strength], fontWeight: 500, flexShrink: 0 }}>{strengthLabel[strength]}</span>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <label className="label">Confirmer le mot de passe</label>
-                  <input
-                    className="input"
-                    type="password"
-                    placeholder="Répétez le nouveau mot de passe"
-                    value={confirmPassword}
-                    onChange={e => setConfirmPassword(e.target.value)}
-                    style={{ borderColor: confirmPassword && confirmPassword !== newPassword ? 'rgba(239,68,68,.4)' : undefined }}
-                  />
-                  {confirmPassword && confirmPassword !== newPassword && (
-                    <div style={{ fontSize: '.73rem', color: '#EF4444', marginTop: '.3rem' }}>Les mots de passe ne correspondent pas</div>
-                  )}
-                </div>
-                <div style={{ display: 'flex', gap: '.5rem' }}>
-                  <button onClick={changePassword} disabled={savingPwd} className="btn-primary flex items-center gap-2" style={{ flex: 1 }}>
-                    <Lock size={14} /> {savingPwd ? 'Modification...' : 'Modifier'}
+                    )}
+                  </div>
+                </SettingRow>
+                <SettingRow label="Confirmer">
+                  <div style={{ maxWidth: '280px' }}>
+                    <input className="input" type="password" placeholder="Répétez le mot de passe" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} style={{ borderColor: confirmPassword && confirmPassword !== newPassword ? 'rgba(239,68,68,.4)' : undefined }} />
+                    {confirmPassword && confirmPassword !== newPassword && <div style={{ fontSize: '.72rem', color: '#EF4444', marginTop: '.3rem' }}>Ne correspondent pas</div>}
+                  </div>
+                </SettingRow>
+                <div style={{ borderTop: '1px solid var(--b1)', paddingTop: '1.25rem', display: 'flex', gap: '.5rem' }}>
+                  <button onClick={changePassword} disabled={savingPwd} className="btn-primary flex items-center gap-2">
+                    <Lock size={14} /> {savingPwd ? 'Modification...' : 'Modifier le mot de passe'}
                   </button>
                   <button onClick={() => { setPwdStep('idle'); setCurrentPassword(''); setNewPassword(''); setConfirmPassword('') }}
-                    style={{ padding: '.6rem .9rem', borderRadius: '8px', border: '1px solid var(--b1)', background: 'transparent', color: 'var(--t3)', cursor: 'pointer', fontSize: '.82rem' }}>
+                    style={{ padding: '.55rem .9rem', borderRadius: '7px', border: '1px solid var(--b1)', background: 'transparent', color: 'var(--t3)', cursor: 'pointer', fontSize: '.82rem' }}>
                     Annuler
                   </button>
                 </div>
               </>
             )}
           </div>
-        </section>
+        )}
 
-        {/* Abonnement */}
-        <section className="card p-5">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '1rem' }}>
-            <CreditCard size={16} style={{ color: '#4646FF' }} />
-            <span style={{ fontSize: '.9rem', fontWeight: 600, color: 'var(--t1)' }}>Abonnement</span>
-          </div>
+        {/* ── Abonnement ───────────────────────────────────────── */}
+        {active === 'billing' && (
+          <div>
+            <SectionHeader title="Abonnement" desc="Gérez votre plan et vos informations de paiement." />
 
-          <div style={{ padding: '.75rem', background: 'var(--bg)', borderRadius: '8px', border: '1px solid var(--b1)', marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem', marginBottom: '.4rem' }}>
-              <div style={{
-                padding: '.2rem .6rem', borderRadius: '999px', fontSize: '.72rem', fontWeight: 600,
-                background: userPlan === 'free' ? 'var(--b1)' : userPlan === 'premium' ? 'rgba(59,123,246,.15)' : 'rgba(251,191,36,.12)',
-                color: userPlan === 'free' ? 'var(--t3)' : userPlan === 'premium' ? '#4646FF' : '#FBBF24',
-              }}>
-                {userPlan === 'free' ? 'Gratuit' : userPlan === 'premium' ? 'Premium' : 'Business'}
+            {/* Plan actuel */}
+            <div style={{ padding: '1rem', background: 'var(--bg)', border: '1px solid var(--b1)', borderRadius: '10px', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.5rem' }}>
+                <div style={{ fontSize: '.88rem', fontWeight: 600, color: 'var(--t1)' }}>Plan actuel</div>
+                <span style={{
+                  padding: '.2rem .65rem', borderRadius: '999px', fontSize: '.72rem', fontWeight: 600,
+                  background: userPlan === 'free' ? 'var(--b1)' : userPlan === 'premium' ? 'rgba(70,70,255,.15)' : 'rgba(251,191,36,.12)',
+                  color: userPlan === 'free' ? 'var(--t3)' : userPlan === 'premium' ? '#4646FF' : '#FBBF24',
+                }}>
+                  {userPlan === 'free' ? 'Gratuit' : userPlan === 'premium' ? 'Premium' : 'Business'}
+                </span>
+              </div>
+              <div style={{ fontSize: '.78rem', color: 'var(--t3)' }}>
+                {userPlan === 'free' ? '5 générations/jour · Instagram & Facebook uniquement'
+                  : userPlan === 'premium' ? '20 générations/jour · 5 plateformes · Planification'
+                  : 'Générations illimitées · Toutes plateformes · Workspaces'}
               </div>
             </div>
-            <div style={{ fontSize: '.8rem', color: 'var(--t3)' }}>
-              {userPlan === 'free' ? '5 générations/jour · Instagram & Facebook' :
-               userPlan === 'premium' ? '20 générations/jour · 5 plateformes · Posts de la semaine' :
-               'Illimité · Toutes plateformes · Workspaces'}
-            </div>
+
+            {userPlan === 'free' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '.6rem' }}>
+                <PlanCard
+                  name="Premium" price="29€/mois"
+                  features={['20 générations / jour', '5 plateformes sociales', 'Planification avancée', 'Analytiques']}
+                  color="#4646FF"
+                  onUpgrade={() => handleUpgrade('premium')}
+                />
+                <PlanCard
+                  name="Business" price="79€/mois"
+                  features={['Générations illimitées', 'Toutes les plateformes', 'Workspaces & équipe', 'Support prioritaire']}
+                  color="#FBBF24"
+                  onUpgrade={() => handleUpgrade('business')}
+                />
+              </div>
+            ) : (
+              <button onClick={handlePortal} className="btn-outline flex items-center gap-2">
+                <CreditCard size={14} /> Gérer mon abonnement
+              </button>
+            )}
           </div>
+        )}
 
-          {userPlan === 'free' ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '.6rem' }}>
-              <button onClick={() => handleUpgrade('premium')} className="btn-primary flex items-center justify-center gap-2" style={{ width: '100%' }}>
-                <ExternalLink size={14} /> Passer à Premium — 29€/mois
-              </button>
-              <button onClick={() => handleUpgrade('business')} className="btn-outline flex items-center justify-center gap-2" style={{ width: '100%' }}>
-                <ExternalLink size={14} /> Passer à Business — 79€/mois
-              </button>
-            </div>
-          ) : (
-            <button onClick={handlePortal} className="btn-outline flex items-center gap-2">
-              <CreditCard size={14} /> Gérer mon abonnement
-            </button>
-          )}
-        </section>
-      </div>
-
-      {/* Zone dangereuse — pleine largeur */}
-      <section className="card p-5" style={{ borderColor: 'rgba(239,68,68,.2)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.75rem' }}>
-          <Trash2 size={16} style={{ color: '#EF4444' }} />
-          <span style={{ fontSize: '.9rem', fontWeight: 600, color: '#EF4444' }}>Zone dangereuse</span>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '1rem', alignItems: 'flex-end' }}>
+        {/* ── Zone dangereuse ──────────────────────────────────── */}
+        {active === 'danger' && (
           <div>
-            <p style={{ fontSize: '.82rem', color: 'var(--t3)', marginBottom: '.75rem' }}>
-              La suppression est <strong style={{ color: 'var(--t3)' }}>définitive et irréversible</strong>. Tous vos posts, données et connexions seront effacés.
-            </p>
-            <label className="label">
-              Tapez <span style={{ color: '#EF4444', fontFamily: 'monospace' }}>supprimer</span> pour activer le bouton
-            </label>
-            <input
-              className="input"
-              placeholder="supprimer"
-              value={confirmDelete}
-              onChange={e => setConfirmDelete(e.target.value)}
-              style={{ maxWidth: '280px', borderColor: confirmDelete === 'supprimer' ? 'rgba(239,68,68,.4)' : undefined }}
-            />
+            <SectionHeader title="Zone dangereuse" desc="Actions irréversibles sur votre compte." danger />
+
+            <div style={{ border: '1px solid rgba(239,68,68,.2)', borderRadius: '10px', overflow: 'hidden' }}>
+              <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(239,68,68,.12)' }}>
+                <div style={{ fontSize: '.85rem', fontWeight: 600, color: 'var(--t1)', marginBottom: '.3rem' }}>Supprimer mon compte</div>
+                <p style={{ fontSize: '.78rem', color: 'var(--t3)', lineHeight: 1.6 }}>
+                  La suppression est <strong style={{ color: '#ef4444' }}>définitive et irréversible</strong>. Tous vos posts, données et connexions seront effacés immédiatement.
+                </p>
+              </div>
+              <div style={{ padding: '1rem 1.25rem', background: 'rgba(239,68,68,.03)' }}>
+                <label style={{ fontSize: '.78rem', color: 'var(--t3)', display: 'block', marginBottom: '.5rem' }}>
+                  Tapez <code style={{ color: '#ef4444', background: 'rgba(239,68,68,.1)', padding: '.1rem .35rem', borderRadius: '4px', fontSize: '.78rem' }}>supprimer</code> pour confirmer
+                </label>
+                <div style={{ display: 'flex', gap: '.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <input
+                    className="input" placeholder="supprimer" value={confirmDelete}
+                    onChange={e => setConfirmDelete(e.target.value)}
+                    style={{ maxWidth: '200px', borderColor: confirmDelete === 'supprimer' ? 'rgba(239,68,68,.4)' : undefined }}
+                  />
+                  <button
+                    disabled={confirmDelete !== 'supprimer' || deleting}
+                    onClick={async () => {
+                      setDeleting(true)
+                      const res = await fetch('/api/auth/delete-account', { method: 'DELETE' })
+                      if (res.ok) { await supabase.auth.signOut(); window.location.href = '/login' }
+                      else { const d = await res.json(); toast(d.error || 'Erreur', 'error'); setDeleting(false) }
+                    }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '.4rem',
+                      padding: '.55rem 1.1rem', borderRadius: '7px',
+                      border: '1px solid rgba(239,68,68,.3)',
+                      background: confirmDelete === 'supprimer' ? 'rgba(239,68,68,.12)' : 'transparent',
+                      color: '#ef4444', cursor: confirmDelete === 'supprimer' ? 'pointer' : 'not-allowed',
+                      fontSize: '.82rem', fontWeight: 500,
+                      opacity: confirmDelete === 'supprimer' ? 1 : .35, transition: '.2s',
+                    }}
+                  >
+                    <Trash2 size={13} /> {deleting ? 'Suppression...' : 'Supprimer mon compte'}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-          <button
-            disabled={confirmDelete !== 'supprimer' || deleting}
-            onClick={async () => {
-              setDeleting(true)
-              const res = await fetch('/api/auth/delete-account', { method: 'DELETE' })
-              if (res.ok) {
-                await supabase.auth.signOut()
-                window.location.href = '/login'
-              } else {
-                const d = await res.json()
-                toast(d.error || 'Erreur suppression', 'error')
-                setDeleting(false)
-              }
-            }}
-            style={{
-              background: confirmDelete === 'supprimer' ? 'rgba(239,68,68,.1)' : 'transparent',
-              border: '1px solid rgba(239,68,68,.3)', color: '#EF4444',
-              padding: '.65rem 1.25rem', borderRadius: '8px',
-              cursor: confirmDelete === 'supprimer' ? 'pointer' : 'not-allowed',
-              fontSize: '.83rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '.5rem',
-              opacity: confirmDelete === 'supprimer' ? 1 : .35, whiteSpace: 'nowrap', transition: '.2s',
-            }}
-          >
-            <Trash2 size={14} /> {deleting ? 'Suppression...' : 'Supprimer mon compte'}
-          </button>
+        )}
+      </main>
+    </div>
+  )
+}
+
+// ── Composants locaux ──────────────────────────────────────────────────────────
+
+function SectionHeader({ title, desc, danger, badge }: { title: string; desc: string; danger?: boolean; badge?: React.ReactNode }) {
+  return (
+    <div style={{ borderBottom: '1px solid var(--b1)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
+        <h2 style={{ fontSize: '1.05rem', fontWeight: 700, color: danger ? '#ef4444' : 'var(--t1)', letterSpacing: '-.01em' }}>{title}</h2>
+        {badge}
+      </div>
+      <p style={{ fontSize: '.8rem', color: 'var(--t3)', marginTop: '.3rem' }}>{desc}</p>
+    </div>
+  )
+}
+
+function SettingRow({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: '1rem', alignItems: 'start', padding: '1rem 0', borderBottom: '1px solid var(--b1)' }}>
+      <div>
+        <div style={{ fontSize: '.83rem', fontWeight: 500, color: 'var(--t1)' }}>{label}</div>
+        {desc && <div style={{ fontSize: '.75rem', color: 'var(--t3)', marginTop: '.25rem', lineHeight: 1.5 }}>{desc}</div>}
+      </div>
+      <div>{children}</div>
+    </div>
+  )
+}
+
+function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button onClick={() => onChange(!value)} style={{
+      width: '42px', height: '22px', borderRadius: '999px', border: 'none', cursor: 'pointer',
+      background: value ? '#4646FF' : 'var(--b1)', transition: '.2s', position: 'relative', flexShrink: 0,
+    }}>
+      <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#fff', position: 'absolute', top: '3px', transition: '.2s', left: value ? '23px' : '3px' }} />
+    </button>
+  )
+}
+
+function PlanCard({ name, price, features, color, onUpgrade }: { name: string; price: string; features: string[]; color: string; onUpgrade: () => void }) {
+  return (
+    <div style={{ padding: '1rem', border: `1px solid ${color}25`, borderRadius: '10px', background: `${color}05` }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.75rem' }}>
+        <div>
+          <div style={{ fontSize: '.88rem', fontWeight: 700, color: 'var(--t1)' }}>{name}</div>
+          <div style={{ fontSize: '.78rem', color: 'var(--t3)', marginTop: '.1rem' }}>{price}</div>
         </div>
-      </section>
+        <button onClick={onUpgrade} style={{
+          display: 'flex', alignItems: 'center', gap: '.4rem',
+          padding: '.45rem .9rem', borderRadius: '7px',
+          border: `1px solid ${color}50`, background: `${color}12`,
+          color, cursor: 'pointer', fontSize: '.78rem', fontWeight: 600,
+        }}>
+          <ExternalLink size={13} /> Passer à {name}
+        </button>
+      </div>
+      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexWrap: 'wrap', gap: '.35rem' }}>
+        {features.map(f => (
+          <li key={f} style={{ fontSize: '.72rem', color: 'var(--t3)', background: 'var(--bg)', border: '1px solid var(--b1)', padding: '.2rem .55rem', borderRadius: '5px' }}>{f}</li>
+        ))}
+      </ul>
     </div>
   )
 }
