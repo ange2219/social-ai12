@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { publishPost as ayrsharePublish } from '@/lib/ayrshare'
+import { publishPost as zernioPublish } from '@/lib/zernio'
 import { publishInstagramPost, publishFacebookPost } from '@/lib/meta'
 import { decryptToken } from '@/lib/utils'
 import { timingSafeEqual } from 'crypto'
@@ -14,7 +14,6 @@ function verifyInternalSecret(secret: string): boolean {
   } catch { return false }
 }
 
-// Codes d'erreur Meta indiquant un token expiré
 function isMetaTokenExpiredError(err: unknown): boolean {
   if (!(err instanceof Error)) return false
   const msg = err.message.toLowerCase()
@@ -31,14 +30,12 @@ function isMetaTokenExpiredError(err: unknown): boolean {
 export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
   const admin = createAdminClient()
 
-  // Appel interne depuis le cron (pas de session user)
   const internalSecret = _req.headers.get('x-internal-secret') || ''
   const isInternalCall = internalSecret && verifyInternalSecret(internalSecret)
 
   let userId: string
 
   if (isInternalCall) {
-    // Le cron n'a pas de session — on récupère le user_id depuis le post directement
     const { data: postOwner } = await admin
       .from('posts')
       .select('user_id')
@@ -55,7 +52,7 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
 
   const [postResult, userResult] = await Promise.all([
     admin.from('posts').select('*').eq('id', params.id).eq('user_id', userId).single(),
-    admin.from('users').select('plan, ayrshare_profile_key').eq('id', userId).single(),
+    admin.from('users').select('plan, zernio_profile_id').eq('id', userId).single(),
   ])
 
   const post = postResult.data
@@ -66,7 +63,7 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
 
   try {
     if (userProfile?.plan === 'free') {
-      // ── Plan gratuit : Meta Graph API directe ─────────────────────────────
+      // ── Plan gratuit : Meta Graph API directe (Facebook + Instagram) ──────
 
       const accounts = await admin
         .from('social_accounts')
@@ -152,20 +149,38 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
       }
 
     } else {
-      // ── Plans payants : Ayrshare ──────────────────────────────────────────
+      // ── Plans payants : Zernio ─────────────────────────────────────────────
 
-      if (!userProfile?.ayrshare_profile_key) {
+      if (!userProfile?.zernio_profile_id) {
         return NextResponse.json({
-          error: 'Compte Ayrshare non configuré. Rendez-vous dans Paramètres → Réseaux sociaux pour connecter vos comptes.',
+          error: 'Compte Zernio non configuré. Rendez-vous dans Paramètres → Réseaux sociaux pour connecter vos comptes.',
+        }, { status: 400 })
+      }
+
+      // Récupère les accountId Zernio pour chaque plateforme du post
+      const { data: socialAccounts } = await admin
+        .from('social_accounts')
+        .select('platform, zernio_account_id')
+        .eq('user_id', userId)
+        .in('platform', post.platforms as Platform[])
+        .eq('is_active', true)
+        .not('zernio_account_id', 'is', null)
+
+      const platformAccounts = (socialAccounts || [])
+        .filter(a => a.zernio_account_id)
+        .map(a => ({ platform: a.platform as Platform, accountId: a.zernio_account_id as string }))
+
+      if (!platformAccounts.length) {
+        return NextResponse.json({
+          error: 'Aucun réseau social connecté via Zernio. Connectez vos comptes dans Paramètres.',
         }, { status: 400 })
       }
 
       const contentVariants = post.content_variants as Partial<Record<Platform, string>> | null
 
-      const result = await ayrsharePublish({
-        profileKey: userProfile.ayrshare_profile_key,
+      const result = await zernioPublish({
+        platforms: platformAccounts,
         content: post.content,
-        platforms: post.platforms as Platform[],
         mediaUrls: post.media_urls || undefined,
         contentVariants: contentVariants || undefined,
       })
@@ -178,7 +193,6 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
       await admin.from('posts').update({
         status: result.status === 'partial' ? 'partial' : 'published',
         published_at: new Date().toISOString(),
-        ayrshare_post_id: result.id,
         meta_post_ids: result.postIds,
         platform_errors: result.errors?.length ? platformErrors : null,
         error_message: result.status === 'partial'
