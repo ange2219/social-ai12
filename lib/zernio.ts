@@ -92,6 +92,8 @@ export async function publishPost(params: {
   const body: Record<string, unknown> = {
     content: params.content,
     platforms: params.platforms,
+    draft: false,      // publier immédiatement, ne pas sauvegarder en brouillon
+    publish: true,
   }
 
   // Variantes par plateforme (contenu différent selon la plateforme)
