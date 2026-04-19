@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
-import { GeneratedPostsView } from '@/components/posts/GeneratedPostsView'
+import { GeneratedPostsView, type SocialAccount } from '@/components/posts/GeneratedPostsView'
 import { ArrowLeft, Save, Trash2 } from 'lucide-react'
 import type { Platform, PostObjective } from '@/types'
 
@@ -28,6 +28,7 @@ export default function ResultsPage() {
   const [data, setData]           = useState<ResultsData | null>(null)
   const [ready, setReady]         = useState(false)
   const [userName, setUserName]   = useState<string | null>(null)
+  const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([])
   const [showLeaveModal, setShowLeaveModal] = useState(false)
   const [leaveSaving, setLeaveSaving]       = useState(false)
   // Plateformes déjà traitées (brouillon/publié/programmé) — retirées de la vue
@@ -48,6 +49,13 @@ export default function ResultsPage() {
     setReady(true)
     fetch('/api/auth/me').then(r => r.json()).then(d => {
       if (d?.full_name) setUserName(d.full_name)
+    }).catch(() => {})
+    fetch('/api/social/accounts').then(r => r.json()).then(d => {
+      if (Array.isArray(d)) setSocialAccounts(d.filter((a: any) => a.is_active).map((a: any) => ({
+        platform: a.platform,
+        platform_username: a.platform_username ?? null,
+        platform_avatar_url: a.platform_avatar_url ?? null,
+      })))
     }).catch(() => {})
   }, [router])
 
@@ -303,6 +311,7 @@ export default function ResultsPage() {
         quotaLimit={data.quotaLimit}
         isPro={data.isPro}
         userName={userName}
+        socialAccounts={socialAccounts}
         initialImages={data.initialImages}
         initialScheduledAt={data.initialScheduledAt}
         allowPlatformToggle={data.allowPlatformToggle}

@@ -354,6 +354,7 @@ interface PostPlatformCardProps {
   isPublishing: boolean
   onClose?: () => void
   userName?: string | null
+  socialAccounts?: SocialAccount[]
 }
 
 function PostPlatformCard({
@@ -362,7 +363,7 @@ function PostPlatformCard({
   onRewrite, onHashtags,
   onScheduleOpen, onPublishScheduled,
   onDraft, onPublish,
-  isPro, isRewriting, isDrafting, isPublishing, onClose, userName,
+  isPro, isRewriting, isDrafting, isPublishing, onClose, userName, socialAccounts,
 }: PostPlatformCardProps) {
   const isActing = isDrafting || isPublishing
   const { content, imageUrl, imageLoading, scheduledAt } = cardState
@@ -477,15 +478,24 @@ function PostPlatformCard({
       </div>
 
       {/* ── User header ── */}
+      {(() => {
+        const platformAccount = !isUnifiedCard ? socialAccounts?.find(a => a.platform === platform) : null
+        const displayName = platformAccount?.platform_username || userName || 'Votre compte'
+        const avatarUrl   = platformAccount?.platform_avatar_url || null
+        return (
       <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem', padding: '.8rem 1rem .3rem' }}>
-        <div style={{
-          width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-          background: `linear-gradient(135deg, ${color}, ${color}88)`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '.88rem', fontWeight: 700, color: '#fff',
-        }}>{userName ? userName.charAt(0).toUpperCase() : 'A'}</div>
+        {avatarUrl ? (
+          <img src={avatarUrl} alt="" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+        ) : (
+          <div style={{
+            width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+            background: `linear-gradient(135deg, ${color}, ${color}88)`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '.88rem', fontWeight: 700, color: '#fff',
+          }}>{displayName.charAt(0).toUpperCase()}</div>
+        )}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: '.83rem', fontWeight: 600, color: 'var(--t1)' }}>{userName || 'Votre compte'}</div>
+          <div style={{ fontSize: '.83rem', fontWeight: 600, color: 'var(--t1)' }}>{displayName}</div>
           {objective && (
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: '.25rem',
@@ -500,6 +510,8 @@ function PostPlatformCard({
           )}
         </div>
       </div>
+        )
+      })()}
 
       {/* ── Textarea ── */}
       <div style={{ padding: '.2rem 1rem .15rem' }}>
@@ -714,6 +726,12 @@ function QuotaBar({ textUsed, textLimit }: {
 
 // ─── Main GeneratedPostsView ──────────────────────────────────────────────────
 
+export interface SocialAccount {
+  platform: Platform
+  platform_username: string | null
+  platform_avatar_url: string | null
+}
+
 export interface GeneratedPostsViewProps {
   platforms:             Platform[]
   variants:              Partial<Record<Platform, string>>
@@ -722,6 +740,7 @@ export interface GeneratedPostsViewProps {
   quotaLimit:            number | 'unlimited'
   isPro:                 boolean
   userName?:             string | null
+  socialAccounts?:       SocialAccount[]
   initialImages?:        Partial<Record<Platform, string>>
   initialScheduledAt?:   string
   allowPlatformToggle?:  boolean   // true seulement pour création manuelle
@@ -734,7 +753,7 @@ export interface GeneratedPostsViewProps {
 
 export function GeneratedPostsView({
   platforms, variants, objective,
-  quotaUsed, quotaLimit, isPro, userName, initialImages, initialScheduledAt,
+  quotaUsed, quotaLimit, isPro, userName, socialAccounts, initialImages, initialScheduledAt,
   allowPlatformToggle, unifiedMode,
   onSaveDraft, onPublish, onSchedule, onClose,
 }: GeneratedPostsViewProps) {
@@ -901,17 +920,21 @@ export function GeneratedPostsView({
       isPublishing: loadingAction === `publish-${p}` || loadingAction === `schedule-${p}`,
       onClose:      allowPlatformToggle && activePlatforms.length > 1 ? () => togglePlatform(p) : undefined,
       userName,
+      socialAccounts,
     }
   }
 
   const ALL_PLATFORMS_LIST: Platform[] = ['instagram', 'facebook', 'tiktok', 'twitter', 'linkedin', 'youtube', 'pinterest']
+  const connectedPlatforms: Platform[] = socialAccounts && socialAccounts.length > 0
+    ? ALL_PLATFORMS_LIST.filter(p => socialAccounts.some(a => a.platform === p))
+    : ALL_PLATFORMS_LIST
 
   return (
     <div>
       {/* ── Sélecteur de plateformes (création manuelle uniquement) ── */}
       {allowPlatformToggle && (
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.4rem', marginBottom: '1.25rem' }}>
-        {ALL_PLATFORMS_LIST.map(p => {
+        {connectedPlatforms.map(p => {
           const isActive = activePlatforms.includes(p)
           const color    = PLATFORM_COLORS[p]
           return (

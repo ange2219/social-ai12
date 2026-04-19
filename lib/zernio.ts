@@ -119,21 +119,30 @@ export async function publishPost(params: {
   })
 
   // Normaliser la réponse Zernio
+  console.log('[zernio/publish] raw response:', JSON.stringify(raw))
+
   const postIds: Partial<Record<Platform, string>> = {}
   const errors: { platform: Platform; message: string }[] = []
 
   // Zernio retourne les IDs par plateforme dans post.postIds ou post.platformPostIds
-  const rawPostIds = raw.post?.postIds || raw.post?.platformPostIds || raw.postIds || {}
+  const rawPostIds = raw.post?.postIds || raw.post?.platformPostIds || raw.postIds || raw.platformPostIds || {}
   for (const [platform, value] of Object.entries(rawPostIds)) {
     if (value && typeof value === 'string') {
       postIds[platform as Platform] = value
     }
   }
 
-  // Erreurs par plateforme
-  const rawErrors = raw.post?.errors || raw.errors || []
+  // Erreurs par plateforme (plusieurs champs possibles selon la version Zernio)
+  const rawErrors = raw.post?.errors || raw.post?.platformErrors || raw.errors || raw.platformErrors || []
   for (const e of rawErrors) {
-    errors.push({ platform: e.platform as Platform, message: e.message || 'Échec inconnu' })
+    errors.push({ platform: e.platform as Platform, message: e.message || e.error || 'Échec inconnu' })
+  }
+
+  // Si une plateforme demandée n'a ni postId ni erreur → on la marque comme erreur
+  for (const { platform } of params.platforms) {
+    if (!postIds[platform] && !errors.find(e => e.platform === platform)) {
+      errors.push({ platform, message: 'Aucune confirmation de publication reçue de Zernio' })
+    }
   }
 
   const successCount = Object.keys(postIds).length
