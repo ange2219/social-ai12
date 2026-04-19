@@ -124,7 +124,12 @@ export async function publishPost(params: {
   const postIds: Partial<Record<Platform, string>> = {}
   const errors: { platform: Platform; message: string }[] = []
 
-  // Zernio retourne les IDs par plateforme dans post.postIds ou post.platformPostIds
+  const zernioPostId: string = raw.post?._id || raw._id || ''
+  const zernioStatus: string = raw.post?.status || raw.status || ''
+
+  // Zernio peut répondre de deux façons :
+  // 1. Publication synchrone → post.postIds contient les IDs par plateforme
+  // 2. Publication asynchrone (draft/pending) → on stocke l'ID Zernio comme référence
   const rawPostIds = raw.post?.postIds || raw.post?.platformPostIds || raw.postIds || raw.platformPostIds || {}
   for (const [platform, value] of Object.entries(rawPostIds)) {
     if (value && typeof value === 'string') {
@@ -132,17 +137,17 @@ export async function publishPost(params: {
     }
   }
 
-  // Erreurs par plateforme (plusieurs champs possibles selon la version Zernio)
+  // Si Zernio a mis le post en file d'attente (draft/pending), utiliser l'ID Zernio
+  if (Object.keys(postIds).length === 0 && zernioPostId && ['draft', 'pending', 'queued', 'scheduled'].includes(zernioStatus)) {
+    for (const { platform } of params.platforms) {
+      postIds[platform] = `zernio:${zernioPostId}`
+    }
+  }
+
+  // Erreurs par plateforme
   const rawErrors = raw.post?.errors || raw.post?.platformErrors || raw.errors || raw.platformErrors || []
   for (const e of rawErrors) {
     errors.push({ platform: e.platform as Platform, message: e.message || e.error || 'Échec inconnu' })
-  }
-
-  // Si une plateforme demandée n'a ni postId ni erreur → on la marque comme erreur
-  for (const { platform } of params.platforms) {
-    if (!postIds[platform] && !errors.find(e => e.platform === platform)) {
-      errors.push({ platform, message: 'Aucune confirmation de publication reçue de Zernio' })
-    }
   }
 
   const successCount = Object.keys(postIds).length
@@ -152,11 +157,13 @@ export async function publishPost(params: {
     : 'success'
 
   if (status === 'error') {
-    const errMsg = errors.map(e => `${e.platform}: ${e.message}`).join(', ')
+    const errMsg = errors.length
+      ? errors.map(e => `${e.platform}: ${e.message}`).join(', ')
+      : 'Zernio n\'a pas confirmé la publication'
     throw new Error(`Publication Zernio échouée. ${errMsg}`)
   }
 
-  return { id: raw.post?._id || '', postIds, errors, status }
+  return { id: zernioPostId, postIds, errors, status }
 }
 
 // ─── Suppression ──────────────────────────────────────────────────────────────
