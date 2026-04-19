@@ -249,7 +249,7 @@ export default function PostsPage() {
 
   function loadPosts(): Promise<void> {
     setLoading(true)
-    return fetch('/api/posts?limit=100&includeDeleted=true')
+    return fetch('/api/posts?limit=100')
       .then(r => r.json())
       .then(d => { setPosts(d.posts || []); setTotal(d.total || 0); setLoading(false) })
       .catch(() => setLoading(false))
@@ -1115,9 +1115,10 @@ export default function PostsPage() {
                 {post.status === 'published' && <InsightsBadge a={post.analytics} />}
                 <div style={{ position: 'absolute', top: '5px', right: '5px', display: 'flex', gap: '3px', zIndex: 6 }}>
                   {post.platforms.slice(0, 3).map(p => {
-                    const removed = post.platform_errors?.[p] === 'removed_externally'
+                    const hasErr = !!post.platform_errors?.[p]
+                    const title = hasErr ? (post.platform_errors![p] === 'removed_externally' ? `Supprimé de ${p}` : `Erreur sur ${p}`) : p
                     return (
-                      <div key={p} title={removed ? `Supprimé de ${p}` : p} style={{ width: '18px', height: '18px', borderRadius: '4px', overflow: 'hidden', flexShrink: 0, opacity: removed ? 0.35 : 1, filter: removed ? 'grayscale(1)' : 'none' }}>
+                      <div key={p} title={title} style={{ width: '18px', height: '18px', borderRadius: '4px', overflow: 'hidden', flexShrink: 0, opacity: hasErr ? 0.35 : 1, filter: hasErr ? 'grayscale(1)' : 'none' }}>
                         <PlatformIcon platform={p} size={18} />
                       </div>
                     )
@@ -1177,9 +1178,10 @@ export default function PostsPage() {
                 <div style={{ fontSize: '.8rem', color: 'var(--t1)', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{post.content}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginTop: '.3rem' }}>
                   {post.platforms.map(p => {
-                    const removed = post.platform_errors?.[p] === 'removed_externally'
+                    const hasErr = !!post.platform_errors?.[p]
+                    const title = hasErr ? (post.platform_errors![p] === 'removed_externally' ? `Supprimé de ${p}` : `Erreur sur ${p}`) : p
                     return (
-                      <div key={p} title={removed ? `Supprimé de ${p}` : p} style={{ width: '16px', height: '16px', borderRadius: '3px', overflow: 'hidden', flexShrink: 0, opacity: removed ? 0.35 : 1, filter: removed ? 'grayscale(1)' : 'none' }}>
+                      <div key={p} title={title} style={{ width: '16px', height: '16px', borderRadius: '3px', overflow: 'hidden', flexShrink: 0, opacity: hasErr ? 0.35 : 1, filter: hasErr ? 'grayscale(1)' : 'none' }}>
                         <PlatformIcon platform={p} size={16} />
                       </div>
                     )
