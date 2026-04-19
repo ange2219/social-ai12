@@ -27,6 +27,9 @@ function isMetaTokenExpiredError(err: unknown): boolean {
   )
 }
 
+// FB et IG → Meta API directe ; tout le reste → Zernio
+const META_PLATFORMS = new Set<Platform>(['facebook', 'instagram'])
+
 export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
   const admin = createAdminClient()
 
@@ -52,7 +55,7 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
 
   const [postResult, userResult] = await Promise.all([
     admin.from('posts').select('*').eq('id', params.id).eq('user_id', userId).single(),
-    admin.from('users').select('plan, zernio_profile_id').eq('id', userId).single(),
+    admin.from('users').select('zernio_profile_id').eq('id', userId).single(),
   ])
 
   const post = postResult.data
@@ -62,20 +65,24 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
   if (post.status === 'published') return NextResponse.json({ error: 'Déjà publié' }, { status: 400 })
 
   try {
-    if (userProfile?.plan === 'free') {
-      // ── Plan gratuit : Meta Graph API directe (Facebook + Instagram) ──────
+    const postPlatforms = post.platforms as Platform[]
+    const metaPlatforms  = postPlatforms.filter(p => META_PLATFORMS.has(p))
+    const zernioPlatforms = postPlatforms.filter(p => !META_PLATFORMS.has(p))
 
-      const accounts = await admin
+    const publishedIds: Record<string, string> = {}
+    const platformErrors: Record<string, string> = {}
+
+    // ── Meta API (Facebook + Instagram) ──────────────────────────────────────
+    if (metaPlatforms.length > 0) {
+      const { data: metaAccounts } = await admin
         .from('social_accounts')
         .select('*')
         .eq('user_id', userId)
-        .in('platform', post.platforms as Platform[])
+        .in('platform', metaPlatforms)
         .eq('is_active', true)
+        .neq('access_token', 'zernio_managed')
 
-      const metaPostIds: Record<string, string> = {}
-      const platformErrors: Record<string, string> = {}
-
-      for (const account of accounts.data || []) {
+      for (const account of metaAccounts || []) {
         let token: string
         try {
           token = decryptToken(account.access_token)
@@ -97,7 +104,7 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
               caption: post.content,
               imageUrl: mediaUrl,
             })
-            metaPostIds.instagram = id
+            publishedIds.instagram = id
           } else if (account.platform === 'facebook') {
             const id = await publishFacebookPost({
               pageId: account.platform_user_id,
@@ -105,7 +112,7 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
               message: post.content,
               imageUrl: post.media_urls?.[0],
             })
-            metaPostIds.facebook = id
+            publishedIds.facebook = id
           }
         } catch (err) {
           if (isMetaTokenExpiredError(err)) {
@@ -115,99 +122,86 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
           }
         }
       }
+    }
 
-      const successCount = Object.keys(metaPostIds).length
-      const hasErrors = Object.keys(platformErrors).length > 0
-
-      if (successCount === 0 && hasErrors) {
-        const errorMsg = Object.entries(platformErrors).map(([p, m]) => `${p}: ${m}`).join(' | ')
-        await admin.from('posts').update({
-          status: 'failed',
-          error_message: errorMsg,
-          platform_errors: platformErrors,
-        }).eq('id', post.id)
-        return NextResponse.json({ error: errorMsg, platformErrors }, { status: 500 })
-      }
-
-      await admin.from('posts').update({
-        status: hasErrors ? 'partial' : 'published',
-        published_at: new Date().toISOString(),
-        meta_post_ids: metaPostIds,
-        platform_errors: hasErrors ? platformErrors : null,
-        error_message: hasErrors
-          ? `Partiel — échec sur : ${Object.keys(platformErrors).join(', ')}`
-          : null,
-      }).eq('id', post.id)
-
-      if (hasErrors) {
-        return NextResponse.json({
-          success: true,
-          partial: true,
-          platformErrors,
-          message: `Publié partiellement — échec sur : ${Object.keys(platformErrors).join(', ')}`,
-        })
-      }
-
-    } else {
-      // ── Plans payants : Zernio ─────────────────────────────────────────────
-
+    // ── Zernio (TikTok, Twitter, LinkedIn, YouTube, Pinterest…) ──────────────
+    if (zernioPlatforms.length > 0) {
       if (!userProfile?.zernio_profile_id) {
-        return NextResponse.json({
-          error: 'Compte Zernio non configuré. Rendez-vous dans Paramètres → Réseaux sociaux pour connecter vos comptes.',
-        }, { status: 400 })
+        for (const p of zernioPlatforms) {
+          platformErrors[p] = 'Compte Zernio non configuré — connectez vos comptes dans Paramètres'
+        }
+      } else {
+        const { data: zernioAccounts } = await admin
+          .from('social_accounts')
+          .select('platform, zernio_account_id')
+          .eq('user_id', userId)
+          .in('platform', zernioPlatforms)
+          .eq('is_active', true)
+          .not('zernio_account_id', 'is', null)
+
+        const platformAccounts = (zernioAccounts || [])
+          .filter(a => a.zernio_account_id)
+          .map(a => ({ platform: a.platform as Platform, accountId: a.zernio_account_id as string }))
+
+        if (!platformAccounts.length) {
+          for (const p of zernioPlatforms) {
+            platformErrors[p] = 'Compte non connecté — reconnectez dans Paramètres'
+          }
+        } else {
+          const contentVariants = post.content_variants as Partial<Record<Platform, string>> | null
+          try {
+            const result = await zernioPublish({
+              platforms: platformAccounts,
+              content: post.content,
+              mediaUrls: post.media_urls || undefined,
+              contentVariants: contentVariants || undefined,
+            })
+            Object.assign(publishedIds, result.postIds)
+            for (const e of result.errors || []) {
+              platformErrors[e.platform] = e.message
+            }
+          } catch (err) {
+            for (const { platform } of platformAccounts) {
+              platformErrors[platform] = err instanceof Error ? err.message : 'Erreur Zernio'
+            }
+          }
+        }
       }
+    }
 
-      // Récupère les accountId Zernio pour chaque plateforme du post
-      const { data: socialAccounts } = await admin
-        .from('social_accounts')
-        .select('platform, zernio_account_id')
-        .eq('user_id', userId)
-        .in('platform', post.platforms as Platform[])
-        .eq('is_active', true)
-        .not('zernio_account_id', 'is', null)
+    // ── Résultat final ────────────────────────────────────────────────────────
+    const successCount = Object.keys(publishedIds).length
+    const errorCount   = Object.keys(platformErrors).length
 
-      const platformAccounts = (socialAccounts || [])
-        .filter(a => a.zernio_account_id)
-        .map(a => ({ platform: a.platform as Platform, accountId: a.zernio_account_id as string }))
-
-      if (!platformAccounts.length) {
-        return NextResponse.json({
-          error: 'Aucun réseau social connecté via Zernio. Connectez vos comptes dans Paramètres.',
-        }, { status: 400 })
-      }
-
-      const contentVariants = post.content_variants as Partial<Record<Platform, string>> | null
-
-      const result = await zernioPublish({
-        platforms: platformAccounts,
-        content: post.content,
-        mediaUrls: post.media_urls || undefined,
-        contentVariants: contentVariants || undefined,
-      })
-
-      const platformErrors: Record<string, string> = {}
-      for (const e of result.errors || []) {
-        platformErrors[e.platform] = e.message
-      }
-
+    if (successCount === 0 && errorCount > 0) {
+      const errorMsg = Object.entries(platformErrors).map(([p, m]) => `${p}: ${m}`).join(' | ')
       await admin.from('posts').update({
-        status: result.status === 'partial' ? 'partial' : 'published',
-        published_at: new Date().toISOString(),
-        meta_post_ids: result.postIds,
-        platform_errors: result.errors?.length ? platformErrors : null,
-        error_message: result.status === 'partial'
-          ? `Partiel — échec sur : ${result.errors?.map(e => e.platform).join(', ')}`
-          : null,
+        status: 'failed',
+        error_message: errorMsg,
+        platform_errors: platformErrors,
       }).eq('id', post.id)
+      return NextResponse.json({ error: errorMsg, platformErrors }, { status: 500 })
+    }
 
-      if (result.status === 'partial') {
-        return NextResponse.json({
-          success: true,
-          partial: true,
-          platformErrors,
-          message: `Publié partiellement — échec sur : ${Object.keys(platformErrors).join(', ')}`,
-        })
-      }
+    const finalStatus = errorCount > 0 ? 'partial' : 'published'
+
+    await admin.from('posts').update({
+      status: finalStatus,
+      published_at: new Date().toISOString(),
+      meta_post_ids: publishedIds,
+      platform_errors: errorCount > 0 ? platformErrors : null,
+      error_message: finalStatus === 'partial'
+        ? `Partiel — échec sur : ${Object.keys(platformErrors).join(', ')}`
+        : null,
+    }).eq('id', post.id)
+
+    if (finalStatus === 'partial') {
+      return NextResponse.json({
+        success: true,
+        partial: true,
+        platformErrors,
+        message: `Publié partiellement — échec sur : ${Object.keys(platformErrors).join(', ')}`,
+      })
     }
 
     return NextResponse.json({ success: true })
