@@ -271,11 +271,10 @@ export default function ProfilePage() {
 
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {([
-                // Ancienne méthode Meta direct (gratuit) — conservé pour rollback si besoin
-                // { platform: 'facebook' as Platform, onConnect: () => window.open('/api/auth/meta/start', 'meta_oauth', `width=600,height=700,left=${window.screen.width/2-300},top=${window.screen.height/2-350}`) },
-                // { platform: 'instagram' as Platform, onConnect: () => window.open('/api/auth/instagram/start', 'instagram_oauth', `width=600,height=700,left=${window.screen.width/2-300},top=${window.screen.height/2-350}`) },
-                { platform: 'facebook'  as Platform, onConnect: () => openOAuthPopup('facebook') },
-                { platform: 'instagram' as Platform, onConnect: () => openOAuthPopup('instagram') },
+                // Facebook & Instagram → API officielle Meta (pas de branding Zernio)
+                { platform: 'facebook'  as Platform, onConnect: () => window.open('/api/auth/meta/start', 'meta_oauth', `width=600,height=700,left=${window.screen.width/2-300},top=${window.screen.height/2-350}`) },
+                { platform: 'instagram' as Platform, onConnect: () => window.open('/api/auth/instagram/start', 'instagram_oauth', `width=600,height=700,left=${window.screen.width/2-300},top=${window.screen.height/2-350}`) },
+                // TikTok, Twitter, LinkedIn → Zernio (OAuth natif de chaque plateforme)
                 { platform: 'tiktok'    as Platform, onConnect: () => openOAuthPopup('tiktok') },
                 { platform: 'twitter'   as Platform, onConnect: () => openOAuthPopup('twitter') },
                 { platform: 'linkedin'  as Platform, onConnect: () => openOAuthPopup('linkedin') },
@@ -393,9 +392,6 @@ function AccountListItem({ platform, acc, userPlan, onConnect, onAddZernio, onDi
   const displayName = acc?.platform_username && acc.platform_username !== platform ? acc.platform_username : null
   const accountType = platform === 'facebook' ? 'Page' : 'Compte'
   const connectedVia = (acc as any)?.connected_via as string | undefined
-  const isPro = userPlan !== 'free'
-  // FB/IG connectés en meta_direct mais pas encore reliés à Zernio → proposer l'ajout
-  const needsZernio = isPro && acc && connectedVia === 'meta_direct' && ['facebook', 'instagram'].includes(platform)
   const [editing, setEditing] = useState(false)
   const [editVal, setEditVal] = useState(displayName || '')
 
@@ -467,13 +463,8 @@ function AccountListItem({ platform, acc, userPlan, onConnect, onAddZernio, onDi
       <div style={{ flexShrink: 0, marginLeft: '1rem', display: 'flex', flexDirection: 'column', gap: '.35rem', alignItems: 'flex-end' }}>
         {acc ? (
           <>
-            {needsZernio && (
-              <button onClick={onAddZernio} style={{ display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.35rem .75rem', borderRadius: '7px', border: '1px solid rgba(70,70,255,.35)', background: 'rgba(70,70,255,.08)', color: '#4646FF', cursor: 'pointer', fontSize: '.73rem', fontWeight: 600 }}>
-                <RefreshCw size={11} /> Reconnecter
-              </button>
-            )}
-            <button onClick={() => onDisconnect(acc.id)} style={{ display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.35rem .75rem', borderRadius: '7px', border: '1px solid rgba(239,68,68,.22)', background: 'transparent', color: '#ef4444', cursor: 'pointer', fontSize: '.73rem', fontWeight: 500 }}>
-              <Unlink size={11} /> Déconnecter
+            <button onClick={() => onDisconnect(acc.id)} style={{ display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.4rem .85rem', borderRadius: '7px', border: '1px solid rgba(239,68,68,.22)', background: 'transparent', color: '#ef4444', cursor: 'pointer', fontSize: '.78rem', fontWeight: 500 }}>
+              <Unlink size={12} /> Déconnecter
             </button>
           </>
         ) : (
