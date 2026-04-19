@@ -487,7 +487,7 @@ function AccountListItem({ platform, acc, userPlan, onConnect, onAddZernio, onDi
           <>
             {needsZernio && (
               <button onClick={onAddZernio} style={{ display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.35rem .75rem', borderRadius: '7px', border: '1px solid rgba(70,70,255,.35)', background: 'rgba(70,70,255,.08)', color: '#4646FF', cursor: 'pointer', fontSize: '.73rem', fontWeight: 600 }}>
-                <Link2 size={11} /> Activer Zernio
+                <RefreshCw size={11} /> Reconnecter
               </button>
             )}
             <button onClick={() => onDisconnect(acc.id)} style={{ display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.35rem .75rem', borderRadius: '7px', border: '1px solid rgba(239,68,68,.22)', background: 'transparent', color: '#ef4444', cursor: 'pointer', fontSize: '.73rem', fontWeight: 500 }}>
