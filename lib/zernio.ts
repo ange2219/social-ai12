@@ -88,22 +88,13 @@ export async function publishPost(params: {
     throw new Error('Aucun compte Zernio configuré pour ces plateformes.')
   }
 
-  // Construction du corps — contenu principal
-  // TikTok: platformSpecificData.draft:false = Direct Post (publish immédiat)
-  //         sans ça, Zernio envoie en Creator Inbox (draft)
-  const platformsWithConfig = params.platforms.map(p => ({
-    ...p,
-    ...(p.platform === 'tiktok' ? {
-      platformSpecificData: { draft: false, allowComment: true, allowDuet: true, allowStitch: true }
-    } : {}),
-  }))
-
   const body: Record<string, unknown> = {
     content: params.content,
-    platforms: platformsWithConfig,
+    platforms: params.platforms,
+    publishNow: !params.scheduleDate, // publication immédiate si pas de date programmée
   }
 
-  // Variantes par plateforme (contenu différent selon la plateforme)
+  // Variantes par plateforme
   if (params.contentVariants) {
     const overrides: Record<string, string> = {}
     for (const { platform } of params.platforms) {
@@ -116,7 +107,26 @@ export async function publishPost(params: {
     }
   }
 
-  if (params.mediaUrls?.length) body.mediaUrls = params.mediaUrls
+  // mediaItems (format Zernio) — détecte video vs image par extension
+  if (params.mediaUrls?.length) {
+    body.mediaItems = params.mediaUrls.map(url => {
+      const isVideo = /\.(mp4|mov|webm|avi|mkv)$/i.test(url)
+      return { type: isVideo ? 'video' : 'image', url }
+    })
+  }
+
+  // TikTok settings au niveau racine (obligatoire pour Direct Post)
+  if (params.platforms.some(p => p.platform === 'tiktok')) {
+    body.tiktokSettings = {
+      privacy_level: 'PUBLIC_TO_EVERYONE',
+      allow_comment: true,
+      allow_duet: true,
+      allow_stitch: true,
+      content_preview_confirmed: true,
+      express_consent_given: true,
+    }
+  }
+
   if (params.scheduleDate) {
     body.scheduledFor = params.scheduleDate
     body.timezone = 'UTC'
