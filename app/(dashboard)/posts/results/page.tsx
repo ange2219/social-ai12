@@ -145,8 +145,8 @@ export default function ResultsPage() {
     if (isUnified(data)) {
       // En mode unifié le post va sur toutes les plateformes sélectionnées —
       // bloquer si Instagram est inclus et qu'il n'y a pas d'image.
-      if (data!.platforms.includes('instagram') && !imageUrl) {
-        toast('Veuillez ajouter une image — Instagram n\'accepte pas les posts sans image.', 'warning')
+      if ((data!.platforms.includes('instagram') || data!.platforms.includes('tiktok')) && !imageUrl) {
+        toast('Veuillez ajouter un média — Instagram et TikTok n\'acceptent pas les posts sans image ou vidéo.', 'warning')
         return
       }
       const id = await saveUnifiedPost(content, imageUrl, 'draft')
@@ -157,8 +157,8 @@ export default function ResultsPage() {
       router.replace('/posts')
       return
     }
-    if (platform === 'instagram' && !imageUrl) {
-      toast('Veuillez ajouter une image — Instagram n\'accepte pas les posts sans image.', 'warning'); return
+    if ((platform === 'instagram' || platform === 'tiktok') && !imageUrl) {
+      toast(`Veuillez ajouter un média — ${platform === 'tiktok' ? 'TikTok' : 'Instagram'} n'accepte pas les posts sans image ou vidéo.`, 'warning'); return
     }
     const id = await savePost(platform, content, imageUrl, 'draft')
     const res = await fetch(`/api/posts/${id}/publish`, { method: 'POST' })

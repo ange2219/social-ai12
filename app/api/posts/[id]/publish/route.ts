@@ -148,8 +148,14 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
             platformErrors[p] = 'Compte non connecté — reconnectez dans Paramètres'
           }
         } else {
+          // TikTok requiert un média (vidéo ou image)
+          if (platformAccounts.some(a => a.platform === 'tiktok') && !post.media_urls?.length) {
+            platformErrors.tiktok = 'Un média (image ou vidéo) est requis pour TikTok'
+            platformAccounts.splice(platformAccounts.findIndex(a => a.platform === 'tiktok'), 1)
+          }
+
           const contentVariants = post.content_variants as Partial<Record<Platform, string>> | null
-          try {
+          if (platformAccounts.length > 0) try {
             const result = await zernioPublish({
               platforms: platformAccounts,
               content: post.content,
