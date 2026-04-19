@@ -270,23 +270,8 @@ export default function ProfilePage() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {([
-                {
-                  platform: 'facebook' as Platform,
-                  onConnect: () => userPlan === 'free'
-                    ? window.open('/api/auth/meta/start', 'meta_oauth', `width=600,height=700,left=${window.screen.width/2-300},top=${window.screen.height/2-350}`)
-                    : openOAuthPopup('facebook'),
-                },
-                {
-                  platform: 'instagram' as Platform,
-                  onConnect: () => userPlan === 'free'
-                    ? window.open('/api/auth/instagram/start', 'instagram_oauth', `width=600,height=700,left=${window.screen.width/2-300},top=${window.screen.height/2-350}`)
-                    : openOAuthPopup('instagram'),
-                },
-                { platform: 'tiktok' as Platform, onConnect: () => openOAuthPopup('tiktok') },
-                { platform: 'twitter' as Platform, onConnect: () => openOAuthPopup('twitter') },
-                { platform: 'linkedin' as Platform, onConnect: () => openOAuthPopup('linkedin') },
-              ]).map(({ platform, onConnect }, i, arr) => {
+              {(['facebook', 'instagram', 'tiktok', 'twitter', 'linkedin'] as Platform[]).map((platform, i, arr) => {
+                const onConnect = () => openOAuthPopup(platform)
                 const acc = accounts.find(a => a.platform === platform)
                 return (
                   <AccountListItem
