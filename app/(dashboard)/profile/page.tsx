@@ -285,9 +285,7 @@ export default function ProfilePage() {
                     key={platform}
                     platform={platform}
                     acc={acc}
-                    userPlan={userPlan}
                     onConnect={onConnect}
-                    onAddZernio={() => openOAuthPopup(platform)}
                     onDisconnect={disconnect}
                     onRename={renameAccount}
                     isLast={i === arr.length - 1}
@@ -378,12 +376,10 @@ function Row({ label, desc, children }: { label: string; desc?: string; children
   )
 }
 
-function AccountListItem({ platform, acc, userPlan, onConnect, onAddZernio, onDisconnect, onRename, isLast }: {
+function AccountListItem({ platform, acc, onConnect, onDisconnect, onRename, isLast }: {
   platform: Platform
   acc: SocialAccount | undefined
-  userPlan: 'free' | 'premium' | 'business'
   onConnect: () => void
-  onAddZernio: () => void
   onDisconnect: (id: string) => void
   onRename: (id: string, name: string) => void
   isLast?: boolean
@@ -391,7 +387,6 @@ function AccountListItem({ platform, acc, userPlan, onConnect, onAddZernio, onDi
   const color = PLATFORM_COLORS[platform]
   const displayName = acc?.platform_username && acc.platform_username !== platform ? acc.platform_username : null
   const accountType = platform === 'facebook' ? 'Page' : 'Compte'
-  const connectedVia = (acc as any)?.connected_via as string | undefined
   const [editing, setEditing] = useState(false)
   const [editVal, setEditVal] = useState(displayName || '')
 
