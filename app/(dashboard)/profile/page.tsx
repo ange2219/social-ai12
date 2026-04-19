@@ -270,8 +270,16 @@ export default function ProfilePage() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {(['facebook', 'instagram', 'tiktok', 'twitter', 'linkedin'] as Platform[]).map((platform, i, arr) => {
-                const onConnect = () => openOAuthPopup(platform)
+              {([
+                // Ancienne méthode Meta direct (gratuit) — conservé pour rollback si besoin
+                // { platform: 'facebook' as Platform, onConnect: () => window.open('/api/auth/meta/start', 'meta_oauth', `width=600,height=700,left=${window.screen.width/2-300},top=${window.screen.height/2-350}`) },
+                // { platform: 'instagram' as Platform, onConnect: () => window.open('/api/auth/instagram/start', 'instagram_oauth', `width=600,height=700,left=${window.screen.width/2-300},top=${window.screen.height/2-350}`) },
+                { platform: 'facebook'  as Platform, onConnect: () => openOAuthPopup('facebook') },
+                { platform: 'instagram' as Platform, onConnect: () => openOAuthPopup('instagram') },
+                { platform: 'tiktok'    as Platform, onConnect: () => openOAuthPopup('tiktok') },
+                { platform: 'twitter'   as Platform, onConnect: () => openOAuthPopup('twitter') },
+                { platform: 'linkedin'  as Platform, onConnect: () => openOAuthPopup('linkedin') },
+              ] as { platform: Platform; onConnect: () => void }[]).map(({ platform, onConnect }, i, arr) => {
                 const acc = accounts.find(a => a.platform === platform)
                 return (
                   <AccountListItem
