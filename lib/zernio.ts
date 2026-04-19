@@ -146,9 +146,7 @@ export async function publishPost(params: {
   const zernioPostId: string = raw.post?._id || raw._id || ''
   const zernioStatus: string = raw.post?.status || raw.status || ''
 
-  // Zernio peut répondre de deux façons :
-  // 1. Publication synchrone → post.postIds contient les IDs par plateforme
-  // 2. Publication asynchrone (draft/pending) → on stocke l'ID Zernio comme référence
+  // Format 1 : post.postIds ou post.platformPostIds (objet {platform: id})
   const rawPostIds = raw.post?.postIds || raw.post?.platformPostIds || raw.postIds || raw.platformPostIds || {}
   for (const [platform, value] of Object.entries(rawPostIds)) {
     if (value && typeof value === 'string') {
@@ -156,7 +154,17 @@ export async function publishPost(params: {
     }
   }
 
-  // Si Zernio a mis le post en file d'attente (draft/pending), utiliser l'ID Zernio
+  // Format 2 : post.platforms[].platformPostId (tableau des plateformes publiées)
+  if (Array.isArray(raw.post?.platforms)) {
+    for (const p of raw.post.platforms) {
+      const pid = p.platformPostId || p.platformId || p.postId
+      if (pid && p.platform && p.status === 'published') {
+        postIds[p.platform as Platform] = pid
+      }
+    }
+  }
+
+  // Format 3 : file d'attente (draft/pending) → stocker l'ID Zernio comme référence
   if (Object.keys(postIds).length === 0 && zernioPostId && ['draft', 'pending', 'queued', 'scheduled'].includes(zernioStatus)) {
     for (const { platform } of params.platforms) {
       postIds[platform] = `zernio:${zernioPostId}`
