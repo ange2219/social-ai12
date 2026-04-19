@@ -89,11 +89,18 @@ export async function publishPost(params: {
   }
 
   // Construction du corps — contenu principal
+  // TikTok: platformSpecificData.draft:false = Direct Post (publish immédiat)
+  //         sans ça, Zernio envoie en Creator Inbox (draft)
+  const platformsWithConfig = params.platforms.map(p => ({
+    ...p,
+    ...(p.platform === 'tiktok' ? {
+      platformSpecificData: { draft: false, allowComment: true, allowDuet: true, allowStitch: true }
+    } : {}),
+  }))
+
   const body: Record<string, unknown> = {
     content: params.content,
-    platforms: params.platforms,
-    draft: false,      // publier immédiatement, ne pas sauvegarder en brouillon
-    publish: true,
+    platforms: platformsWithConfig,
   }
 
   // Variantes par plateforme (contenu différent selon la plateforme)
