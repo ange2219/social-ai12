@@ -213,6 +213,52 @@ export async function POST() {
       }
     }
 
+    // ── Zernio-managed platforms (TikTok, LinkedIn, Twitter…) ─────────────────
+    const zernioPostId = post.meta_post_ids['_zernio']
+    if (zernioPostId) {
+      const zernioPlatforms = Object.keys(post.meta_post_ids).filter(
+        p => p !== '_zernio' && !['facebook', 'instagram'].includes(p)
+      )
+      if (zernioPlatforms.length > 0) {
+        tasks.push((async () => {
+          try {
+            const res = await fetch(`https://zernio.com/api/v1/posts/${zernioPostId}`, {
+              headers: {
+                'Authorization': `Bearer ${process.env.ZERNIO_API_KEY}`,
+                'Content-Type': 'application/json',
+              },
+            })
+
+            if (res.status === 404) {
+              for (const p of zernioPlatforms) {
+                if (post.platform_errors?.[p] !== 'removed_externally') {
+                  await removePlatformOrDeletePost(post.id, p)
+                }
+              }
+              return
+            }
+
+            if (!res.ok) return
+
+            const data = await res.json()
+            const zPost = data.post || data
+
+            if (Array.isArray(zPost.platforms)) {
+              for (const pp of zPost.platforms) {
+                if (!zernioPlatforms.includes(pp.platform)) continue
+                if (post.platform_errors?.[pp.platform] === 'removed_externally') continue
+                if (pp.status === 'failed' || pp.status === 'deleted' || pp.status === 'removed') {
+                  await removePlatformOrDeletePost(post.id, pp.platform)
+                } else if (pp.status === 'published') {
+                  await clearPlatformError(post.id, pp.platform)
+                }
+              }
+            }
+          } catch { /* réseau — on ignore */ }
+        })())
+      }
+    }
+
     await Promise.allSettled(tasks)
   }
 

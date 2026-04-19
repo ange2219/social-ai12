@@ -48,6 +48,34 @@ function stLabel(s: string) {
   return 'Brouillon'
 }
 
+function groupPostsByDate(posts: Post[]): { label: string; posts: Post[] }[] {
+  const now = new Date()
+  const today     = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const yesterday = new Date(today.getTime() - 86_400_000)
+  const weekAgo   = new Date(today.getTime() - 6 * 86_400_000)
+  const monthAgo  = new Date(today.getTime() - 30 * 86_400_000)
+
+  const groups: { label: string; posts: Post[] }[] = [
+    { label: "Aujourd'hui", posts: [] },
+    { label: 'Hier', posts: [] },
+    { label: 'Cette semaine', posts: [] },
+    { label: 'Ce mois', posts: [] },
+    { label: 'Plus ancien', posts: [] },
+  ]
+
+  for (const post of posts) {
+    const d   = new Date(post.created_at)
+    const day = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+    if      (day >= today)     groups[0].posts.push(post)
+    else if (day >= yesterday) groups[1].posts.push(post)
+    else if (day >= weekAgo)   groups[2].posts.push(post)
+    else if (day >= monthAgo)  groups[3].posts.push(post)
+    else                       groups[4].posts.push(post)
+  }
+
+  return groups.filter(g => g.posts.length > 0)
+}
+
 interface PostAnalytics {
   likes: number
   comments: number
@@ -1075,142 +1103,158 @@ export default function PostsPage() {
           </button>
         </div>
       ) : view === 'grid' ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '.6rem' }}>
-          {filtered.map(post => {
-            const isSelected = selectedIds.has(post.id)
-            return (
-            <div key={post.id}
-              onClick={() => openPost(post)}
-              style={{ background: 'var(--card)', border: `1px solid ${isSelected ? '#4646FF' : 'var(--b1)'}`, borderRadius: '10px', overflow: 'hidden', transition: '.15s', cursor: 'pointer', position: 'relative' }}
-              onMouseEnter={e => {
-                if (!isSelected) e.currentTarget.style.borderColor = '#4646FF'
-                const overlay = e.currentTarget.querySelector('.insights-overlay') as HTMLElement | null
-                if (overlay) overlay.style.opacity = '1'
-              }}
-              onMouseLeave={e => {
-                if (!isSelected) e.currentTarget.style.borderColor = 'var(--b1)'
-                const overlay = e.currentTarget.querySelector('.insights-overlay') as HTMLElement | null
-                if (overlay) overlay.style.opacity = '0'
-              }}
-            >
-              {/* Permanent checkbox */}
-              <div
-                onClick={e => { e.stopPropagation(); toggleSelect(post.id) }}
-                style={{ position: 'absolute', top: '6px', left: '6px', zIndex: 10, cursor: 'pointer' }}
-              >
-                {isSelected
-                  ? <CheckSquare size={18} color="#4646FF" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.8))' }} />
-                  : <Square size={18} color="rgba(255,255,255,.45)" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.8))' }} />
-                }
+        <div>
+          {groupPostsByDate(filtered).map(group => (
+            <div key={group.label} style={{ marginBottom: '1.5rem' }}>
+              <div style={{ fontSize: '.7rem', fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: '.6rem', paddingLeft: '.1rem' }}>
+                {group.label}
               </div>
-              <div style={{ aspectRatio: '1', background: 'var(--s2)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {post.media_urls?.[0]
-                  ? <img src={post.media_urls[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                  : <svg width="36" height="36" viewBox="0 0 36 36" fill="none" style={{ opacity: .25 }}>
-                      <rect x="4" y="6" width="28" height="24" rx="3" stroke="var(--t3)" strokeWidth="1.8"/>
-                      <circle cx="13" cy="15" r="3" stroke="var(--t3)" strokeWidth="1.5"/>
-                      <path d="M4 24l7-7 5 5 4-4 8 7" stroke="var(--t3)" strokeWidth="1.5" strokeLinejoin="round"/>
-                    </svg>
-                }
-                {post.status === 'published' && <InsightsBadge a={post.analytics} />}
-                <div style={{ position: 'absolute', top: '5px', right: '5px', display: 'flex', gap: '3px', zIndex: 6 }}>
-                  {post.platforms.slice(0, 3).map(p => {
-                    const hasErr = !!post.platform_errors?.[p]
-                    const title = hasErr ? (post.platform_errors![p] === 'removed_externally' ? `Supprimé de ${p}` : `Erreur sur ${p}`) : p
-                    return (
-                      <div key={p} title={title} style={{ width: '18px', height: '18px', borderRadius: '4px', overflow: 'hidden', flexShrink: 0, opacity: hasErr ? 0.35 : 1, filter: hasErr ? 'grayscale(1)' : 'none' }}>
-                        <PlatformIcon platform={p} size={18} />
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-              <div style={{ padding: '.55rem .6rem' }}>
-                <div style={{ fontSize: '.72rem', color: 'var(--t3)', lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', marginBottom: '.45rem' }}>
-                  {post.content}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span className={stClass(post.status)} style={{ fontSize: '.62rem' }}>{stLabel(post.status)}</span>
-                  {(post.status === 'draft' || post.status === 'failed') && (
-                    <div style={{ display: 'flex', gap: '.25rem' }} onClick={e => e.stopPropagation()}>
-                      <button onClick={() => publishPost(post)} disabled={publishing === post.id} title="Publier"
-                        style={{ background: 'rgba(59,123,246,.15)', border: '1px solid rgba(59,123,246,.3)', borderRadius: '5px', padding: '.2rem .35rem', cursor: 'pointer', color: '#4646FF', display: 'flex', alignItems: 'center' }}>
-                        {publishing === post.id
-                          ? <div style={{ width: '10px', height: '10px', border: '1.5px solid rgba(59,123,246,.3)', borderTopColor: '#4646FF', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
-                          : <Send size={10} />}
-                      </button>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '.6rem' }}>
+                {group.posts.map(post => {
+                  const isSelected = selectedIds.has(post.id)
+                  return (
+                  <div key={post.id}
+                    onClick={() => openPost(post)}
+                    style={{ background: 'var(--card)', border: `1px solid ${isSelected ? '#4646FF' : 'var(--b1)'}`, borderRadius: '10px', overflow: 'hidden', transition: '.15s', cursor: 'pointer', position: 'relative' }}
+                    onMouseEnter={e => {
+                      if (!isSelected) e.currentTarget.style.borderColor = '#4646FF'
+                      const overlay = e.currentTarget.querySelector('.insights-overlay') as HTMLElement | null
+                      if (overlay) overlay.style.opacity = '1'
+                    }}
+                    onMouseLeave={e => {
+                      if (!isSelected) e.currentTarget.style.borderColor = 'var(--b1)'
+                      const overlay = e.currentTarget.querySelector('.insights-overlay') as HTMLElement | null
+                      if (overlay) overlay.style.opacity = '0'
+                    }}
+                  >
+                    <div
+                      onClick={e => { e.stopPropagation(); toggleSelect(post.id) }}
+                      style={{ position: 'absolute', top: '6px', left: '6px', zIndex: 10, cursor: 'pointer' }}
+                    >
+                      {isSelected
+                        ? <CheckSquare size={18} color="#4646FF" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.8))' }} />
+                        : <Square size={18} color="rgba(255,255,255,.45)" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.8))' }} />
+                      }
                     </div>
-                  )}
-                </div>
+                    <div style={{ aspectRatio: '1', background: 'var(--s2)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {post.media_urls?.[0]
+                        ? <img src={post.media_urls[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                        : <svg width="36" height="36" viewBox="0 0 36 36" fill="none" style={{ opacity: .25 }}>
+                            <rect x="4" y="6" width="28" height="24" rx="3" stroke="var(--t3)" strokeWidth="1.8"/>
+                            <circle cx="13" cy="15" r="3" stroke="var(--t3)" strokeWidth="1.5"/>
+                            <path d="M4 24l7-7 5 5 4-4 8 7" stroke="var(--t3)" strokeWidth="1.5" strokeLinejoin="round"/>
+                          </svg>
+                      }
+                      {post.status === 'published' && <InsightsBadge a={post.analytics} />}
+                      <div style={{ position: 'absolute', top: '5px', right: '5px', display: 'flex', gap: '3px', zIndex: 6 }}>
+                        {post.platforms.slice(0, 3).map(p => {
+                          const hasErr = !!post.platform_errors?.[p]
+                          const title = hasErr ? (post.platform_errors![p] === 'removed_externally' ? `Supprimé de ${p}` : `Erreur sur ${p}`) : p
+                          return (
+                            <div key={p} title={title} style={{ width: '18px', height: '18px', borderRadius: '4px', overflow: 'hidden', flexShrink: 0, opacity: hasErr ? 0.35 : 1, filter: hasErr ? 'grayscale(1)' : 'none' }}>
+                              <PlatformIcon platform={p} size={18} />
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                    <div style={{ padding: '.55rem .6rem' }}>
+                      <div style={{ fontSize: '.72rem', color: 'var(--t3)', lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', marginBottom: '.45rem' }}>
+                        {post.content}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span className={stClass(post.status)} style={{ fontSize: '.62rem' }}>{stLabel(post.status)}</span>
+                        {(post.status === 'draft' || post.status === 'failed') && (
+                          <div style={{ display: 'flex', gap: '.25rem' }} onClick={e => e.stopPropagation()}>
+                            <button onClick={() => publishPost(post)} disabled={publishing === post.id} title="Publier"
+                              style={{ background: 'rgba(59,123,246,.15)', border: '1px solid rgba(59,123,246,.3)', borderRadius: '5px', padding: '.2rem .35rem', cursor: 'pointer', color: '#4646FF', display: 'flex', alignItems: 'center' }}>
+                              {publishing === post.id
+                                ? <div style={{ width: '10px', height: '10px', border: '1.5px solid rgba(59,123,246,.3)', borderTopColor: '#4646FF', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
+                                : <Send size={10} />}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )})}
               </div>
             </div>
-          )})}
+          ))}
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
-          {filtered.map(post => {
-            const isSelected = selectedIds.has(post.id)
-            return (
-            <div key={post.id}
-              onClick={() => openPost(post)}
-              style={{ background: 'var(--card)', border: `1px solid ${isSelected ? '#4646FF' : 'var(--b1)'}`, borderRadius: '8px', padding: '.75rem 1rem', display: 'flex', alignItems: 'center', gap: '1rem', transition: '.15s', cursor: 'pointer' }}
-              onMouseEnter={e => { if (!isSelected) e.currentTarget.style.borderColor = '#4646FF' }}
-              onMouseLeave={e => { if (!isSelected) e.currentTarget.style.borderColor = 'var(--b1)' }}
-            >
-              {/* Permanent checkbox */}
-              <div
-                onClick={e => { e.stopPropagation(); toggleSelect(post.id) }}
-                style={{ flexShrink: 0, cursor: 'pointer' }}
-              >
-                {isSelected ? <CheckSquare size={17} color="#4646FF" /> : <Square size={17} color="#52525C" />}
+        <div>
+          {groupPostsByDate(filtered).map(group => (
+            <div key={group.label} style={{ marginBottom: '1.5rem' }}>
+              <div style={{ fontSize: '.7rem', fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: '.5rem', paddingLeft: '.1rem' }}>
+                {group.label}
               </div>
-              <div style={{ width: '44px', height: '44px', borderRadius: '6px', background: 'var(--s2)', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {post.media_urls?.[0]
-                  ? <img src={post.media_urls[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <svg width="22" height="22" viewBox="0 0 36 36" fill="none" style={{ opacity: .25 }}>
-                      <rect x="4" y="6" width="28" height="24" rx="3" stroke="var(--t3)" strokeWidth="1.8"/>
-                      <circle cx="13" cy="15" r="3" stroke="var(--t3)" strokeWidth="1.5"/>
-                      <path d="M4 24l7-7 5 5 4-4 8 7" stroke="var(--t3)" strokeWidth="1.5" strokeLinejoin="round"/>
-                    </svg>
-                }
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '.8rem', color: 'var(--t1)', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{post.content}</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginTop: '.3rem' }}>
-                  {post.platforms.map(p => {
-                    const hasErr = !!post.platform_errors?.[p]
-                    const title = hasErr ? (post.platform_errors![p] === 'removed_externally' ? `Supprimé de ${p}` : `Erreur sur ${p}`) : p
-                    return (
-                      <div key={p} title={title} style={{ width: '16px', height: '16px', borderRadius: '3px', overflow: 'hidden', flexShrink: 0, opacity: hasErr ? 0.35 : 1, filter: hasErr ? 'grayscale(1)' : 'none' }}>
-                        <PlatformIcon platform={p} size={16} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
+                {group.posts.map(post => {
+                  const isSelected = selectedIds.has(post.id)
+                  return (
+                  <div key={post.id}
+                    onClick={() => openPost(post)}
+                    style={{ background: 'var(--card)', border: `1px solid ${isSelected ? '#4646FF' : 'var(--b1)'}`, borderRadius: '8px', padding: '.75rem 1rem', display: 'flex', alignItems: 'center', gap: '1rem', transition: '.15s', cursor: 'pointer' }}
+                    onMouseEnter={e => { if (!isSelected) e.currentTarget.style.borderColor = '#4646FF' }}
+                    onMouseLeave={e => { if (!isSelected) e.currentTarget.style.borderColor = 'var(--b1)' }}
+                  >
+                    <div
+                      onClick={e => { e.stopPropagation(); toggleSelect(post.id) }}
+                      style={{ flexShrink: 0, cursor: 'pointer' }}
+                    >
+                      {isSelected ? <CheckSquare size={17} color="#4646FF" /> : <Square size={17} color="#52525C" />}
+                    </div>
+                    <div style={{ width: '44px', height: '44px', borderRadius: '6px', background: 'var(--s2)', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {post.media_urls?.[0]
+                        ? <img src={post.media_urls[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : <svg width="22" height="22" viewBox="0 0 36 36" fill="none" style={{ opacity: .25 }}>
+                            <rect x="4" y="6" width="28" height="24" rx="3" stroke="var(--t3)" strokeWidth="1.8"/>
+                            <circle cx="13" cy="15" r="3" stroke="var(--t3)" strokeWidth="1.5"/>
+                            <path d="M4 24l7-7 5 5 4-4 8 7" stroke="var(--t3)" strokeWidth="1.5" strokeLinejoin="round"/>
+                          </svg>
+                      }
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '.8rem', color: 'var(--t1)', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{post.content}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginTop: '.3rem' }}>
+                        {post.platforms.map(p => {
+                          const hasErr = !!post.platform_errors?.[p]
+                          const title = hasErr ? (post.platform_errors![p] === 'removed_externally' ? `Supprimé de ${p}` : `Erreur sur ${p}`) : p
+                          return (
+                            <div key={p} title={title} style={{ width: '16px', height: '16px', borderRadius: '3px', overflow: 'hidden', flexShrink: 0, opacity: hasErr ? 0.35 : 1, filter: hasErr ? 'grayscale(1)' : 'none' }}>
+                              <PlatformIcon platform={p} size={16} />
+                            </div>
+                          )
+                        })}
+                        <span style={{ fontSize: '.7rem', color: '#3f3f46' }}>
+                          {new Date(post.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
+                        </span>
                       </div>
-                    )
-                  })}
-                  <span style={{ fontSize: '.7rem', color: '#3f3f46' }}>
-                    {new Date(post.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
-                  </span>
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-                {post.analytics && post.status === 'published' && (
-                  <div style={{ display: 'flex', gap: '.6rem', fontSize: '.7rem', color: 'var(--t3)' }}>
-                    <span title="Likes">❤️ {post.analytics.likes}</span>
-                    <span title="Commentaires">💬 {post.analytics.comments}</span>
-                    <span title="Impressions">👁️ {post.analytics.impressions > 1000 ? (post.analytics.impressions/1000).toFixed(1)+'K' : post.analytics.impressions}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                      {post.analytics && post.status === 'published' && (
+                        <div style={{ display: 'flex', gap: '.6rem', fontSize: '.7rem', color: 'var(--t3)' }}>
+                          <span title="Likes">❤️ {post.analytics.likes}</span>
+                          <span title="Commentaires">💬 {post.analytics.comments}</span>
+                          <span title="Impressions">👁️ {post.analytics.impressions > 1000 ? (post.analytics.impressions/1000).toFixed(1)+'K' : post.analytics.impressions}</span>
+                        </div>
+                      )}
+                      <span className={stClass(post.status)} style={{ fontSize: '.68rem' }}>{stLabel(post.status)}</span>
+                      {(post.status === 'draft' || post.status === 'failed') && (
+                        <button onClick={() => publishPost(post)} disabled={publishing === post.id}
+                          style={{ background: 'rgba(59,123,246,.15)', border: '1px solid rgba(59,123,246,.3)', borderRadius: '6px', padding: '.3rem .6rem', cursor: 'pointer', color: '#4646FF', display: 'flex', alignItems: 'center', gap: '.3rem', fontSize: '.72rem', fontWeight: 500 }}>
+                          {publishing === post.id
+                            ? <div style={{ width: '11px', height: '11px', border: '1.5px solid rgba(59,123,246,.3)', borderTopColor: '#4646FF', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
+                            : <Send size={11} />} Publier
+                        </button>
+                      )}
+                    </div>
                   </div>
-                )}
-                <span className={stClass(post.status)} style={{ fontSize: '.68rem' }}>{stLabel(post.status)}</span>
-                {(post.status === 'draft' || post.status === 'failed') && (
-                  <button onClick={() => publishPost(post)} disabled={publishing === post.id}
-                    style={{ background: 'rgba(59,123,246,.15)', border: '1px solid rgba(59,123,246,.3)', borderRadius: '6px', padding: '.3rem .6rem', cursor: 'pointer', color: '#4646FF', display: 'flex', alignItems: 'center', gap: '.3rem', fontSize: '.72rem', fontWeight: 500 }}>
-                    {publishing === post.id
-                      ? <div style={{ width: '11px', height: '11px', border: '1.5px solid rgba(59,123,246,.3)', borderTopColor: '#4646FF', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
-                      : <Send size={11} />} Publier
-                  </button>
-                )}
+                )})}
               </div>
             </div>
-          )})}
+          ))}
         </div>
       )}
     </div>

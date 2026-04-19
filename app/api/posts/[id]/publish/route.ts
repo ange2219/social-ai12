@@ -163,6 +163,8 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
               contentVariants: contentVariants || undefined,
             })
             Object.assign(publishedIds, result.postIds)
+            // Store Zernio post _id for future sync checks
+            if (result.id) publishedIds._zernio = result.id
             for (const e of result.errors || []) {
               platformErrors[e.platform] = e.message
             }
