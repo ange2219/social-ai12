@@ -453,18 +453,7 @@ function AccountListItem({ platform, acc, userPlan, onConnect, onAddZernio, onDi
                 </button>
               </div>
             )}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginTop: '.15rem' }}>
-              <span style={{ fontSize: '.72rem', color: 'var(--t3)' }}>{accountType}</span>
-              {connectedVia && (
-                <span style={{
-                  fontSize: '.62rem', fontWeight: 600, padding: '.1rem .4rem', borderRadius: '4px',
-                  background: connectedVia === 'both' ? 'rgba(34,197,94,.1)' : connectedVia === 'zernio' ? 'rgba(70,70,255,.1)' : 'rgba(156,163,175,.1)',
-                  color: connectedVia === 'both' ? '#22C55E' : connectedVia === 'zernio' ? '#4646FF' : 'var(--t3)',
-                }}>
-                  {connectedVia === 'both' ? '✓ Meta + Zernio' : connectedVia === 'zernio' ? 'Zernio' : 'Meta direct'}
-                </span>
-              )}
-            </div>
+            <div style={{ fontSize: '.75rem', color: 'var(--t3)', marginTop: '.1rem' }}>{accountType}</div>
           </div>
         ) : (
           <div>
