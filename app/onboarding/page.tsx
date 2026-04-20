@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
 import { ChevronRight, ChevronLeft, Check, Sparkles, User, Building2, Briefcase, Megaphone, DollarSign, Users, Globe, Target, Trophy } from 'lucide-react'
+import { PlatformIcon } from '@/components/ui/PlatformIcon'
 
 interface OnboardingData {
   account_type: string
@@ -92,6 +93,18 @@ const OBJECTIVES = [
   { value: 'recrutement', label: 'Recrutement', icon: Target },
   { value: 'expertise', label: 'Montrer l\'expertise', icon: Trophy },
 ]
+
+const PLATFORM_LABEL: Record<string, string> = {
+  facebook: 'Facebook', instagram: 'Instagram', tiktok: 'TikTok',
+  twitter: 'Twitter / X', linkedin: 'LinkedIn',
+}
+const PLATFORM_DESC: Record<string, string> = {
+  facebook: 'Page professionnelle',
+  instagram: 'Compte professionnel requis',
+  tiktok: 'Compte TikTok',
+  twitter: 'Compte Twitter / X',
+  linkedin: 'Profil ou page LinkedIn',
+}
 
 const STEPS = ['Compte & Marque', 'Audience & Contenu', 'Objectifs', 'Connecter vos réseaux']
 
@@ -189,6 +202,14 @@ export default function OnboardingPage() {
             toast(`Erreur Instagram : ${d.error}`, 'error')
           }
           setConnecting(null)
+        } else if (d.type === 'zernio_oauth' && d.platform) {
+          if (d.success) {
+            setConnectedAccounts(prev => ({ ...prev, [d.platform]: d.username || d.platform }))
+            toast(`${PLATFORM_LABEL[d.platform] || d.platform} connecté !`, 'success')
+          } else if (d.error) {
+            toast(`Erreur : ${d.error}`, 'error')
+          }
+          setConnecting(null)
         }
       } catch {}
     }
@@ -222,7 +243,7 @@ export default function OnboardingPage() {
     update('content_pillars', next)
   }
 
-  async function connectSocial(platform: 'facebook' | 'instagram', oauthUrl: string) {
+  async function connectSocial(platform: string, oauthUrl: string) {
     const popup = window.open(oauthUrl, `${platform}_oauth`, 'width=600,height=700')
     if (!popup) {
       toast('Popup bloquée — autorisez les popups dans votre navigateur', 'error')
@@ -236,15 +257,19 @@ export default function OnboardingPage() {
       if (done) return
       done = true
       setConnectedAccounts(prev => ({ ...prev, [platform]: username }))
-      toast(`${platform === 'facebook' ? 'Facebook' : 'Instagram'} connecté${username !== platform ? ` — @${username}` : ''} !`, 'success')
+      const label = PLATFORM_LABEL[platform] || platform
+      toast(`${label} connecté${username !== platform ? ` — @${username}` : ''} !`, 'success')
       setConnecting(null)
     }
 
     // Écoute postMessage (chemin rapide)
     const onMessage = (e: MessageEvent) => {
       if (!e.data) return
-      const type = platform === 'facebook' ? 'meta_oauth' : 'instagram_oauth'
-      if (e.data.type !== type) return
+      const expectedType = platform === 'facebook' ? 'meta_oauth'
+        : platform === 'instagram' ? 'instagram_oauth'
+        : 'zernio_oauth'
+      if (e.data.type !== expectedType) return
+      if (expectedType === 'zernio_oauth' && e.data.platform !== platform) return
       window.removeEventListener('message', onMessage)
       if (e.data.success) {
         handleSuccess(e.data.page || e.data.username || platform)
@@ -508,9 +533,13 @@ export default function OnboardingPage() {
           {step === 3 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
-              {/* Facebook */}
-              {(['facebook', 'instagram'] as const).map(platform => {
-                const isFb = platform === 'facebook'
+              {([
+                { platform: 'facebook',  oauthUrl: '/api/auth/meta/start' },
+                { platform: 'instagram', oauthUrl: '/api/auth/instagram/start' },
+                { platform: 'tiktok',    oauthUrl: '/api/social/start?platform=tiktok' },
+                { platform: 'twitter',   oauthUrl: '/api/social/start?platform=twitter' },
+                { platform: 'linkedin',  oauthUrl: '/api/social/start?platform=linkedin' },
+              ]).map(({ platform, oauthUrl }) => {
                 const connected = !!connectedAccounts[platform]
                 const isConnecting = connecting === platform
                 const username = connectedAccounts[platform]
@@ -518,22 +547,13 @@ export default function OnboardingPage() {
                 return (
                   <div key={platform} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', borderRadius: '10px', border: connected ? '1px solid rgba(34,197,94,0.3)' : '1px solid var(--b1)', background: connected ? 'rgba(34,197,94,0.04)' : 'var(--s2)', transition: 'all 0.3s' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
-                      <div style={{ width: 36, height: 36, borderRadius: 8, overflow: 'hidden', flexShrink: 0 }}>
-                        {isFb ? (
-                          <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="5" fill="#1877F2"/><path d="M16 8h-2a1 1 0 0 0-1 1v2h3l-.5 3H13v7h-3v-7H8v-3h2V9a4 4 0 0 1 4-4h2v3z" fill="white"/></svg>
-                        ) : (
-                          <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-                            <defs><radialGradient id="ig2" cx="30%" cy="107%" r="150%"><stop offset="0%" stopColor="#fdf497"/><stop offset="45%" stopColor="#fd5949"/><stop offset="60%" stopColor="#d6249f"/><stop offset="90%" stopColor="#285AEB"/></radialGradient></defs>
-                            <rect x="0" y="0" width="24" height="24" rx="5.5" fill="url(#ig2)"/>
-                            <circle cx="12" cy="12" r="4.5" stroke="white" strokeWidth="1.8" fill="none"/>
-                            <circle cx="17.2" cy="6.8" r="1.2" fill="white"/>
-                          </svg>
-                        )}
+                      <div style={{ width: 36, height: 36, borderRadius: 8, overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <PlatformIcon platform={platform as never} size={36} />
                       </div>
                       <div>
-                        <div style={{ fontSize: '.875rem', fontWeight: 600, color: 'var(--t1)' }}>{isFb ? 'Facebook' : 'Instagram'}</div>
+                        <div style={{ fontSize: '.875rem', fontWeight: 600, color: 'var(--t1)' }}>{PLATFORM_LABEL[platform]}</div>
                         <div style={{ fontSize: '.75rem', color: connected ? '#22c55e' : 'var(--t3)' }}>
-                          {connected ? `Connecté${username !== platform ? ` — @${username}` : ''} ✓` : isFb ? 'Page professionnelle' : 'Compte professionnel requis'}
+                          {connected ? `Connecté${username !== platform ? ` — @${username}` : ''} ✓` : PLATFORM_DESC[platform]}
                         </div>
                       </div>
                     </div>
@@ -542,8 +562,8 @@ export default function OnboardingPage() {
                       <button
                         type="button"
                         disabled={isConnecting}
-                        onClick={() => connectSocial(platform, isFb ? '/api/auth/meta/start' : '/api/auth/instagram/start')}
-                        style={{ fontSize: '.78rem', fontWeight: 600, color: isFb ? '#7B5CF5' : '#E1306C', border: `1px solid ${isFb ? 'rgba(123,92,245,0.3)' : 'rgba(225,48,108,0.3)'}`, background: isFb ? 'rgba(123,92,245,0.08)' : 'rgba(225,48,108,0.08)', padding: '.4rem .8rem', borderRadius: '7px', cursor: isConnecting ? 'not-allowed' : 'pointer', opacity: isConnecting ? 0.6 : 1, minWidth: 90, textAlign: 'center' }}
+                        onClick={() => connectSocial(platform, oauthUrl)}
+                        style={{ fontSize: '.78rem', fontWeight: 600, color: '#7B5CF5', border: '1px solid rgba(123,92,245,0.3)', background: 'rgba(123,92,245,0.08)', padding: '.4rem .8rem', borderRadius: '7px', cursor: isConnecting ? 'not-allowed' : 'pointer', opacity: isConnecting ? 0.6 : 1, minWidth: 90, textAlign: 'center' }}
                       >
                         {isConnecting ? '...' : 'Connecter'}
                       </button>

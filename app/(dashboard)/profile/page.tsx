@@ -466,7 +466,7 @@ function AccountListItem({ platform, acc, onConnect, onDisconnect, onRename, isL
             </div>
           )}
           {acc && (
-            <div style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '20px', height: '20px', borderRadius: '50%', overflow: 'hidden', border: '2px solid var(--s1)' }}>
+            <div style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '20px', height: '20px', borderRadius: '50%', overflow: 'hidden', border: '2px solid var(--s1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <PlatformIcon platform={platform} size={20} />
             </div>
           )}
