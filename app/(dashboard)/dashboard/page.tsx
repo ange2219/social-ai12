@@ -7,7 +7,7 @@ import { PostsTableCard } from '@/components/dashboard/PostsTableCard'
 import { ActivityChart } from '@/components/dashboard/ActivityChart'
 import { TypingGreeting } from '@/components/dashboard/TypingGreeting'
 import { AutoRefresh } from '@/components/dashboard/AutoRefresh'
-import { type Plan } from '@/types'
+import { type Plan, PLAN_LIMITS } from '@/types'
 
 const PLATFORM_NAMES: Record<string, string> = {
   instagram: 'Instagram', facebook: 'Facebook', tiktok: 'TikTok',
@@ -107,11 +107,12 @@ export default async function DashboardPage() {
   const bestPlatform = Object.entries(platformEng).sort((a, b) => b[1] - a[1])[0]?.[0] || null
 
   const plan = (userData?.plan || 'free') as Plan
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-  const monthRes = await admin.from('posts').select('id', { count: 'exact' })
-    .eq('user_id', authUser.id).gte('created_at', monthStart).neq('status', 'deleted')
-  const monthCount = monthRes.count || 0
-  const planLimit: number | 'unlimited' = 'unlimited'
+  const planLimit = PLAN_LIMITS[plan].generationsPerDay
+
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
+  const todayRes = await admin.from('posts').select('id', { count: 'exact' })
+    .eq('user_id', authUser.id).gte('created_at', todayStart).neq('status', 'deleted')
+  const todayCount = todayRes.count || 0
 
   const aiTip = getAiTip(weeks, bestPlatform, avgPerWeek)
   const firstName = userData?.full_name?.split(' ')[0] || authUser.email?.split('@')[0] || 'vous'
@@ -134,23 +135,26 @@ export default async function DashboardPage() {
       <div className="kpi-row">
         <div className="kpi-card c-blue">
           <div className="kpi-card-header">
-            <span className="kpi-label">Posts générés</span>
+            <span className="kpi-label">Générations aujourd&apos;hui</span>
             <div className="kpi-icon ki-blue">
               <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 0 2-2h2a2 2 0 0 0 2 2"/></svg>
             </div>
           </div>
           <div className="kpi-donut-row">
-            <div className="kpi-val">{generatedCount} <small>/{planLimit === 'unlimited' ? '∞' : planLimit}</small></div>
+            <div className="kpi-val">
+              {todayCount}
+              <small>/{planLimit === 'unlimited' ? '∞' : planLimit}</small>
+            </div>
             {planLimit !== 'unlimited' && (
               <div className="kpi-donut">
                 <svg width="48" height="48" viewBox="0 0 48 48">
                   <circle cx="24" cy="24" r="19" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="4.5"/>
-                  {generatedCount > 0 && (
-                    <circle cx="24" cy="24" r="19" fill="none" stroke="url(#gradKpi1)" strokeWidth="4.5"
-                      strokeDasharray="119.4"
-                      strokeDashoffset={119.4 - (119.4 * Math.min(generatedCount / (planLimit as number), 1))}
-                      style={{ transition: 'stroke-dashoffset 0.9s cubic-bezier(.4,0,.2,1) 0.3s' }}/>
-                  )}
+                  <circle cx="24" cy="24" r="19" fill="none" stroke="url(#gradKpi1)" strokeWidth="4.5"
+                    strokeDasharray="119.4"
+                    strokeDashoffset={119.4 - (119.4 * Math.min(todayCount / (planLimit as number), 1))}
+                    style={{ transition: 'stroke-dashoffset 0.9s cubic-bezier(.4,0,.2,1) 0.3s' }}
+                    transform="rotate(-90 24 24)"
+                  />
                   <defs>
                     <linearGradient id="gradKpi1" x1="0" y1="0" x2="1" y2="0">
                       <stop offset="0%" stopColor="#7B5CF5"/>
@@ -158,12 +162,14 @@ export default async function DashboardPage() {
                     </linearGradient>
                   </defs>
                 </svg>
-                <div className="kpi-donut-center">{Math.round((generatedCount / (planLimit as number)) * 100)}%</div>
+                <div className="kpi-donut-center">
+                  {Math.round((todayCount / (planLimit as number)) * 100)}%
+                </div>
               </div>
             )}
           </div>
           <div className="kpi-bottom">
-            <span className="kpi-score-label">{weeks[3]} publiés cette semaine</span>
+            <span className="kpi-score-label">{generatedCount} posts au total · {weeks[3]} cette semaine</span>
           </div>
         </div>
 

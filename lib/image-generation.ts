@@ -1,11 +1,18 @@
 /**
  * Système de génération d'images personnalisées par marque
  * Couche 1 : Classification automatique du type d'image
- * Couche 2 : Constructeur de prompt intelligent
- * Couche 3 : Multi-provider avec fallback (Imagen 3 → DALL-E 3)
+ * Couche 2 : Transformateur IA Post → Prompt (Claude Haiku)
+ * Couche 3 : Constructeur de prompt de base (fallback)
+ * Couche 4 : Génération via Pollinations (Flux)
  */
 
+import OpenAI from 'openai'
 import type { Platform, Plan } from '@/types'
+
+const githubAI = new OpenAI({
+  baseURL: 'https://models.inference.ai.azure.com',
+  apiKey: process.env.GITHUB_TOKEN,
+})
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -179,7 +186,77 @@ export function buildImagePrompt(ctx: ImagePromptContext): string {
   ].filter(Boolean).join(' ')
 }
 
-// ─── Couche 3 : Providers ─────────────────────────────────────────────────────
+// ─── Couche 3 : Post → Image Prompt Transformer ───────────────────────────────
+
+/**
+ * Transforme un post social en prompt d'image détaillé et précis.
+ * Claude Haiku analyse le post + contexte marque → prompt Flux optimisé.
+ * Fallback sur buildImagePrompt() si Claude n'est pas disponible.
+ */
+export async function transformPostToImagePrompt(
+  ctx: ImagePromptContext
+): Promise<string> {
+  if (!process.env.GITHUB_TOKEN) {
+    return buildImagePrompt(ctx)
+  }
+
+  const { brand, postContent, platform, imageType } = ctx
+  const styleGuide = IMAGE_STYLE_GUIDES[imageType]
+  const platformSpec = PLATFORM_SPECS[platform]
+  const colorInfo = brand.color_primary
+    ? `Brand colors: primary ${brand.color_primary}${brand.color_secondary ? `, secondary ${brand.color_secondary}` : ''}`
+    : `Industry: ${brand.industry} → use ${INDUSTRY_COLOR_HINTS[brand.industry] || 'professional'} palette`
+
+  const systemPrompt = `You are an expert art director specializing in AI image generation for social media.
+Your task: transform a social media post into a precise, optimized image prompt for Flux/Stable Diffusion.
+
+Rules:
+- Describe ONE concrete, coherent visual scene
+- Integrate brand colors as dominant elements of the composition
+- Match the style to the content type (${styleGuide.base})
+- Target format: ${platformSpec}
+- Be specific about: composition, lighting, color palette, mood, photographic/illustrative style
+- End with restrictions: ${styleGuide.negative}
+- Reply ONLY with the prompt, no explanation or commentary
+- Maximum 250 words`
+
+  const userMessage = `Brand: ${brand.brand_name} (${brand.industry})
+Tone: ${brand.tone}
+${brand.target_audience ? `Audience: ${brand.target_audience}` : ''}
+${brand.description ? `Description: ${brand.description}` : ''}
+${colorInfo}
+${brand.visual_style ? `Desired visual style: ${brand.visual_style}` : ''}
+
+Post to illustrate:
+---
+${postContent}
+---
+
+Generate the image prompt for this post.`
+
+  try {
+    const response = await githubAI.chat.completions.create({
+      model: 'gpt-4o-mini',
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage },
+      ],
+    })
+
+    const text = response.choices[0]?.message?.content?.trim() ?? ''
+    if (text.length > 50) {
+      console.log(`[post-to-prompt] GPT prompt generated (${text.length} chars)`)
+      return text
+    }
+  } catch (err) {
+    console.warn('[post-to-prompt] GPT unavailable, using fallback:', err instanceof Error ? err.message : err)
+  }
+
+  return buildImagePrompt(ctx)
+}
+
+// ─── Couche 4 : Providers ─────────────────────────────────────────────────────
 
 /**
  * Génération via Pollinations.ai — gratuit, sans clé API, modèle Flux.
@@ -211,8 +288,10 @@ export async function generateBrandedImage(
   ctx: ImagePromptContext,
   plan: Plan
 ): Promise<ImageResult> {
-  const prompt = buildImagePrompt(ctx)
   console.log(`[image-generation] type=${ctx.imageType} platform=${ctx.platform}`)
+
+  // Transformer IA : Post → Prompt précis (avec fallback sur le prompt builder statique)
+  const prompt = await transformPostToImagePrompt(ctx)
   console.log(`[image-generation] prompt (200 chars): ${prompt.slice(0, 200)}`)
 
   const url = await generateWithPollinations(prompt)
