@@ -28,7 +28,14 @@ export async function POST(req: NextRequest) {
     .single()
 
   const plan = (userProfile?.plan || 'free') as Plan
-  // Toutes les fonctionnalités débloquées
+
+  // Génération semaine réservée Premium / Business
+  if (plan === 'free') {
+    return NextResponse.json({
+      error: 'La génération de semaine complète est réservée aux plans Premium et Business.',
+      code: 'PLAN_REQUIRED',
+    }, { status: 403 })
+  }
 
   const parsedBody = GenerateWeekSchema.safeParse(await req.json())
   if (!parsedBody.success) {

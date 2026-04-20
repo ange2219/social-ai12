@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { classifyImageType, buildImagePrompt, generateBrandedImage } from '@/lib/image-generation'
 import { uploadImageFromUrl, uploadImageFromBase64 } from '@/lib/storage'
+import { checkImageLimit, recordImageGeneration } from '@/lib/server-utils'
 import type { Platform, Plan } from '@/types'
 import { z } from 'zod'
 
@@ -25,6 +26,20 @@ export async function POST(req: NextRequest) {
     .single()
 
   const plan = (userProfile?.plan || 'free') as Plan
+
+  // Vérifier le quota d'images hebdomadaire
+  const { allowed: imgAllowed, used: imgUsed, limit: imgLimit } = await checkImageLimit(user.id, plan)
+  if (!imgAllowed) {
+    const msg = imgLimit === 0
+      ? 'La génération d\'images est réservée aux plans Premium et Business.'
+      : `Quota d'images atteint (${imgUsed}/${imgLimit} cette semaine).`
+    return NextResponse.json({
+      error: msg,
+      code: imgLimit === 0 ? 'PLAN_REQUIRED' : 'IMAGE_LIMIT_REACHED',
+      used: imgUsed,
+      limit: imgLimit,
+    }, { status: 403 })
+  }
 
   const parsed = GenerateImageSchema.safeParse(await req.json())
   if (!parsed.success) {
@@ -72,6 +87,7 @@ export async function POST(req: NextRequest) {
       permanentUrl = await uploadImageFromUrl(result.url, user.id)
     }
 
+    await recordImageGeneration(user.id)
     return NextResponse.json({
       url: permanentUrl,
       imageType: result.imageType,

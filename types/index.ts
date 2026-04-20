@@ -80,10 +80,12 @@ export interface Subscription {
 
 export interface PlanLimits {
   platforms: number | 'unlimited'
-  generationsPerDay: number | 'unlimited'
+  generationsPerWeek: number | 'unlimited'
+  imagesPerWeek: number | 'unlimited'
   accountsPerPlatform: number
   scheduling: boolean
   advancedAnalytics: boolean
+  generateWeek: boolean
   workspaces: number
   aiProvider: 'github' | 'claude'
 }
@@ -91,28 +93,34 @@ export interface PlanLimits {
 export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
   free: {
     platforms: 2,
-    generationsPerDay: 15,
+    generationsPerWeek: 15,
+    imagesPerWeek: 0,
     accountsPerPlatform: 1,
     scheduling: false,
     advancedAnalytics: false,
+    generateWeek: false,
     workspaces: 1,
     aiProvider: 'github',
   },
   premium: {
     platforms: 5,
-    generationsPerDay: 20,
+    generationsPerWeek: 20,
+    imagesPerWeek: 7,
     accountsPerPlatform: 3,
     scheduling: true,
     advancedAnalytics: true,
+    generateWeek: true,
     workspaces: 1,
     aiProvider: 'claude',
   },
   business: {
     platforms: 999,
-    generationsPerDay: 'unlimited',
+    generationsPerWeek: 'unlimited',
+    imagesPerWeek: 'unlimited',
     accountsPerPlatform: 10,
     scheduling: true,
     advancedAnalytics: true,
+    generateWeek: true,
     workspaces: 3,
     aiProvider: 'claude',
   },

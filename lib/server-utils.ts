@@ -2,7 +2,13 @@ import { createAdminClient } from './supabase/server'
 import type { Plan } from '@/types'
 import { PLAN_LIMITS } from '@/types'
 
-/** Vérifie + enregistre un appel IA — SERVER ONLY */
+function weekStart(): string {
+  const d = new Date()
+  d.setDate(d.getDate() - 6)
+  d.setHours(0, 0, 0, 0)
+  return d.toISOString()
+}
+
 export async function checkGenerationLimit(userId: string, plan: Plan): Promise<{
   allowed: boolean
   used: number
@@ -10,30 +16,60 @@ export async function checkGenerationLimit(userId: string, plan: Plan): Promise<
 }> {
   const limits = PLAN_LIMITS[plan]
 
-  if (limits.generationsPerDay === 'unlimited') {
+  if (limits.generationsPerWeek === 'unlimited') {
     return { allowed: true, used: 0, limit: 'unlimited' }
   }
 
   const supabase = createAdminClient()
-  const startOfDay = new Date()
-  startOfDay.setHours(0, 0, 0, 0)
-
   const { count } = await supabase
     .from('ai_generation_log')
     .select('id', { count: 'exact', head: true })
     .eq('user_id', userId)
-    .gte('created_at', startOfDay.toISOString())
+    .gte('created_at', weekStart())
 
   const used = count ?? 0
   return {
-    allowed: used < (limits.generationsPerDay as number),
+    allowed: used < (limits.generationsPerWeek as number),
     used,
-    limit: limits.generationsPerDay,
+    limit: limits.generationsPerWeek,
   }
 }
 
-/** Enregistre un appel IA réussi — à appeler après génération */
 export async function recordGeneration(userId: string): Promise<void> {
   const supabase = createAdminClient()
   await supabase.from('ai_generation_log').insert({ user_id: userId })
+}
+
+export async function checkImageLimit(userId: string, plan: Plan): Promise<{
+  allowed: boolean
+  used: number
+  limit: number | 'unlimited'
+}> {
+  const limits = PLAN_LIMITS[plan]
+
+  if (limits.imagesPerWeek === 'unlimited') {
+    return { allowed: true, used: 0, limit: 'unlimited' }
+  }
+  if (limits.imagesPerWeek === 0) {
+    return { allowed: false, used: 0, limit: 0 }
+  }
+
+  const supabase = createAdminClient()
+  const { count } = await supabase
+    .from('ai_image_log')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .gte('created_at', weekStart())
+
+  const used = count ?? 0
+  return {
+    allowed: used < (limits.imagesPerWeek as number),
+    used,
+    limit: limits.imagesPerWeek,
+  }
+}
+
+export async function recordImageGeneration(userId: string): Promise<void> {
+  const supabase = createAdminClient()
+  await supabase.from('ai_image_log').insert({ user_id: userId })
 }

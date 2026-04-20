@@ -107,12 +107,14 @@ export default async function DashboardPage() {
   const bestPlatform = Object.entries(platformEng).sort((a, b) => b[1] - a[1])[0]?.[0] || null
 
   const plan = (userData?.plan || 'free') as Plan
-  const planLimit = PLAN_LIMITS[plan].generationsPerDay
+  const planLimit = PLAN_LIMITS[plan].generationsPerWeek
 
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
-  const todayRes = await admin.from('posts').select('id', { count: 'exact' })
-    .eq('user_id', authUser.id).gte('created_at', todayStart).neq('status', 'deleted')
-  const todayCount = todayRes.count || 0
+  const weekStart = new Date(now)
+  weekStart.setDate(weekStart.getDate() - 6)
+  weekStart.setHours(0, 0, 0, 0)
+  const weekRes = await admin.from('ai_generation_log').select('id', { count: 'exact' })
+    .eq('user_id', authUser.id).gte('created_at', weekStart.toISOString())
+  const todayCount = weekRes.count || 0
 
   const aiTip = getAiTip(weeks, bestPlatform, avgPerWeek)
   const firstName = userData?.full_name?.split(' ')[0] || authUser.email?.split('@')[0] || 'vous'
@@ -135,7 +137,7 @@ export default async function DashboardPage() {
       <div className="kpi-row">
         <div className="kpi-card c-blue">
           <div className="kpi-card-header">
-            <span className="kpi-label">Générations aujourd&apos;hui</span>
+            <span className="kpi-label">Générations cette semaine</span>
             <div className="kpi-icon ki-blue">
               <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 0 2-2h2a2 2 0 0 0 2 2"/></svg>
             </div>

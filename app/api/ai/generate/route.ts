@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { generatePosts } from '@/lib/ai'
+import { checkGenerationLimit, recordGeneration } from '@/lib/server-utils'
 import type { GenerateRequest, Plan } from '@/types'
+import { FREE_PLATFORMS, PLAN_LIMITS } from '@/types'
 import { z } from 'zod'
 
 const ALLOWED_PLATFORMS = ['instagram', 'facebook', 'twitter', 'linkedin', 'tiktok', 'youtube', 'pinterest'] as const
@@ -35,14 +37,35 @@ export async function POST(req: NextRequest) {
     .eq('id', user.id)
     .single()
 
-  // On garde le plan DB pour le choix du provider IA (free → GitHub, premium/business → Claude)
-  // mais on ne bloque plus sur le quota — toutes les fonctionnalités sont débloquées
   const plan = (userProfile?.plan || 'free') as Plan
+
+  // Vérifier la limite hebdomadaire
+  const { allowed, used, limit } = await checkGenerationLimit(user.id, plan)
+  if (!allowed) {
+    return NextResponse.json({
+      error: `Limite hebdomadaire atteinte (${used}/${limit} générations utilisées)`,
+      code: 'WEEKLY_LIMIT_REACHED',
+      used,
+      limit,
+    }, { status: 429 })
+  }
 
   const parsed = GenerateSchema.safeParse(await req.json())
   if (!parsed.success) {
     return NextResponse.json({ error: 'Données invalides', details: parsed.error.flatten() }, { status: 400 })
   }
+
+  // Restreindre les plateformes pour les Free
+  if (plan === 'free') {
+    const invalid = parsed.data.platforms.filter(p => !FREE_PLATFORMS.includes(p as never))
+    if (invalid.length > 0) {
+      return NextResponse.json({
+        error: `Plan Free : plateformes non disponibles (${invalid.join(', ')}). Disponibles : Instagram, Facebook.`,
+        code: 'PLATFORM_NOT_ALLOWED',
+      }, { status: 403 })
+    }
+  }
+
   const body: GenerateRequest = {
     ...parsed.data,
     objective:        parsed.data.objective,
@@ -73,8 +96,8 @@ export async function POST(req: NextRequest) {
 
   try {
     const result = await generatePosts(body, plan)
-
-    return NextResponse.json({ ...result, used: 0, limit: 'unlimited' })
+    await recordGeneration(user.id)
+    return NextResponse.json({ ...result, used: used + 1, limit })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Generation failed'
     return NextResponse.json({ error: message }, { status: 500 })
