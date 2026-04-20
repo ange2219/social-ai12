@@ -227,6 +227,17 @@ export default function ProfilePage() {
           <div style={{ marginTop: '.6rem' }}>
             <div style={{ fontSize: '.85rem', fontWeight: 600, color: 'var(--t1)' }}>{fullName || 'Mon compte'}</div>
             <div style={{ fontSize: '.72rem', color: 'var(--t3)', marginTop: '.1rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{email}</div>
+            <div style={{ marginTop: '.45rem' }}>
+              {userPlan === 'free' && (
+                <span style={{ fontSize: '.68rem', fontWeight: 700, padding: '.18rem .5rem', borderRadius: '20px', background: 'rgba(150,150,150,0.12)', color: 'var(--t3)', border: '1px solid var(--b1)', letterSpacing: '.04em' }}>GRATUIT</span>
+              )}
+              {userPlan === 'premium' && (
+                <span style={{ fontSize: '.68rem', fontWeight: 700, padding: '.18rem .5rem', borderRadius: '20px', background: 'rgba(123,92,245,0.15)', color: '#7B5CF5', border: '1px solid rgba(123,92,245,0.35)', letterSpacing: '.04em' }}>⭐ PRO</span>
+              )}
+              {userPlan === 'business' && (
+                <span style={{ fontSize: '.68rem', fontWeight: 700, padding: '.18rem .5rem', borderRadius: '20px', background: 'rgba(245,158,11,0.15)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.35)', letterSpacing: '.04em' }}>💼 BUSINESS</span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -295,15 +306,14 @@ export default function ProfilePage() {
 
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {([
-                // Facebook & Instagram → API officielle Meta (pas de branding Zernio)
-                { platform: 'facebook'  as Platform, onConnect: () => window.open('/api/auth/meta/start', 'meta_oauth', `width=600,height=700,left=${window.screen.width/2-300},top=${window.screen.height/2-350}`) },
-                { platform: 'instagram' as Platform, onConnect: () => window.open('/api/auth/instagram/start', 'instagram_oauth', `width=600,height=700,left=${window.screen.width/2-300},top=${window.screen.height/2-350}`) },
-                // TikTok, Twitter, LinkedIn → Zernio (OAuth natif de chaque plateforme)
-                { platform: 'tiktok'    as Platform, onConnect: () => openOAuthPopup('tiktok') },
-                { platform: 'twitter'   as Platform, onConnect: () => openOAuthPopup('twitter') },
-                { platform: 'linkedin'  as Platform, onConnect: () => openOAuthPopup('linkedin') },
-              ] as { platform: Platform; onConnect: () => void }[]).map(({ platform, onConnect }, i, arr) => {
+                { platform: 'facebook'  as Platform, proOnly: false, onConnect: () => window.open('/api/auth/meta/start', 'meta_oauth', `width=600,height=700,left=${window.screen.width/2-300},top=${window.screen.height/2-350}`) },
+                { platform: 'instagram' as Platform, proOnly: false, onConnect: () => window.open('/api/auth/instagram/start', 'instagram_oauth', `width=600,height=700,left=${window.screen.width/2-300},top=${window.screen.height/2-350}`) },
+                { platform: 'tiktok'    as Platform, proOnly: true,  onConnect: () => openOAuthPopup('tiktok') },
+                { platform: 'twitter'   as Platform, proOnly: true,  onConnect: () => openOAuthPopup('twitter') },
+                { platform: 'linkedin'  as Platform, proOnly: true,  onConnect: () => openOAuthPopup('linkedin') },
+              ] as { platform: Platform; proOnly: boolean; onConnect: () => void }[]).map(({ platform, proOnly, onConnect }, i, arr) => {
                 const acc = accounts.find(a => a.platform === platform)
+                const locked = proOnly && userPlan === 'free'
                 return (
                   <AccountListItem
                     key={platform}
@@ -313,6 +323,7 @@ export default function ProfilePage() {
                     onDisconnect={disconnect}
                     onRename={renameAccount}
                     isLast={i === arr.length - 1}
+                    locked={locked}
                   />
                 )
               })}
@@ -429,13 +440,14 @@ function Row({ label, desc, children }: { label: string; desc?: string; children
   )
 }
 
-function AccountListItem({ platform, acc, onConnect, onDisconnect, onRename, isLast }: {
+function AccountListItem({ platform, acc, onConnect, onDisconnect, onRename, isLast, locked }: {
   platform: Platform
   acc: SocialAccount | undefined
   onConnect: () => void
   onDisconnect: (id: string) => void
   onRename: (id: string, name: string) => void
   isLast?: boolean
+  locked?: boolean
 }) {
   const color = PLATFORM_COLORS[platform]
   const displayName = acc?.platform_username && acc.platform_username !== platform ? acc.platform_username : null
@@ -454,6 +466,8 @@ function AccountListItem({ platform, acc, onConnect, onDisconnect, onRename, isL
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       padding: '1rem 0',
       borderBottom: isLast ? 'none' : '1px solid var(--b1)',
+      opacity: locked ? 0.5 : 1,
+      pointerEvents: locked ? 'none' : 'auto',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minWidth: 0 }}>
         {/* Avatar + badge */}
@@ -509,7 +523,9 @@ function AccountListItem({ platform, acc, onConnect, onDisconnect, onRename, isL
 
       {/* Action */}
       <div style={{ flexShrink: 0, marginLeft: '1rem', display: 'flex', flexDirection: 'column', gap: '.35rem', alignItems: 'flex-end' }}>
-        {acc ? (
+        {locked ? (
+          <span style={{ fontSize: '.72rem', fontWeight: 700, padding: '.2rem .55rem', borderRadius: '20px', background: 'rgba(123,92,245,0.12)', color: '#7B5CF5', border: '1px solid rgba(123,92,245,0.3)', letterSpacing: '.04em' }}>⭐ PRO</span>
+        ) : acc ? (
           <>
             <button onClick={() => onDisconnect(acc.id)} style={{ display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.4rem .85rem', borderRadius: '7px', border: '1px solid rgba(239,68,68,.22)', background: 'transparent', color: '#ef4444', cursor: 'pointer', fontSize: '.78rem', fontWeight: 500 }}>
               <Unlink size={12} /> Déconnecter

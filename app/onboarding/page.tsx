@@ -536,9 +536,6 @@ export default function OnboardingPage() {
               {([
                 { platform: 'facebook',  oauthUrl: '/api/auth/meta/start' },
                 { platform: 'instagram', oauthUrl: '/api/auth/instagram/start' },
-                { platform: 'tiktok',    oauthUrl: '/api/social/start?platform=tiktok' },
-                { platform: 'twitter',   oauthUrl: '/api/social/start?platform=twitter' },
-                { platform: 'linkedin',  oauthUrl: '/api/social/start?platform=linkedin' },
               ]).map(({ platform, oauthUrl }) => {
                 const connected = !!connectedAccounts[platform]
                 const isConnecting = connecting === platform
@@ -573,7 +570,7 @@ export default function OnboardingPage() {
               })}
 
               <p style={{ fontSize: '.75rem', color: 'var(--t3)', textAlign: 'center', marginTop: '.25rem' }}>
-                Vous pouvez connecter d&apos;autres réseaux depuis votre profil à tout moment.
+                TikTok, Twitter / X et LinkedIn disponibles avec le plan <span style={{ color: '#7B5CF5', fontWeight: 600 }}>Pro</span>.
               </p>
             </div>
           )}
