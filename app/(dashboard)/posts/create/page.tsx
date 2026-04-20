@@ -186,13 +186,13 @@ function ParamsPopup({
 function PlatformPopup({
   selected, onChange,
   distributionMode, onDistributionChange,
-  isPro, onClose,
+  connectedPlatforms, onClose,
 }: {
   selected: Platform[]
   onChange: (p: Platform[]) => void
   distributionMode: DistributionMode
   onDistributionChange: (m: DistributionMode) => void
-  isPro: boolean
+  connectedPlatforms: Platform[]
   onClose: () => void
 }) {
   const [localSelected, setLocalSelected] = useState<Platform[]>(selected)
@@ -205,14 +205,11 @@ function PlatformPopup({
   }, [onClose])
 
   function toggle(p: Platform) {
-    const isLocked = !isPro && !FREE_PLATFORMS.includes(p)
-    if (isLocked) return
     setLocalSelected(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p])
   }
 
   function save() {
     onChange(localSelected)
-    // Si une seule plateforme, toujours unified
     onDistributionChange(localSelected.length <= 1 ? 'unified' : localMode)
     onClose()
   }
@@ -237,44 +234,42 @@ function PlatformPopup({
         <div style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
           {/* Sélection des plateformes */}
           <div>
-            <label style={{ display: 'block', fontSize: '.78rem', fontWeight: 600, color: 'var(--t2)', marginBottom: '.6rem' }}>Plateformes disponibles</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '.5rem' }}>
-              {ALL_PLATFORMS.map(p => {
-                const isLocked = !isPro && !FREE_PLATFORMS.includes(p)
-                const isSelected = localSelected.includes(p)
-                return (
-                  <button
-                    key={p}
-                    onClick={() => toggle(p)}
-                    title={isLocked ? 'Réservé au plan Pro' : PLATFORM_NAMES[p]}
-                    style={{
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.3rem',
-                      padding: '.6rem .4rem', borderRadius: '10px',
-                      border: `1px solid ${isSelected && !isLocked ? PLATFORM_COLORS[p] + '60' : 'var(--b1)'}`,
-                      background: isSelected && !isLocked ? PLATFORM_COLORS[p] + '12' : 'transparent',
-                      cursor: isLocked ? 'not-allowed' : 'pointer',
-                      opacity: isLocked ? .35 : 1,
-                      transition: '.12s',
-                    }}
-                  >
-                    <div style={{ opacity: isLocked ? .5 : 1 }}>
+            <label style={{ display: 'block', fontSize: '.78rem', fontWeight: 600, color: 'var(--t2)', marginBottom: '.6rem' }}>Plateformes connectées</label>
+            {connectedPlatforms.length === 0 ? (
+              <div style={{ padding: '.75rem', background: 'var(--s2)', border: '1px solid var(--b1)', borderRadius: '8px', fontSize: '.78rem', color: 'var(--t3)', textAlign: 'center' }}>
+                Aucune plateforme connectée — connectez-en une dans les Paramètres.
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '.5rem' }}>
+                {connectedPlatforms.map(p => {
+                  const isSelected = localSelected.includes(p)
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => toggle(p)}
+                      title={PLATFORM_NAMES[p]}
+                      style={{
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.3rem',
+                        padding: '.6rem .4rem', borderRadius: '10px', position: 'relative',
+                        border: `1px solid ${isSelected ? PLATFORM_COLORS[p] + '60' : 'var(--b1)'}`,
+                        background: isSelected ? PLATFORM_COLORS[p] + '12' : 'transparent',
+                        cursor: 'pointer', transition: '.12s',
+                      }}
+                    >
                       <PlatformIcon platform={p} size={18} />
-                    </div>
-                    <span style={{ fontSize: '.6rem', color: isSelected && !isLocked ? PLATFORM_COLORS[p] : 'var(--t3)', fontWeight: 500 }}>
-                      {PLATFORM_NAMES[p].split(' ')[0]}
-                    </span>
-                    {isLocked && (
-                      <span style={{ fontSize: '.52rem', color: '#FBBF24', background: 'rgba(251,191,36,.12)', border: '1px solid rgba(251,191,36,.2)', borderRadius: '3px', padding: '0 4px', lineHeight: '1.5' }}>Pro</span>
-                    )}
-                    {isSelected && !isLocked && (
-                      <div style={{ position: 'absolute', top: '4px', right: '4px' }}>
-                        <Check size={10} color={PLATFORM_COLORS[p]} />
-                      </div>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
+                      <span style={{ fontSize: '.6rem', color: isSelected ? PLATFORM_COLORS[p] : 'var(--t3)', fontWeight: 500 }}>
+                        {PLATFORM_NAMES[p].split(' ')[0]}
+                      </span>
+                      {isSelected && (
+                        <div style={{ position: 'absolute', top: '4px', right: '4px' }}>
+                          <Check size={10} color={PLATFORM_COLORS[p]} />
+                        </div>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
 
           {/* Mode de distribution — masqué si une seule plateforme */}
@@ -697,14 +692,21 @@ export default function CreatePage() {
 
   // ── Plan ──
   const [isPro, setIsPro] = useState(false)
+  const [connectedPlatforms, setConnectedPlatforms] = useState<Platform[]>([])
 
   // ──────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    createClient().from('users').select('plan').single().then(({ data }) => {
-      if (data) setIsPro(true) // toutes les fonctionnalités débloquées
+    const supabase = createClient()
+    supabase.from('users').select('plan').single().then(({ data }) => {
+      if (data) setIsPro(true)
     })
-    fetch('/api/brand').then(r => r.ok ? r.json() : null).then(b => {
+    supabase.from('social_accounts').select('platform').eq('is_active', true).then(({ data }) => {
+      if (data && data.length > 0) {
+        setConnectedPlatforms([...new Set(data.map((r: any) => r.platform as Platform))])
+      }
+    })
+    fetch('/api/brand').then((r: Response) => r.ok ? r.json() : null).then((b: any) => {
       if (b?.tone) {
         // Mapper l'ancien GenerateTone vers PostTone si possible
         const toneMap: Record<string, PostTone> = {
@@ -976,7 +978,7 @@ export default function CreatePage() {
           onChange={setSelectedPlatforms}
           distributionMode={distributionMode}
           onDistributionChange={setDistributionMode}
-          isPro={isPro}
+          connectedPlatforms={connectedPlatforms}
           onClose={() => setShowPlatformPopup(false)}
         />
       )}
@@ -1010,41 +1012,40 @@ export default function CreatePage() {
           {/* Plateformes */}
           <div style={{ background: 'var(--card)', border: '1px solid var(--b1)', borderRadius: '14px', padding: '1.25rem' }}>
             <label style={{ display: 'block', fontSize: '.78rem', fontWeight: 600, color: 'var(--t2)', marginBottom: '.75rem' }}>
-              Choisissez vos plateformes
+              Plateformes connectées
             </label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.45rem', marginBottom: '1.25rem' }}>
-              {ALL_PLATFORMS.map(p => {
-                const isLocked   = !isPro && !FREE_PLATFORMS.includes(p)
-                const isSelected = selectedPlatforms.includes(p)
-                return (
-                  <button
-                    key={p}
-                    onClick={() => {
-                      if (isLocked) return
-                      setSelectedPlatforms(prev =>
+            {connectedPlatforms.length === 0 ? (
+              <div style={{ padding: '.75rem', background: 'var(--s2)', border: '1px solid var(--b1)', borderRadius: '8px', fontSize: '.78rem', color: 'var(--t3)', marginBottom: '1.25rem' }}>
+                Aucune plateforme connectée — connectez-en une dans les Paramètres.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.45rem', marginBottom: '1.25rem' }}>
+                {connectedPlatforms.map(p => {
+                  const isSelected = selectedPlatforms.includes(p)
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => setSelectedPlatforms(prev =>
                         prev.includes(p)
                           ? prev.length > 1 ? prev.filter(x => x !== p) : prev
                           : [...prev, p]
-                      )
-                    }}
-                    title={isLocked ? 'Plan Pro requis' : PLATFORM_NAMES[p]}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '.4rem',
-                      padding: '.35rem .75rem', borderRadius: '8px', fontSize: '.8rem', fontWeight: 500,
-                      border: `1px solid ${isLocked ? 'var(--b1)' : isSelected ? PLATFORM_COLORS[p] + '60' : 'var(--b1)'}`,
-                      background: isSelected && !isLocked ? PLATFORM_COLORS[p] + '12' : 'transparent',
-                      color: isLocked ? 'var(--t3)' : isSelected ? PLATFORM_COLORS[p] : 'var(--t2)',
-                      cursor: isLocked ? 'not-allowed' : 'pointer',
-                      opacity: isLocked ? .4 : 1, transition: '.12s',
-                    }}
-                  >
-                    <PlatformIcon platform={p} size={14} />
-                    {PLATFORM_NAMES[p]}
-                    {isLocked && <span style={{ fontSize: '.6rem', color: '#FBBF24', marginLeft: '.1rem' }}>Pro</span>}
-                  </button>
-                )
-              })}
-            </div>
+                      )}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '.4rem',
+                        padding: '.35rem .75rem', borderRadius: '8px', fontSize: '.8rem', fontWeight: 500,
+                        border: `1px solid ${isSelected ? PLATFORM_COLORS[p] + '60' : 'var(--b1)'}`,
+                        background: isSelected ? PLATFORM_COLORS[p] + '12' : 'transparent',
+                        color: isSelected ? PLATFORM_COLORS[p] : 'var(--t2)',
+                        cursor: 'pointer', transition: '.12s',
+                      }}
+                    >
+                      <PlatformIcon platform={p} size={14} />
+                      {PLATFORM_NAMES[p]}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
             <p style={{ fontSize: '.73rem', color: 'var(--t3)', marginBottom: '1rem', lineHeight: 1.5 }}>
               Vous rédigerez votre contenu directement dans l&apos;éditeur — une carte par plateforme.
             </p>
