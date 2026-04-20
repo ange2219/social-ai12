@@ -55,13 +55,40 @@ export default function LoginPage() {
 
   async function handleGoogleLogin() {
     setLoading(true); setError('')
-    const { error } = await supabase.auth.signInWithOAuth({
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/popup-callback`,
+        skipBrowserRedirect: true,
       },
     })
-    if (error) { setError(error.message); setLoading(false) }
+
+    if (error) { setError(error.message); setLoading(false); return }
+    if (!data.url) { setLoading(false); return }
+
+    const w = 500, h = 620
+    const left = window.screenX + (window.outerWidth - w) / 2
+    const top  = window.screenY + (window.outerHeight - h) / 2
+    const popup = window.open(data.url, 'google-oauth', `width=${w},height=${h},left=${left},top=${top},toolbar=no,menubar=no`)
+
+    function onMessage(e: MessageEvent) {
+      if (e.origin !== window.location.origin) return
+      if (e.data?.type === 'GOOGLE_AUTH_SUCCESS') {
+        window.removeEventListener('message', onMessage)
+        clearInterval(poll)
+        router.push('/dashboard')
+      }
+    }
+    window.addEventListener('message', onMessage)
+
+    const poll = setInterval(() => {
+      if (popup?.closed) {
+        clearInterval(poll)
+        window.removeEventListener('message', onMessage)
+        setLoading(false)
+      }
+    }, 500)
   }
 
   return (
