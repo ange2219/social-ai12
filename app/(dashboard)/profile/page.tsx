@@ -229,13 +229,19 @@ export default function ProfilePage() {
             <div style={{ fontSize: '.72rem', color: 'var(--t3)', marginTop: '.1rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{email}</div>
             <div style={{ marginTop: '.45rem' }}>
               {userPlan === 'free' && (
-                <span style={{ fontSize: '.68rem', fontWeight: 700, padding: '.18rem .5rem', borderRadius: '20px', background: 'rgba(150,150,150,0.12)', color: 'var(--t3)', border: '1px solid var(--b1)', letterSpacing: '.04em' }}>GRATUIT</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '.3rem', fontSize: '.68rem', fontWeight: 700, padding: '.18rem .5rem', borderRadius: '20px', background: 'rgba(150,150,150,0.12)', color: 'var(--t3)', border: '1px solid var(--b1)', letterSpacing: '.04em' }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#9CA3AF', flexShrink: 0 }} />GRATUIT
+                </span>
               )}
               {userPlan === 'premium' && (
-                <span style={{ fontSize: '.68rem', fontWeight: 700, padding: '.18rem .5rem', borderRadius: '20px', background: 'rgba(123,92,245,0.15)', color: '#7B5CF5', border: '1px solid rgba(123,92,245,0.35)', letterSpacing: '.04em' }}>⭐ PRO</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '.3rem', fontSize: '.68rem', fontWeight: 700, padding: '.18rem .5rem', borderRadius: '20px', background: 'rgba(123,92,245,0.15)', color: '#7B5CF5', border: '1px solid rgba(123,92,245,0.35)', letterSpacing: '.04em' }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#7B5CF5', flexShrink: 0 }} />PRO
+                </span>
               )}
               {userPlan === 'business' && (
-                <span style={{ fontSize: '.68rem', fontWeight: 700, padding: '.18rem .5rem', borderRadius: '20px', background: 'rgba(245,158,11,0.15)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.35)', letterSpacing: '.04em' }}>💼 BUSINESS</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '.3rem', fontSize: '.68rem', fontWeight: 700, padding: '.18rem .5rem', borderRadius: '20px', background: 'rgba(245,158,11,0.15)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.35)', letterSpacing: '.04em' }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#F59E0B', flexShrink: 0 }} />BUSINESS
+                </span>
               )}
             </div>
           </div>
@@ -524,7 +530,9 @@ function AccountListItem({ platform, acc, onConnect, onDisconnect, onRename, isL
       {/* Action */}
       <div style={{ flexShrink: 0, marginLeft: '1rem', display: 'flex', flexDirection: 'column', gap: '.35rem', alignItems: 'flex-end' }}>
         {locked ? (
-          <span style={{ fontSize: '.72rem', fontWeight: 700, padding: '.2rem .55rem', borderRadius: '20px', background: 'rgba(123,92,245,0.12)', color: '#7B5CF5', border: '1px solid rgba(123,92,245,0.3)', letterSpacing: '.04em' }}>⭐ PRO</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '.3rem', fontSize: '.72rem', fontWeight: 700, padding: '.2rem .55rem', borderRadius: '20px', background: 'rgba(123,92,245,0.12)', color: '#7B5CF5', border: '1px solid rgba(123,92,245,0.3)', letterSpacing: '.04em' }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#7B5CF5', flexShrink: 0 }} />PRO
+          </span>
         ) : acc ? (
           <>
             <button onClick={() => onDisconnect(acc.id)} style={{ display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.4rem .85rem', borderRadius: '7px', border: '1px solid rgba(239,68,68,.22)', background: 'transparent', color: '#ef4444', cursor: 'pointer', fontSize: '.78rem', fontWeight: 500 }}>
