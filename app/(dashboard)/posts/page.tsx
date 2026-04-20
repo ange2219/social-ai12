@@ -1094,13 +1094,18 @@ export default function PostsPage() {
       {loading ? (
         <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--t3)', fontSize: '.85rem' }}>Chargement...</div>
       ) : filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '4rem', background: 'var(--card)', border: '1px solid var(--b1)', borderRadius: '10px' }}>
-          <div style={{ marginBottom: '.75rem', display: 'flex', justifyContent: 'center' }}><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="1.5" strokeLinecap="round"><path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z"/></svg></div>
-          <div style={{ color: 'var(--t1)', fontWeight: 600, marginBottom: '.4rem', fontSize: '.9rem' }}>Aucun post</div>
-          <div style={{ color: 'var(--t3)', fontSize: '.8rem', marginBottom: '1.25rem' }}>Créez votre premier post en quelques secondes</div>
-          <button onClick={() => router.push('/posts/create')} className="btn-primary flex items-center gap-2" style={{ margin: '0 auto', padding: '.5rem 1rem', fontSize: '.8rem' }}>
-            <Plus size={14} /> Générer un post
-          </button>
+        <div style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+          <div style={{ marginBottom: '.75rem', display: 'flex', justifyContent: 'center' }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="1.5" strokeLinecap="round">
+              <path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z"/>
+            </svg>
+          </div>
+          <div style={{ color: 'var(--t3)', fontSize: '.85rem' }}>
+            {filter === 'all'       && 'Aucun post pour le moment'}
+            {filter === 'published' && 'Aucun post publié'}
+            {filter === 'draft'     && 'Aucun post dans les brouillons'}
+            {filter === 'scheduled' && 'Aucun post programmé'}
+          </div>
         </div>
       ) : view === 'grid' ? (
         <div>
