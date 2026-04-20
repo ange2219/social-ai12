@@ -103,8 +103,8 @@ const STEP_META = [
 ]
 
 const fieldStyle: React.CSSProperties = {
-  display: 'block', width: '100%', background: '#18181C',
-  border: '1px solid #2A2A32', borderRadius: '8px',
+  display: 'block', width: '100%', background: 'var(--s2)',
+  border: '1px solid var(--b1)', borderRadius: '8px',
   color: 'var(--t1)', fontSize: '.875rem', padding: '.6rem .85rem',
   outline: 'none', boxSizing: 'border-box',
 }

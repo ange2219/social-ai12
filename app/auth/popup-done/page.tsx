@@ -1,15 +1,33 @@
 'use client'
 
 import { useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
 export default function PopupDone() {
   useEffect(() => {
-    if (window.opener && !window.opener.closed) {
-      window.opener.postMessage({ type: 'GOOGLE_AUTH_SUCCESS' }, window.location.origin)
-      window.close()
-    } else {
-      window.location.href = '/dashboard'
+    async function handle() {
+      let isNew = false
+      try {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { data } = await supabase
+            .from('brand_profiles')
+            .select('user_id')
+            .eq('user_id', user.id)
+            .maybeSingle()
+          isNew = !data
+        }
+      } catch {}
+
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({ type: 'GOOGLE_AUTH_SUCCESS', isNew }, window.location.origin)
+        window.close()
+      } else {
+        window.location.href = isNew ? '/onboarding' : '/dashboard'
+      }
     }
+    handle()
   }, [])
 
   return (

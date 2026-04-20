@@ -3,13 +3,22 @@ import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 
 const BrandSchema = z.object({
-  brand_name:   z.string().min(1).max(100).optional(),
-  description:  z.string().max(2000).optional(),
-  default_tone: z.string().max(50).optional(),
-  tone:         z.string().max(50).optional(),
-  sector:       z.string().max(100).optional(),
-  industry:     z.string().max(100).optional(),
-  posts_per_week: z.number().int().min(1).max(30).optional(),
+  brand_name:          z.string().min(1).max(100).optional(),
+  description:         z.string().max(2000).optional(),
+  default_tone:        z.string().max(50).optional(),
+  tone:                z.string().max(50).optional(),
+  sector:              z.string().max(100).optional(),
+  industry:            z.string().max(100).optional(),
+  posts_per_week:      z.number().int().min(1).max(30).optional(),
+  account_type:        z.string().max(50).optional(),
+  website:             z.string().url().optional().or(z.literal('')),
+  target_audience:     z.string().max(500).optional(),
+  audience_age:        z.string().max(50).optional(),
+  audience_interests:  z.string().max(500).optional(),
+  audience_location:   z.string().max(200).optional(),
+  content_pillars:     z.array(z.string().max(100)).max(10).optional(),
+  avoid_words:         z.string().max(500).optional(),
+  objectives:          z.array(z.string().max(100)).max(10).optional(),
 })
 
 export async function GET() {
@@ -36,11 +45,20 @@ export async function POST(req: NextRequest) {
     .from('brand_profiles')
     .upsert({
       user_id: user.id,
-      brand_name: body.brand_name,
-      description: body.description,
-      tone: body.default_tone || body.tone,
-      industry: body.sector || body.industry,
-      posts_per_week: body.posts_per_week,
+      brand_name:         body.brand_name,
+      description:        body.description,
+      tone:               body.default_tone || body.tone,
+      industry:           body.sector || body.industry,
+      posts_per_week:     body.posts_per_week,
+      account_type:       body.account_type,
+      website:            body.website,
+      target_audience:    body.target_audience,
+      audience_age:       body.audience_age,
+      audience_interests: body.audience_interests,
+      audience_location:  body.audience_location,
+      content_pillars:    body.content_pillars,
+      avoid_words:        body.avoid_words,
+      objectives:         body.objectives,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id' })
     .select()

@@ -77,7 +77,7 @@ export default function LoginPage() {
       if (e.data?.type === 'GOOGLE_AUTH_SUCCESS') {
         window.removeEventListener('message', onMessage)
         clearInterval(poll)
-        router.push('/dashboard')
+        router.push(e.data.isNew ? '/onboarding' : '/dashboard')
       }
     }
     window.addEventListener('message', onMessage)

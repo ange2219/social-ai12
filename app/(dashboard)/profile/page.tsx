@@ -38,6 +38,13 @@ export default function ProfilePage() {
   const [sector, setSector] = useState('')
   const [defaultTone, setDefaultTone] = useState('professionnel')
   const [postsPerWeek, setPostsPerWeek] = useState(5)
+  const [website, setWebsite] = useState('')
+  const [targetAudience, setTargetAudience] = useState('')
+  const [audienceAge, setAudienceAge] = useState('')
+  const [audienceLocation, setAudienceLocation] = useState('')
+  const [contentPillars, setContentPillars] = useState<string[]>([])
+  const [avoidWords, setAvoidWords] = useState('')
+  const [objectives, setObjectives] = useState<string[]>([])
   const [savingBrand, setSavingBrand] = useState(false)
 
   const [accounts, setAccounts] = useState<SocialAccount[]>([])
@@ -78,6 +85,13 @@ export default function ProfilePage() {
         setSector(brand.industry || '')
         setDefaultTone(brand.tone || 'professionnel')
         setPostsPerWeek(brand.posts_per_week || 5)
+        setWebsite(brand.website || '')
+        setTargetAudience(brand.target_audience || '')
+        setAudienceAge(brand.audience_age || '')
+        setAudienceLocation(brand.audience_location || '')
+        setContentPillars(brand.content_pillars || [])
+        setAvoidWords(brand.avoid_words || '')
+        setObjectives(brand.objectives || [])
       }
       await loadAccounts()
     }
@@ -142,7 +156,17 @@ export default function ProfilePage() {
 
   async function saveBrand() {
     setSavingBrand(true)
-    const res = await fetch('/api/brand', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ brand_name: brandName, description: brandDesc, sector, default_tone: defaultTone, posts_per_week: postsPerWeek }) })
+    const res = await fetch('/api/brand', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        brand_name: brandName, description: brandDesc, sector,
+        default_tone: defaultTone, posts_per_week: postsPerWeek,
+        website, target_audience: targetAudience, audience_age: audienceAge,
+        audience_location: audienceLocation, content_pillars: contentPillars,
+        avoid_words: avoidWords, objectives,
+      }),
+    })
     setSavingBrand(false)
     toast(res.ok ? 'Profil de marque sauvegardé' : 'Erreur', res.ok ? 'success' : 'error')
   }
@@ -310,6 +334,9 @@ export default function ProfilePage() {
             <Row label="Secteur d'activité">
               <input className="input" style={{ maxWidth: '320px' }} placeholder="Ex: Marketing digital, Mode..." value={sector} onChange={e => setSector(e.target.value)} />
             </Row>
+            <Row label="Site web">
+              <input className="input" style={{ maxWidth: '320px' }} placeholder="https://votre-site.com" value={website} onChange={e => setWebsite(e.target.value)} />
+            </Row>
             <Row label="Ton par défaut">
               <select className="input" style={{ maxWidth: '200px' }} value={defaultTone} onChange={e => setDefaultTone(e.target.value)}>
                 <option value="professionnel">Professionnel</option>
@@ -317,6 +344,32 @@ export default function ProfilePage() {
                 <option value="inspirant">Inspirant</option>
                 <option value="humoristique">Humoristique</option>
               </select>
+            </Row>
+            <Row label="Audience cible">
+              <input className="input" style={{ maxWidth: '320px' }} placeholder="Ex: Entrepreneurs, Étudiants..." value={targetAudience} onChange={e => setTargetAudience(e.target.value)} />
+            </Row>
+            <Row label="Tranche d'âge">
+              <select className="input" style={{ maxWidth: '200px' }} value={audienceAge} onChange={e => setAudienceAge(e.target.value)}>
+                <option value="">Non précisé</option>
+                {['13-17','18-24','25-34','35-44','45-54','55+','Tous âges'].map(a => <option key={a} value={a}>{a}</option>)}
+              </select>
+            </Row>
+            <Row label="Portée géographique">
+              <select className="input" style={{ maxWidth: '200px' }} value={audienceLocation} onChange={e => setAudienceLocation(e.target.value)}>
+                <option value="">Non précisé</option>
+                <option value="locale">Locale</option>
+                <option value="nationale">Nationale</option>
+                <option value="internationale">Internationale</option>
+              </select>
+            </Row>
+            <Row label="Piliers de contenu" desc="Séparés par des virgules.">
+              <input className="input" style={{ maxWidth: '480px', width: '100%' }} placeholder="Ex: Conseils, Coulisses, Produits..." value={contentPillars.join(', ')} onChange={e => setContentPillars(e.target.value.split(',').map(s => s.trim()).filter(Boolean))} />
+            </Row>
+            <Row label="Objectifs" desc="Séparés par des virgules.">
+              <input className="input" style={{ maxWidth: '480px', width: '100%' }} placeholder="Ex: notoriete, ventes, communaute..." value={objectives.join(', ')} onChange={e => setObjectives(e.target.value.split(',').map(s => s.trim()).filter(Boolean))} />
+            </Row>
+            <Row label="Mots à éviter">
+              <input className="input" style={{ maxWidth: '480px', width: '100%' }} placeholder="Ex: politique, prix des concurrents..." value={avoidWords} onChange={e => setAvoidWords(e.target.value)} />
             </Row>
             <Row label="Posts / semaine">
               <input className="input" style={{ maxWidth: '100px' }} type="number" min={1} max={21} value={postsPerWeek} onChange={e => setPostsPerWeek(Number(e.target.value))} />
