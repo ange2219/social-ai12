@@ -159,8 +159,8 @@ export default async function DashboardPage() {
                   />
                   <defs>
                     <linearGradient id="gradKpi1" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#3B82F6"/>
-                      <stop offset="100%" stopColor="#2563EB"/>
+                      <stop offset="0%" stopColor="#7B5CF5"/>
+                      <stop offset="100%" stopColor="#A855F7"/>
                     </linearGradient>
                   </defs>
                 </svg>
@@ -228,7 +228,7 @@ export default async function DashboardPage() {
           <div className="sugg-card">
             <div className="card-title" style={{ marginBottom: 6 }}>Suggestions IA</div>
             <div className="sugg-legend">
-              <div className="legend-item"><div className="legend-dot" style={{ background: 'var(--blue)' }} />Engagement</div>
+              <div className="legend-item"><div className="legend-dot" style={{ background: 'var(--purple)' }} />Engagement</div>
               <div className="legend-item"><div className="legend-dot" style={{ background: 'var(--teal)' }} />Portée</div>
               <div className="legend-item"><div className="legend-dot" style={{ background: 'var(--green)' }} />Régularité</div>
             </div>
@@ -240,7 +240,7 @@ export default async function DashboardPage() {
                 <div className="sugg-name">Publier 3×/semaine</div>
                 <div className="sugg-sub">Doublez votre engagement</div>
               </div>
-              <div className="sugg-bar-wrap"><div className="sugg-bar-bg"><div className="sugg-bar-fill" style={{ width: '80%', background: 'var(--blue)' }} /></div></div>
+              <div className="sugg-bar-wrap"><div className="sugg-bar-bg"><div className="sugg-bar-fill" style={{ width: '80%', background: 'var(--purple)' }} /></div></div>
             </div>
             <div className="sugg-item">
               <div className="sugg-avatar" style={{ background: 'rgba(6,182,212,.10)', color: 'var(--teal)' }}>

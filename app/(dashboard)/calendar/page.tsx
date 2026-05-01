@@ -133,7 +133,7 @@ function MonthView({ monthDate, posts }: { monthDate: Date; posts: Post[] }) {
                   borderBottom: '1px solid var(--b1)',
                   borderLeft: di > 0 ? '1px solid var(--b1)' : 'none',
                   padding: '.35rem .4rem',
-                  background: !day ? 'var(--s2)' : isToday ? 'rgba(59,130,246,.04)' : 'transparent',
+                  background: !day ? 'var(--s2)' : isToday ? 'rgba(123,92,245,.04)' : 'transparent',
                 }}
               >
                 {day && (
@@ -143,14 +143,14 @@ function MonthView({ monthDate, posts }: { monthDate: Date; posts: Post[] }) {
                       color: isToday ? 'var(--accent)' : 'var(--t2)',
                       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                       width: 22, height: 22, borderRadius: '50%',
-                      background: isToday ? 'rgba(59,130,246,.15)' : 'transparent',
+                      background: isToday ? 'rgba(123,92,245,.15)' : 'transparent',
                     }}>
                       {day.getDate()}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                       {dayPosts.slice(0, 3).map(post => {
                         const platform = post.platforms[0] || 'instagram'
-                        const color    = PLATFORM_COLORS[platform] || '#3B82F6'
+                        const color    = PLATFORM_COLORS[platform] || '#7B5CF5'
                         const short    = PLATFORM_SHORT[platform] || platform
                         return (
                           <div
@@ -350,7 +350,7 @@ export default function CalendarPage() {
                           key={p.id}
                           style={{
                             width: 6, height: 6, borderRadius: '50%',
-                            background: PLATFORM_COLORS[p.platforms[0]] || '#3B82F6',
+                            background: PLATFORM_COLORS[p.platforms[0]] || '#7B5CF5',
                           }}
                         />
                       ))}
@@ -387,13 +387,13 @@ export default function CalendarPage() {
                         height: HOUR_H,
                         borderBottom: '1px solid var(--b1)',
                         borderLeft: '1px solid var(--b1)',
-                        background: isToday ? 'rgba(59,130,246,.025)' : 'transparent',
+                        background: isToday ? 'rgba(123,92,245,.025)' : 'transparent',
                         padding: '3px 5px',
                       }}
                     >
                       {cellPosts.map(post => {
                         const platform = post.platforms[0] || 'instagram'
-                        const color    = PLATFORM_COLORS[platform] || '#3B82F6'
+                        const color    = PLATFORM_COLORS[platform] || '#7B5CF5'
                         const short    = PLATFORM_SHORT[platform] || platform
                         const words    = post.content.trim().split(/\s+/)
                         const topic    = words.slice(0, 2).join(' ')

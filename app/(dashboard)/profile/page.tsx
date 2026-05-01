@@ -234,8 +234,8 @@ export default function ProfilePage() {
                 </span>
               )}
               {userPlan === 'premium' && (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '.3rem', fontSize: '.68rem', fontWeight: 700, padding: '.18rem .5rem', borderRadius: '20px', background: 'rgba(59,130,246,0.15)', color: '#3B82F6', border: '1px solid rgba(59,130,246,0.35)', letterSpacing: '.04em' }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#3B82F6', flexShrink: 0 }} />PRO
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '.3rem', fontSize: '.68rem', fontWeight: 700, padding: '.18rem .5rem', borderRadius: '20px', background: 'rgba(123,92,245,0.15)', color: '#7B5CF5', border: '1px solid rgba(123,92,245,0.35)', letterSpacing: '.04em' }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#7B5CF5', flexShrink: 0 }} />PRO
                 </span>
               )}
               {userPlan === 'business' && (
@@ -530,8 +530,8 @@ function AccountListItem({ platform, acc, onConnect, onDisconnect, onRename, isL
       {/* Action */}
       <div style={{ flexShrink: 0, marginLeft: '1rem', display: 'flex', flexDirection: 'column', gap: '.35rem', alignItems: 'flex-end' }}>
         {locked ? (
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '.3rem', fontSize: '.72rem', fontWeight: 700, padding: '.2rem .55rem', borderRadius: '20px', background: 'rgba(59,130,246,0.12)', color: '#3B82F6', border: '1px solid rgba(59,130,246,0.3)', letterSpacing: '.04em' }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#3B82F6', flexShrink: 0 }} />PRO
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '.3rem', fontSize: '.72rem', fontWeight: 700, padding: '.2rem .55rem', borderRadius: '20px', background: 'rgba(123,92,245,0.12)', color: '#7B5CF5', border: '1px solid rgba(123,92,245,0.3)', letterSpacing: '.04em' }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#7B5CF5', flexShrink: 0 }} />PRO
           </span>
         ) : acc ? (
           <>

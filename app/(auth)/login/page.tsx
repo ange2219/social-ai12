@@ -75,22 +75,22 @@ export default function LoginPage() {
         .login-page-wrap {
           --bg:#0D0D1A;--bg2:#13132A;--bg3:#1A1A35;
           --card:#1E1E3A;--card2:#252548;--border:#2E2E5A;
-          --blue:#3B82F6;--blue2:#2563EB;
-          --blue-light:rgba(59,130,246,0.15);
+          --purple:#7B5CF5;--purple2:#A855F7;
+          --purple-light:rgba(123,92,245,0.15);
           --text:#FFFFFF;--text2:#9CA3AF;--text3:#6B7280;
           --input-bg:#1A1A35;--input-border:#2E2E5A;
-          --shadow:rgba(59,130,246,0.2);
+          --shadow:rgba(123,92,245,0.2);
           font-family:'DM Sans',sans-serif;
           background:var(--bg);color:var(--text);
           min-height:100vh;display:flex;align-items:stretch;
           overflow-x:hidden;
         }
         [data-theme="light"] .login-page-wrap {
-          --bg:#F8F9FA;--bg2:#F1F5F9;--bg3:#E2E8F0;
-          --card:#FFFFFF;--card2:#FFFFFF;--border:#E2E8F0;
+          --bg:#F5F3FF;--bg2:#EDE9FE;--bg3:#DDD6FE;
+          --card:#FFFFFF;--card2:#F9F7FF;--border:#DDD6FE;
           --text:#0D0D1A;--text2:#6B7280;--text3:#9CA3AF;
-          --input-bg:#FFFFFF;--input-border:#E2E8F0;
-          --shadow:rgba(59,130,246,0.1);
+          --input-bg:#FFFFFF;--input-border:#DDD6FE;
+          --shadow:rgba(123,92,245,0.1);
         }
 
         /* ── Layout ── */
@@ -112,20 +112,20 @@ export default function LoginPage() {
         }
         .phone-illustration img{
           width:100%;height:auto;object-fit:contain;display:block;
-          filter:drop-shadow(0 24px 48px rgba(59,130,246,0.3));
+          filter:drop-shadow(0 24px 48px rgba(123,92,245,0.3));
         }
 
         /* ── Tagline ── */
         .login-tagline{text-align:center;}
         .login-tagline h1{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;line-height:1.2;margin-bottom:12px;}
-        .login-tagline h1 span{background:linear-gradient(135deg,var(--blue),var(--blue2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+        .login-tagline h1 span{background:linear-gradient(135deg,var(--purple),var(--purple2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
         .login-tagline p{font-size:15px;color:var(--text2);line-height:1.6;max-width:360px;margin:0 auto;}
 
         /* ── Logo ── */
         .login-logo{display:flex;align-items:center;gap:8px;margin-bottom:32px;}
-        .logo-mark{width:38px;height:38px;background:linear-gradient(135deg,var(--blue),var(--blue2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:#fff;}
+        .logo-mark{width:38px;height:38px;background:linear-gradient(135deg,var(--purple),var(--purple2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:#fff;}
         .logo-text{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--text);}
-        .logo-text span{background:linear-gradient(135deg,var(--blue),var(--blue2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+        .logo-text span{background:linear-gradient(135deg,var(--purple),var(--purple2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 
         /* ── Form ── */
         .login-form{width:100%;}
@@ -139,10 +139,10 @@ export default function LoginPage() {
           font-family:'DM Sans',sans-serif;font-size:14px;outline:none;
           transition:border-color .2s,box-shadow .2s;box-sizing:border-box;
         }
-        .form-input:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(59,130,246,0.2);}
+        .form-input:focus{border-color:var(--purple);box-shadow:0 0 0 2px rgba(123,92,245,0.2);}
         .form-input::placeholder{color:var(--text3);}
         .btn-primary{
-          width:100%;background:linear-gradient(135deg,var(--blue),var(--blue2));
+          width:100%;background:linear-gradient(135deg,var(--purple),var(--purple2));
           color:#fff;border:none;border-radius:12px;padding:14px;
           font-family:'Syne',sans-serif;font-size:15px;font-weight:700;
           cursor:pointer;transition:all .2s;letter-spacing:.02em;margin-top:4px;
@@ -159,10 +159,10 @@ export default function LoginPage() {
           cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;
           transition:all .2s;margin-bottom:10px;
         }
-        .btn-social:hover{border-color:var(--blue);background:var(--blue-light);}
+        .btn-social:hover{border-color:var(--purple);background:var(--purple-light);}
         .btn-social:disabled{opacity:.6;cursor:not-allowed;}
         .login-switch{text-align:center;margin-top:20px;font-size:13px;color:var(--text2);}
-        .login-switch a{color:var(--blue);text-decoration:none;font-weight:600;cursor:pointer;}
+        .login-switch a{color:var(--purple);text-decoration:none;font-weight:600;cursor:pointer;}
         .error-box{
           background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);
           color:#EF4444;font-size:12px;border-radius:8px;padding:10px 14px;margin-bottom:12px;
@@ -174,7 +174,7 @@ export default function LoginPage() {
           display:flex;align-items:center;justify-content:center;
           cursor:pointer;transition:all .3s;box-shadow:0 4px 12px var(--shadow);
         }
-        .theme-toggle:hover{background:var(--blue);border-color:var(--blue);}
+        .theme-toggle:hover{background:var(--purple);border-color:var(--purple);}
         .theme-toggle svg{width:18px;height:18px;stroke:var(--text);fill:none;stroke-width:1.8;stroke-linecap:round;}
         .password-wrap{position:relative;}
         .password-wrap .form-input{padding-right:44px;}
@@ -183,9 +183,9 @@ export default function LoginPage() {
           background:none;border:none;cursor:pointer;padding:0;
           color:var(--text3);display:flex;align-items:center;transition:color .2s;
         }
-        .eye-btn:hover{color:var(--blue);}
+        .eye-btn:hover{color:var(--purple);}
         .password-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
-        .forgot-link{font-size:12px;color:var(--blue);text-decoration:none;cursor:pointer;font-weight:500;}
+        .forgot-link{font-size:12px;color:var(--purple);text-decoration:none;cursor:pointer;font-weight:500;}
         .forgot-link:hover{text-decoration:underline;}
         .forgot-msg{font-size:12px;color:#22c55e;margin-top:6px;}
 

@@ -25,7 +25,7 @@ export function WelcomeBanner({ firstName }: { firstName: string }) {
       background: 'var(--card)', border: '1px solid var(--b1)',
       borderRadius: '14px', padding: '.85rem 1.2rem',
       display: 'flex', alignItems: 'center', gap: '.75rem',
-      boxShadow: '0 16px 48px rgba(59,130,246,.12)',
+      boxShadow: '0 16px 48px rgba(123,92,245,.12)',
       maxWidth: '280px',
       transform: visible ? 'translateY(0)' : 'translateY(20px)',
       opacity: visible ? 1 : 0,
