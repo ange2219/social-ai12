@@ -41,7 +41,7 @@ function formatScheduled(iso: string): string {
 // ─── Objective icons ──────────────────────────────────────────────────────────
 
 const OBJ_COLORS: Record<string, string> = {
-  vendre: '#EF4444', engager: '#7B5CF5', eduquer: '#06B6D4',
+  vendre: '#EF4444', engager: '#3B82F6', eduquer: '#06B6D4',
   inspirer: '#F59E0B', annoncer: '#10B981', fideliser: '#EC4899',
 }
 
@@ -125,8 +125,8 @@ function WheelColumn({
       {/* Highlight bar */}
       <div style={{
         position: 'absolute', top: ITEM_H * 2, left: 6, right: 6, height: ITEM_H,
-        background: 'rgba(123,92,245,.12)', borderRadius: '8px',
-        border: '1px solid rgba(123,92,245,.2)',
+        background: 'rgba(59,130,246,.12)', borderRadius: '8px',
+        border: '1px solid rgba(59,130,246,.2)',
         pointerEvents: 'none', zIndex: 1,
       }} />
       {/* Scrollable */}
@@ -539,7 +539,7 @@ function PostPlatformCard({
           onMouseEnter={e => { if (!isRewriting) { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' } }}
           onMouseLeave={e => { if (!isRewriting) { e.currentTarget.style.borderColor = 'var(--b1)'; e.currentTarget.style.color = 'var(--t3)' } }}
         >
-          {isRewriting ? <div style={{ width: '9px', height: '9px', border: '1.5px solid rgba(123,92,245,.25)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'rot .7s linear infinite', flexShrink: 0 }} /> : <RotateCcw size={10} />}
+          {isRewriting ? <div style={{ width: '9px', height: '9px', border: '1.5px solid rgba(59,130,246,.25)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'rot .7s linear infinite', flexShrink: 0 }} /> : <RotateCcw size={10} />}
           Réécrire
         </button>
         <button
@@ -555,7 +555,7 @@ function PostPlatformCard({
       {/* ── Image loading ── */}
       {imageLoading && (
         <div style={{ margin: '0 1rem .6rem', borderRadius: '12px', aspectRatio: '16/9', background: 'var(--s2)', border: '1px solid var(--b1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ width: '24px', height: '24px', border: '3px solid rgba(123,92,245,.2)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
+          <div style={{ width: '24px', height: '24px', border: '3px solid rgba(59,130,246,.2)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
         </div>
       )}
 
@@ -578,7 +578,7 @@ function PostPlatformCard({
           {showImageMenu && (
             <div style={{ position: 'absolute', top: '44px', left: '8px', background: 'var(--card)', border: '1px solid var(--b1)', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,.3)', zIndex: 50, minWidth: '190px' }}>
               <button onClick={handleGenerateImage} disabled={!isPro} style={{ display: 'flex', alignItems: 'center', gap: '.6rem', width: '100%', padding: '.65rem .9rem', background: 'none', border: 'none', cursor: isPro ? 'pointer' : 'not-allowed', color: isPro ? 'var(--t1)' : 'var(--t3)', fontSize: '.82rem', textAlign: 'left', opacity: isPro ? 1 : .5 }} onMouseEnter={e => { if (isPro) (e.currentTarget as HTMLElement).style.background = 'var(--s2)' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none' }}>
-                <div style={{ width: '22px', height: '22px', borderRadius: '5px', background: 'rgba(123,92,245,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><span style={{ fontSize: '.8rem' }}>✨</span></div>
+                <div style={{ width: '22px', height: '22px', borderRadius: '5px', background: 'rgba(59,130,246,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><span style={{ fontSize: '.8rem' }}>✨</span></div>
                 <div><div style={{ fontWeight: 600, fontSize: '.8rem' }}>Générer avec l&apos;IA</div>{!isPro && <div style={{ fontSize: '.67rem', color: '#FBBF24' }}>Pro requis</div>}</div>
               </button>
               <div style={{ height: '1px', background: 'var(--b1)' }} />
@@ -612,7 +612,7 @@ function PostPlatformCard({
           {!imageUrl && showImageMenu && (
             <div style={{ position: 'absolute', bottom: 'calc(100% + 4px)', left: '1rem', right: '1rem', background: 'var(--card)', border: '1px solid var(--b1)', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,.25)', zIndex: 50 }}>
               <button onClick={handleGenerateImage} disabled={!isPro} style={{ display: 'flex', alignItems: 'center', gap: '.6rem', width: '100%', padding: '.65rem .9rem', background: 'none', border: 'none', cursor: isPro ? 'pointer' : 'not-allowed', color: isPro ? 'var(--t1)' : 'var(--t3)', fontSize: '.82rem', textAlign: 'left', opacity: isPro ? 1 : .5 }} onMouseEnter={e => { if (isPro) (e.currentTarget as HTMLElement).style.background = 'var(--s2)' }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none' }}>
-                <div style={{ width: '22px', height: '22px', borderRadius: '5px', background: 'rgba(123,92,245,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><span style={{ fontSize: '.8rem' }}>✨</span></div>
+                <div style={{ width: '22px', height: '22px', borderRadius: '5px', background: 'rgba(59,130,246,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><span style={{ fontSize: '.8rem' }}>✨</span></div>
                 <div><div style={{ fontWeight: 600, fontSize: '.8rem' }}>Générer avec l&apos;IA</div>{!isPro && <div style={{ fontSize: '.67rem', color: '#FBBF24' }}>Pro requis</div>}</div>
               </button>
               <div style={{ height: '1px', background: 'var(--b1)' }} />
@@ -634,7 +634,7 @@ function PostPlatformCard({
           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--s2)' }}
           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none' }}
         >
-          <div style={{ width: 30, height: 30, borderRadius: '50%', background: scheduledAt ? 'rgba(123,92,245,.1)' : 'var(--s2)', border: `1px solid ${scheduledAt ? 'rgba(123,92,245,.3)' : 'var(--b1)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <div style={{ width: 30, height: 30, borderRadius: '50%', background: scheduledAt ? 'rgba(59,130,246,.1)' : 'var(--s2)', border: `1px solid ${scheduledAt ? 'rgba(59,130,246,.3)' : 'var(--b1)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <Clock size={14} color={scheduledAt ? 'var(--accent)' : 'var(--t2)'} />
           </div>
           <span style={{ flex: 1, textAlign: 'left', fontWeight: 500 }}>Programmer la publication</span>
@@ -657,7 +657,7 @@ function PostPlatformCard({
           onMouseEnter={e => { if (!isActing) { e.currentTarget.style.borderColor = 'var(--b2)'; e.currentTarget.style.color = 'var(--t1)' } }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--b1)'; e.currentTarget.style.color = 'var(--t2)' }}
         >
-          {isDrafting ? <div style={{ width: '13px', height: '13px', border: '2px solid rgba(123,92,245,.2)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'rot .7s linear infinite', flexShrink: 0 }} /> : <Save size={14} />}
+          {isDrafting ? <div style={{ width: '13px', height: '13px', border: '2px solid rgba(59,130,246,.2)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'rot .7s linear infinite', flexShrink: 0 }} /> : <Save size={14} />}
           Brouillons
         </button>
         {scheduledAt ? (
@@ -719,7 +719,7 @@ function QuotaBar({ textUsed, textLimit }: {
       borderRadius: '10px', marginBottom: '1.25rem',
     }}>
       <span style={{ fontSize: '.68rem', color: 'var(--t3)', fontWeight: 500, whiteSpace: 'nowrap' }}>Quotas du jour</span>
-      <QuotaItem label="Posts texte" value={textStr} pct={textPct} color="#7B5CF5" />
+      <QuotaItem label="Posts texte" value={textStr} pct={textPct} color="#3B82F6" />
     </div>
   )
 }

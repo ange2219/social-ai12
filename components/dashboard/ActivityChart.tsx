@@ -96,7 +96,7 @@ function computeChartData(
 }
 
 const COLORS: Record<Platform, string> = {
-  linkedin:  '#7B5CF5',
+  linkedin:  '#3B82F6',
   instagram: '#EC4899',
   twitter:   '#06B6D4',
   facebook:  '#3B82F6',

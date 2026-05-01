@@ -901,7 +901,7 @@ export default function PostsPage() {
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           gap: '.75rem', padding: '.6rem .9rem', marginBottom: '1rem',
-          background: 'rgba(123,92,245,.1)', border: '1px solid rgba(123,92,245,.25)',
+          background: 'rgba(59,130,246,.1)', border: '1px solid rgba(59,130,246,.25)',
           borderRadius: '10px',
           maxWidth: 480, marginLeft: 'auto', marginRight: 'auto',
         }}>
@@ -960,7 +960,7 @@ export default function PostsPage() {
                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--s2)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
-                  <Sparkles size={14} style={{ color: 'var(--accent, #7B5CF5)', flexShrink: 0 }} />
+                  <Sparkles size={14} style={{ color: 'var(--accent, #3B82F6)', flexShrink: 0 }} />
                   Générer
                 </button>
                 <button

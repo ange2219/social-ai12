@@ -63,7 +63,7 @@ function ChipGroup<T extends string>({
           style={{
             padding: '.3rem .75rem', borderRadius: '6px', fontSize: '.78rem', fontWeight: 500,
             border: `1px solid ${value === o.value ? 'var(--accent)' : 'var(--b1)'}`,
-            background: value === o.value ? 'rgba(123,92,245,.12)' : 'transparent',
+            background: value === o.value ? 'rgba(59,130,246,.12)' : 'transparent',
             color: value === o.value ? 'var(--accent)' : 'var(--t2)',
             cursor: 'pointer', transition: '.12s',
           }}
@@ -287,7 +287,7 @@ function PlatformPopup({
                     style={{
                       display: 'flex', alignItems: 'flex-start', gap: '.75rem', padding: '.75rem .9rem',
                       borderRadius: '10px', border: `1px solid ${localMode === opt.value ? 'var(--accent)' : 'var(--b1)'}`,
-                      background: localMode === opt.value ? 'rgba(123,92,245,.08)' : 'transparent',
+                      background: localMode === opt.value ? 'rgba(59,130,246,.08)' : 'transparent',
                       cursor: 'pointer', textAlign: 'left', transition: '.12s',
                     }}
                   >
@@ -457,7 +457,7 @@ function LivePreviewPanel({
               <div style={{ fontSize: '.65rem', fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '.4rem' }}>Paramètres</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.3rem' }}>
                 {[
-                  { label: LENGTH_LABELS[params.length], color: '#7B5CF5' },
+                  { label: LENGTH_LABELS[params.length], color: '#3B82F6' },
                   { label: FORMAT_LABELS[params.format], color: '#06B6D4' },
                   { label: POSTTONE_LABELS[params.tone],  color: '#10B981' },
                   { label: CTA_LABELS[params.cta],        color: '#F59E0B' },
@@ -482,7 +482,7 @@ function LivePreviewPanel({
               <div style={{ fontSize: '.65rem', fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '.35rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
                 Contexte IA
                 {reformulating && (
-                  <div style={{ width: '8px', height: '8px', border: '1.5px solid rgba(123,92,245,.3)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
+                  <div style={{ width: '8px', height: '8px', border: '1.5px solid rgba(59,130,246,.3)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'rot .7s linear infinite' }} />
                 )}
               </div>
               {reformulating ? (
@@ -617,7 +617,7 @@ function PostActionModal({ content, platforms, mediaUrls, aiGenerated, onClose }
 // ─── Icônes d'objectif (petites, colorées) ────────────────────────────────────
 
 const OBJ_COLORS: Record<string, string> = {
-  vendre: '#EF4444', engager: '#7B5CF5', eduquer: '#06B6D4',
+  vendre: '#EF4444', engager: '#3B82F6', eduquer: '#06B6D4',
   inspirer: '#F59E0B', annoncer: '#10B981', fideliser: '#EC4899',
 }
 
@@ -1106,13 +1106,13 @@ export default function CreatePage() {
                     display: 'flex', alignItems: 'center', gap: '.5rem',
                     padding: '.45rem .85rem', borderRadius: '8px',
                     border: `1px solid ${objective ? 'var(--accent)' : 'var(--b1)'}`,
-                    background: objective ? 'rgba(123,92,245,.1)' : 'var(--card)',
+                    background: objective ? 'rgba(59,130,246,.1)' : 'var(--card)',
                     color: objective ? 'var(--accent)' : 'var(--t2)',
                     cursor: 'pointer', fontSize: '.82rem', fontWeight: 500, transition: 'all .18s',
                   }}
                 >
                   {aiDetecting ? (
-                    <div style={{ width: '10px', height: '10px', border: '1.5px solid rgba(123,92,245,.25)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'rot .7s linear infinite', flexShrink: 0 }} />
+                    <div style={{ width: '10px', height: '10px', border: '1.5px solid rgba(59,130,246,.25)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'rot .7s linear infinite', flexShrink: 0 }} />
                   ) : objective ? (
                     <ObjIcon objective={objective} active={true} size={12} />
                   ) : (
@@ -1130,7 +1130,7 @@ export default function CreatePage() {
                       style={{
                         width: '100%', display: 'flex', alignItems: 'center', gap: '.6rem',
                         padding: '.5rem .75rem', borderRadius: '7px', border: 'none',
-                        background: objective === null ? 'rgba(123,92,245,.08)' : 'transparent',
+                        background: objective === null ? 'rgba(59,130,246,.08)' : 'transparent',
                         color: objective === null ? 'var(--accent)' : 'var(--t3)',
                         cursor: 'pointer', fontSize: '.82rem', textAlign: 'left', transition: 'background .1s',
                         fontStyle: 'italic',
@@ -1150,7 +1150,7 @@ export default function CreatePage() {
                         style={{
                           width: '100%', display: 'flex', alignItems: 'center', gap: '.6rem',
                           padding: '.5rem .75rem', borderRadius: '7px', border: 'none',
-                          background: objective === key ? 'rgba(123,92,245,.1)' : 'transparent',
+                          background: objective === key ? 'rgba(59,130,246,.1)' : 'transparent',
                           color: objective === key ? 'var(--accent)' : 'var(--t1)',
                           cursor: 'pointer', fontSize: '.82rem', textAlign: 'left', transition: 'background .1s',
                         }}

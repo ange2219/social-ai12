@@ -159,8 +159,8 @@ export default async function DashboardPage() {
                   />
                   <defs>
                     <linearGradient id="gradKpi1" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#7B5CF5"/>
-                      <stop offset="100%" stopColor="#A855F7"/>
+                      <stop offset="0%" stopColor="#3B82F6"/>
+                      <stop offset="100%" stopColor="#2563EB"/>
                     </linearGradient>
                   </defs>
                 </svg>

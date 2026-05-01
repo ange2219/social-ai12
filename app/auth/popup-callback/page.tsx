@@ -21,7 +21,7 @@ export default function PopupCallbackPage() {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#0D0D1A', color: '#9CA3AF', fontFamily: 'DM Sans, sans-serif', fontSize: '14px', gap: '10px' }}>
-      <div style={{ width: '16px', height: '16px', border: '2px solid rgba(123,92,245,.3)', borderTopColor: '#7B5CF5', borderRadius: '50%', animation: 'spin .7s linear infinite' }} />
+      <div style={{ width: '16px', height: '16px', border: '2px solid rgba(59,130,246,.3)', borderTopColor: '#3B82F6', borderRadius: '50%', animation: 'spin .7s linear infinite' }} />
       Connexion en cours...
       <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
     </div>
