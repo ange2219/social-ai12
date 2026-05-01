@@ -1,67 +1,105 @@
 'use client'
 
 import Link from 'next/link'
-import { Heart, MessageCircle } from 'lucide-react'
+
+const PLACEHOLDER_POSTS = [
+  { id: 'p1', full_name: 'Sophie M.', content: 'Astuce LinkedIn : poster le mardi matin entre 8h et 10h génère 2× plus d\'impressions. Je viens de tester cette semaine !', likes_count: 14, comments_count: 3 },
+  { id: 'p2', full_name: 'Marc D.', content: 'Quelqu\'un a déjà testé les carrousels Instagram vs les Reels pour un compte B2B ? Curieux de vos retours…', likes_count: 9, comments_count: 7 },
+  { id: 'p3', full_name: 'Léa R.', content: 'Partage de mon template de contenu mensuel : 40% éducatif, 30% inspirant, 20% promo, 10% personnel. Ça fonctionne bien !', likes_count: 22, comments_count: 5 },
+]
+
+function getInitials(name: string) {
+  return (name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+}
+
+function getColor(name: string) {
+  const colors = [
+    'rgba(123,92,245,0.15)', 'rgba(6,182,212,0.15)',
+    'rgba(16,185,129,0.15)', 'rgba(245,158,11,0.15)',
+  ]
+  const textColors = ['#7B5CF5', '#06b6d4', '#10b981', '#f59e0b']
+  const i = (name?.charCodeAt(0) || 0) % colors.length
+  return { bg: colors[i], color: textColors[i] }
+}
 
 export function CommunityPreview({ topPosts }: { topPosts: any[] }) {
+  // Utilise les vrais posts si dispo, sinon les placeholders pour inciter au clic
+  const displayPosts = topPosts.length >= 3
+    ? topPosts.slice(0, 3)
+    : [...topPosts, ...PLACEHOLDER_POSTS].slice(0, 3)
+
   return (
     <div className="sugg-card" style={{ padding: '1.25rem' }}>
-      <div className="card-title" style={{ marginBottom: '.2rem' }}>Communauté</div>
-      <p style={{ fontSize: '.8rem', color: 'var(--t2)', marginBottom: '1.2rem' }}>
-        Les posts les plus populaires du moment.
-      </p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '.8rem' }}>
-        {topPosts.length === 0 ? (
-          <div style={{ fontSize: '.85rem', color: 'var(--t3)', textAlign: 'center', padding: '1rem 0' }}>
-            Aucun post pour le moment. Soyez le premier !
-          </div>
-        ) : (
-          topPosts.map(post => (
-            <Link key={post.id} href="/community" style={{ textDecoration: 'none' }}>
-              <div style={{ 
-                background: 'var(--s2)', 
-                border: '1px solid var(--b1)', 
-                borderRadius: '8px', 
-                padding: '.8rem',
-                transition: 'all 0.2s',
-                cursor: 'pointer'
-              }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(123,92,245,0.4)'}
-              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--b1)'}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.4rem' }}>
-                  <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--card)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                    {post.avatar_url ? <img src={post.avatar_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt=""/> : <span style={{ color: 'var(--t2)', fontSize: '.6rem', fontWeight: 700 }}>{(post.full_name || 'U').slice(0, 2).toUpperCase()}</span>}
-                  </div>
-                  <span style={{ fontSize: '.8rem', fontWeight: 600, color: 'var(--t1)' }}>{post.full_name || 'Utilisateur'}</span>
-                </div>
-                
-                <p style={{ fontSize: '.85rem', color: 'var(--t1)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', marginBottom: '.6rem', lineHeight: 1.4 }}>
-                  {post.content}
-                </p>
-
-                <div style={{ display: 'flex', gap: '1rem', color: 'var(--t3)', fontSize: '.75rem', fontWeight: 600 }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '.3rem', color: post.likes_count > 0 ? '#ef4444' : 'var(--t3)' }}>
-                    <Heart size={12} fill={post.likes_count > 0 ? '#ef4444' : 'none'} /> {post.likes_count}
-                  </span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '.3rem' }}>
-                    <MessageCircle size={12} /> {post.comments_count}
-                  </span>
-                </div>
-              </div>
-            </Link>
-          ))
-        )}
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.2rem' }}>
+        <div>
+          <div className="card-title" style={{ marginBottom: '.1rem' }}>Communauté</div>
+          <p style={{ fontSize: '.78rem', color: 'var(--t3)', margin: 0 }}>
+            Ce que la communauté partage en ce moment
+          </p>
+        </div>
+        <span style={{
+          width: 8, height: 8, borderRadius: '50%',
+          background: '#ef4444',
+          display: 'inline-block',
+          boxShadow: '0 0 0 3px rgba(239,68,68,0.2)',
+          animation: 'pulse-dot 2s infinite',
+          flexShrink: 0,
+        }} />
       </div>
 
-      <Link href="/community" style={{ 
-        display: 'block', textAlign: 'center', marginTop: '1rem', 
-        fontSize: '.85rem', fontWeight: 600, color: '#7B5CF5', 
-        textDecoration: 'none', background: 'rgba(123,92,245,0.08)',
-        padding: '.6rem', borderRadius: '8px', border: '1px solid rgba(123,92,245,0.2)'
+      {/* Posts list — style "Suggestions IA" */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '.9rem' }}>
+        {displayPosts.map((post, i) => {
+          const { bg, color } = getColor(post.full_name || '')
+          const isPlaceholder = !post.user_id
+          return (
+            <div key={post.id || i} className="sugg-item" style={{ opacity: isPlaceholder ? 0.7 : 1 }}>
+              {/* Avatar initiales colorées — même style que l'icône IA */}
+              <div className="sugg-avatar" style={{ background: bg, color }}>
+                {getInitials(post.full_name || 'U')}
+              </div>
+              <div className="sugg-info">
+                <div className="sugg-name" style={{ fontWeight: 600 }}>
+                  {post.full_name || 'Utilisateur'}
+                </div>
+                <div className="sugg-sub" style={{
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                }}>
+                  {post.content}
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '.2rem', flexShrink: 0 }}>
+                <span style={{ fontSize: '.7rem', color: post.likes_count > 0 ? '#ef4444' : 'var(--t3)', fontWeight: 700 }}>
+                  ♥ {post.likes_count}
+                </span>
+                <span style={{ fontSize: '.7rem', color: 'var(--t3)', fontWeight: 600 }}>
+                  💬 {post.comments_count}
+                </span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* CTA */}
+      <Link href="/community" style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem',
+        marginTop: '1.1rem',
+        fontSize: '.82rem', fontWeight: 700, color: 'var(--accent)',
+        textDecoration: 'none', background: 'rgba(123,92,245,0.07)',
+        padding: '.55rem', borderRadius: '8px', border: '1px solid rgba(123,92,245,0.18)',
+        transition: 'background 0.2s',
       }}>
-        Rejoindre la discussion
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        Rejoindre la discussion →
       </Link>
     </div>
   )

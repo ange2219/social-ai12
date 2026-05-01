@@ -2,7 +2,6 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { LiveClock } from '@/components/dashboard/LiveClock'
 import { WelcomeBanner } from '@/components/dashboard/WelcomeBanner'
-import { ProgressionWidget } from '@/components/dashboard/ProgressionWidget'
 import { PostsTableCard } from '@/components/dashboard/PostsTableCard'
 import { CommunityPreview } from '@/components/dashboard/CommunityPreview'
 import { TypingGreeting } from '@/components/dashboard/TypingGreeting'
@@ -277,9 +276,6 @@ export default async function DashboardPage() {
           </div>
         </div>
       </div>
-
-      {/* Progression abonnés */}
-      <ProgressionWidget initialBaselines={baselines} />
     </>
   )
 }
