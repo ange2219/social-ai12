@@ -9,7 +9,7 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 const githubAI = new OpenAI({
   baseURL: 'https://models.inference.ai.azure.com',
-  apiKey: process.env.GITHUB_TOKEN,
+  apiKey: process.env.GITHUB_TOKEN || 'dummy',
 })
 
 const gemini = process.env.GEMINI_API_KEY

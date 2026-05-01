@@ -9,7 +9,7 @@ const Schema = z.object({ brief: z.string().min(3).max(2000) })
 
 const githubAI = new OpenAI({
   baseURL: 'https://models.inference.ai.azure.com',
-  apiKey: process.env.GITHUB_TOKEN,
+  apiKey: process.env.GITHUB_TOKEN || 'dummy',
 })
 
 export async function POST(req: NextRequest) {

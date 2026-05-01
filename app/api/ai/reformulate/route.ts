@@ -4,7 +4,7 @@ import OpenAI from 'openai'
 
 const githubAI = new OpenAI({
   baseURL: 'https://models.inference.ai.azure.com',
-  apiKey: process.env.GITHUB_TOKEN,
+  apiKey: process.env.GITHUB_TOKEN || 'dummy',
 })
 
 export async function POST(req: NextRequest) {

@@ -9,10 +9,7 @@
 import OpenAI from 'openai'
 import type { Platform, Plan } from '@/types'
 
-const githubAI = new OpenAI({
-  baseURL: 'https://models.inference.ai.azure.com',
-  apiKey: process.env.GITHUB_TOKEN,
-})
+// Instantiation moved inside the function to prevent build errors
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -201,6 +198,12 @@ export async function transformPostToImagePrompt(
   }
 
   const { brand, postContent, platform, imageType } = ctx
+
+  const githubAI = new OpenAI({
+    baseURL: 'https://models.inference.ai.azure.com',
+    apiKey: process.env.GITHUB_TOKEN,
+  })
+
   const styleGuide = IMAGE_STYLE_GUIDES[imageType]
   const platformSpec = PLATFORM_SPECS[platform]
   const colorInfo = brand.color_primary
