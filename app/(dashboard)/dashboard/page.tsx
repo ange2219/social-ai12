@@ -146,18 +146,26 @@ export default async function DashboardPage() {
           <TypingGreeting firstName={firstName} />
           <p>Votre tableau de bord est prêt. Continuez à publier régulièrement !</p>
         </div>
-        <div className="next-post-status">
-          <div style={{ fontSize: '.75rem', color: 'var(--t3)', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.05em' }}>
-            Prochain post
+        
+        <div style={{ display: 'flex', gap: '12px' }}>
+          {/* Prochain Post avec le style exact de l'horloge */}
+          <div className="time-box">
+            <div style={{ textAlign: 'right' }}>
+              <div className="time-label">Prochain Post</div>
+              <div className="time-val">
+                {nextPost ? (
+                  new Date(nextPost.scheduled_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+                ) : (
+                  "Aucun"
+                )}
+              </div>
+            </div>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+              <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2Z"/>
+            </svg>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', color: 'var(--t1)', fontWeight: 700 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: nextPost ? 'var(--green)' : 'var(--t3)' }} />
-            {nextPost ? (
-              <span>Prévu le {new Date(nextPost.scheduled_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
-            ) : (
-              <span style={{ color: 'var(--t3)' }}>Aucun post programmé</span>
-            )}
-          </div>
+
+          <LiveClock />
         </div>
       </div>
 

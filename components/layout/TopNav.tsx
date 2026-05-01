@@ -47,6 +47,7 @@ export function TopNav({
         .from('community_posts')
         .select('*', { count: 'exact', head: true })
         .gte('created_at', yesterday.toISOString())
+        .neq('user_id', user.id)
       
       if (count && count > 0) setHasNew(true)
     }
@@ -59,7 +60,7 @@ export function TopNav({
     'Tableau de bord'
 
   return (
-    <div className="tnav">
+    <div className="topnav">
       <button
         className={`hamburger${sidebarOpen ? ' open' : ''}`}
         onClick={onToggleSidebar}
