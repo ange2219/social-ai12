@@ -33,7 +33,6 @@ export function CommunityPreview({ topPosts }: { topPosts: any[] }) {
             Ce que la communauté partage en ce moment
           </p>
         </div>
-        </div>
       </div>
 
       {/* Posts list — style "Suggestions IA" */}
