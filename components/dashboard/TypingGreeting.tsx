@@ -26,7 +26,7 @@ export function TypingGreeting({ firstName }: { firstName: string }) {
       {!done && (
         <span style={{
           display: 'inline-block', width: 2, height: '1em',
-          background: 'var(--purple)', marginLeft: 2,
+          background: 'var(--blue)', marginLeft: 2,
           verticalAlign: 'text-bottom',
           animation: 'blink .7s step-end infinite',
         }} />
