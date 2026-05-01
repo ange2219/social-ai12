@@ -33,14 +33,7 @@ export function CommunityPreview({ topPosts }: { topPosts: any[] }) {
             Ce que la communauté partage en ce moment
           </p>
         </div>
-        {displayPosts.length > 0 && (
-          <span style={{
-            width: 8, height: 8, borderRadius: '50%',
-            background: '#ef4444',
-            display: 'inline-block',
-            flexShrink: 0,
-          }} />
-        )}
+        </div>
       </div>
 
       {/* Posts list — style "Suggestions IA" */}
