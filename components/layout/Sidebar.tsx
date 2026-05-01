@@ -89,24 +89,24 @@ export function Sidebar({ user, open }: { user: User; open: boolean }) {
 
       {/* Footer */}
       <div className="sb-footer">
-        <Link href="/profile" className="sb-user" title={user.full_name || user.email || 'Profil'}>
-          <div className="sb-avatar">
-            {user.avatar_url
-              ? <img src={user.avatar_url} alt="" />
-              : initials
-            }
-          </div>
-          <div className="sb-user-info">
-            <div className="sb-user-name">{user.full_name || user.email?.split('@')[0]}</div>
-            <div className="sb-user-plan">{PLAN_LABELS[user.plan]}</div>
-          </div>
+        {/* Aide / Support */}
+        <Link href="/help" className="ni" title="Besoin d'aide ?" style={{ borderTop: '1px solid var(--border)', borderRadius: 0, marginTop: 4 }}>
+          <span className="sb-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </span>
+          <span className="sb-label">Besoin d'aide ?</span>
         </Link>
-        <button onClick={handleLogout} className="sb-logout" title="Se déconnecter">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-            <polyline points="16 17 21 12 16 7"/>
-            <line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
+
+        {/* Déconnexion */}
+        <button onClick={handleLogout} className="ni" title="Se déconnecter" style={{ color: 'var(--red)', background: 'none', border: 'none', width: '100%', textAlign: 'left' }}>
+          <span className="sb-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </span>
+          <span className="sb-label">Se déconnecter</span>
         </button>
       </div>
     </aside>
