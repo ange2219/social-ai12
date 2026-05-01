@@ -11,20 +11,27 @@ export default async function CommunityPage() {
 
   const admin = createAdminClient()
 
-  // On récupère les posts via la vue qui inclut les infos utilisateur
-  const { data: posts } = await admin
-    .from('vw_community_posts')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(50)
+  let posts: any[] = []
+  let likedPostIds = new Set<string>()
+  let dbReady = true
 
-  // On récupère les likes de l'utilisateur connecté pour savoir quels posts il a liké
-  const { data: userLikes } = await admin
-    .from('community_likes')
-    .select('post_id')
-    .eq('user_id', user.id)
+  try {
+    const { data: postsData } = await admin
+      .from('vw_community_posts')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50)
 
-  const likedPostIds = new Set((userLikes || []).map(l => l.post_id))
+    const { data: userLikes } = await admin
+      .from('community_likes')
+      .select('post_id')
+      .eq('user_id', user.id)
+
+    posts = postsData || []
+    likedPostIds = new Set((userLikes || []).map((l: any) => l.post_id))
+  } catch {
+    dbReady = false
+  }
 
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '1rem 0' }}>
@@ -35,11 +42,19 @@ export default async function CommunityPage() {
         </p>
       </header>
 
-      <CommunityFeed 
-        initialPosts={posts || []} 
-        currentUserId={user.id} 
-        initialLikedIds={Array.from(likedPostIds)}
-      />
+      {!dbReady ? (
+        <div style={{ background: 'var(--card)', border: '1px dashed var(--b1)', borderRadius: 12, padding: '3rem', textAlign: 'center', color: 'var(--t2)' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⚠️</div>
+          <div style={{ fontWeight: 700, marginBottom: '.5rem', color: 'var(--t1)' }}>Configuration requise</div>
+          <p style={{ fontSize: '.9rem' }}>Les tables de la communauté n'ont pas encore été créées.<br/>Exécutez le script <code>supabase/migration_community.sql</code> dans votre éditeur SQL Supabase.</p>
+        </div>
+      ) : (
+        <CommunityFeed
+          initialPosts={posts}
+          currentUserId={user.id}
+          initialLikedIds={Array.from(likedPostIds)}
+        />
+      )}
     </div>
   )
 }

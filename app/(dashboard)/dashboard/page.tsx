@@ -79,15 +79,19 @@ export default async function DashboardPage() {
   const scheduledPosts = scheduledRes.data || []
   const baselines      = (baselinesRes as any).data || []
 
-  // Fetch community posts safely in case the user hasn't run the SQL script yet
-  const communityRes = await admin
-    .from('vw_community_posts')
-    .select('*')
-    .order('likes_count', { ascending: false })
-    .order('created_at', { ascending: false })
-    .limit(3)
-    
-  const topCommunityPosts = communityRes.data || []
+  // Fetch community posts safely — table may not exist yet
+  let topCommunityPosts: any[] = []
+  try {
+    const communityRes = await admin
+      .from('vw_community_posts')
+      .select('*')
+      .order('likes_count', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(3)
+    topCommunityPosts = communityRes.data || []
+  } catch {
+    // La migration communauté n'a pas encore été exécutée, on ignore
+  }
 
   const postIds = allPosts.map((p: any) => p.id)
   const analyticsRes = postIds.length > 0
