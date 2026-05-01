@@ -40,7 +40,7 @@ export function TopNav({
     'Tableau de bord'
 
   return (
-    <div className="topnav">
+    <div className="tnav">
       <button
         className={`hamburger${sidebarOpen ? ' open' : ''}`}
         onClick={onToggleSidebar}
@@ -73,12 +73,12 @@ export function TopNav({
             <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
             <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
           </svg>
+          {/* Note: On pourrait passer hasNew de la page, pour l'instant on le laisse fixe mais sans animation */}
           <span style={{
             position: 'absolute', top: 0, right: 0,
             width: 8, height: 8, borderRadius: '50%',
             background: '#ef4444',
             border: '1.5px solid var(--bg)',
-            animation: 'pulse-dot 2s infinite'
           }} />
         </Link>
 

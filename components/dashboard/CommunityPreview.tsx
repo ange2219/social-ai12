@@ -2,11 +2,7 @@
 
 import Link from 'next/link'
 
-const PLACEHOLDER_POSTS = [
-  { id: 'p1', full_name: 'Sophie M.', content: 'Astuce LinkedIn : poster le mardi matin entre 8h et 10h génère 2× plus d\'impressions. Je viens de tester cette semaine !', likes_count: 14, comments_count: 3 },
-  { id: 'p2', full_name: 'Marc D.', content: 'Quelqu\'un a déjà testé les carrousels Instagram vs les Reels pour un compte B2B ? Curieux de vos retours…', likes_count: 9, comments_count: 7 },
-  { id: 'p3', full_name: 'Léa R.', content: 'Partage de mon template de contenu mensuel : 40% éducatif, 30% inspirant, 20% promo, 10% personnel. Ça fonctionne bien !', likes_count: 22, comments_count: 5 },
-]
+
 
 function getInitials(name: string) {
   return (name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
@@ -24,9 +20,7 @@ function getColor(name: string) {
 
 export function CommunityPreview({ topPosts }: { topPosts: any[] }) {
   // Utilise les vrais posts si dispo, sinon les placeholders pour inciter au clic
-  const displayPosts = topPosts.length >= 3
-    ? topPosts.slice(0, 3)
-    : [...topPosts, ...PLACEHOLDER_POSTS].slice(0, 3)
+  const displayPosts = topPosts.slice(0, 3)
 
   return (
     <div className="sugg-card" style={{ padding: '1.25rem' }}>
@@ -39,14 +33,14 @@ export function CommunityPreview({ topPosts }: { topPosts: any[] }) {
             Ce que la communauté partage en ce moment
           </p>
         </div>
-        <span style={{
-          width: 8, height: 8, borderRadius: '50%',
-          background: '#ef4444',
-          display: 'inline-block',
-          boxShadow: '0 0 0 3px rgba(239,68,68,0.2)',
-          animation: 'pulse-dot 2s infinite',
-          flexShrink: 0,
-        }} />
+        {displayPosts.length > 0 && (
+          <span style={{
+            width: 8, height: 8, borderRadius: '50%',
+            background: '#ef4444',
+            display: 'inline-block',
+            flexShrink: 0,
+          }} />
+        )}
       </div>
 
       {/* Posts list — style "Suggestions IA" */}
@@ -85,6 +79,12 @@ export function CommunityPreview({ topPosts }: { topPosts: any[] }) {
           )
         })}
       </div>
+
+      {displayPosts.length === 0 && (
+        <div style={{ fontSize: '.82rem', color: 'var(--t3)', textAlign: 'center', padding: '1rem 0', border: '1px dashed var(--b1)', borderRadius: 8 }}>
+          Aucun post pour le moment.
+        </div>
+      )}
 
       {/* CTA */}
       <Link href="/community" style={{
