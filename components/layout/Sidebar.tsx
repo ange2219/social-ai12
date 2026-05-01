@@ -2,7 +2,9 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { PLAN_LIMITS } from '@/types'
 import type { User } from '@/types'
 
 const PLAN_LABELS = { free: 'Plan Gratuit', premium: 'Plan Premium', business: 'Plan Business' }
@@ -22,6 +24,29 @@ export function Sidebar({ user, open }: { user: User; open: boolean }) {
     return pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
       ? 'ni on' : 'ni'
   }
+
+  const [used, setUsed] = useState(0)
+  const limit = PLAN_LIMITS[user.plan].generationsPerWeek
+
+  useEffect(() => {
+    async function fetchQuota() {
+      const now = new Date()
+      const weekStart = new Date(now)
+      weekStart.setDate(now.getDate() - 6)
+      weekStart.setHours(0,0,0,0)
+
+      const { count } = await supabase
+        .from('ai_generation_log')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .gte('created_at', weekStart.toISOString())
+      
+      setUsed(count || 0)
+    }
+    fetchQuota()
+  }, [user.id])
+
+  const progress = typeof limit === 'number' ? Math.min((used / limit) * 100, 100) : 0
 
   return (
     <aside className={`sidebar${open ? ' open' : ''}`}>
@@ -85,6 +110,31 @@ export function Sidebar({ user, open }: { user: User; open: boolean }) {
           </span>
           <span className="sb-label">Paramètres</span>
         </Link>
+
+        {/* Upgrade Card - Inspired by user screenshot */}
+        {user.plan === 'free' && open && (
+          <div className="upgrade-card-sidebar">
+            <div className="upgrade-card-content">
+              <div className="upgrade-title">Passer à la version Pro</div>
+              <div className="upgrade-sub">Obtenez plus de générations et de fonctionnalités.</div>
+              
+              <div className="quota-bar-container">
+                <div className="quota-bar-info">
+                  <span>Quota utilisé</span>
+                  <span>{used}/{limit}</span>
+                </div>
+                <div className="quota-bar-bg">
+                  <div className="quota-bar-fill" style={{ width: `${progress}%` }} />
+                </div>
+              </div>
+
+              <Link href="/settings?tab=plan" className="upgrade-pro-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                Passer en Pro
+              </Link>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Footer */}
