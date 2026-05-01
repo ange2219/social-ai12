@@ -2,6 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import type { User } from '@/types'
 
 const PAGE_TITLES: Record<string, string> = {
@@ -33,6 +35,23 @@ export function TopNav({
 }) {
   const pathname = usePathname()
   const initials = (user.full_name || user.email || 'U').slice(0, 2).toUpperCase()
+  const [hasNew, setHasNew] = useState(false)
+
+  useEffect(() => {
+    const checkNew = async () => {
+      const supabase = createClient()
+      const yesterday = new Date()
+      yesterday.setDate(yesterday.getDate() - 1)
+      
+      const { count } = await supabase
+        .from('community_posts')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', yesterday.toISOString())
+      
+      if (count && count > 0) setHasNew(true)
+    }
+    checkNew()
+  }, [])
 
   const pageTitle =
     PAGE_TITLES[pathname] ||
@@ -73,13 +92,14 @@ export function TopNav({
             <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
             <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
           </svg>
-          {/* Note: On pourrait passer hasNew de la page, pour l'instant on le laisse fixe mais sans animation */}
-          <span style={{
-            position: 'absolute', top: 0, right: 0,
-            width: 8, height: 8, borderRadius: '50%',
-            background: '#ef4444',
-            border: '1.5px solid var(--bg)',
-          }} />
+          {hasNew && (
+            <span style={{
+              position: 'absolute', top: 0, right: 0,
+              width: 8, height: 8, borderRadius: '50%',
+              background: '#ef4444',
+              border: '1.5px solid var(--bg)',
+            }} />
+          )}
         </Link>
 
         {/* Avatar */}

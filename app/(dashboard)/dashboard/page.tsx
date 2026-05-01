@@ -101,6 +101,20 @@ export default async function DashboardPage() {
   const publishedCount   = allPosts.filter((p: any) => p.status === 'published').length
   const generatedCount   = allPosts.filter((p: any) => p.status !== 'deleted').length
 
+  const engagementRate = totalImpressions > 0 ? ((totalEngagement / totalImpressions) * 100).toFixed(1) : '0.0'
+  
+  // Calcul de la série (streak)
+  let streak = 0
+  const publishedDates = new Set(allPosts
+    .filter((p: any) => p.status === 'published')
+    .map((p: any) => new Date(p.created_at).toDateString())
+  )
+  let checkDate = new Date()
+  while (publishedDates.has(checkDate.toDateString())) {
+    streak++
+    checkDate.setDate(checkDate.getDate() - 1)
+  }
+
   const now = new Date()
   const weeks: number[] = [0, 0, 0, 0]
   for (const post of allPosts) {
@@ -117,16 +131,7 @@ export default async function DashboardPage() {
   }
   const bestPlatform = Object.entries(platformEng).sort((a, b) => b[1] - a[1])[0]?.[0] || null
 
-  const plan = (userData?.plan || 'free') as Plan
-  const planLimit = PLAN_LIMITS[plan].generationsPerWeek
-
-  const weekStart = new Date(now)
-  weekStart.setDate(weekStart.getDate() - 6)
-  weekStart.setHours(0, 0, 0, 0)
-  const weekRes = await admin.from('ai_generation_log').select('id', { count: 'exact' })
-    .eq('user_id', authUser.id).gte('created_at', weekStart.toISOString())
-  const todayCount = weekRes.count || 0
-
+  const nextPost = scheduledPosts[0]
   const aiTip = getAiTip(weeks, bestPlatform, avgPerWeek)
   const firstName = userData?.full_name?.split(' ')[0] || authUser.email?.split('@')[0] || 'vous'
 
@@ -141,48 +146,33 @@ export default async function DashboardPage() {
           <TypingGreeting firstName={firstName} />
           <p>Votre tableau de bord est prêt. Continuez à publier régulièrement !</p>
         </div>
-        <LiveClock />
+        <div className="next-post-status">
+          <div style={{ fontSize: '.75rem', color: 'var(--t3)', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+            Prochain post
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', color: 'var(--t1)', fontWeight: 700 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: nextPost ? 'var(--green)' : 'var(--t3)' }} />
+            {nextPost ? (
+              <span>Prévu le {new Date(nextPost.scheduled_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+            ) : (
+              <span style={{ color: 'var(--t3)' }}>Aucun post programmé</span>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* KPI Row */}
       <div className="kpi-row">
         <div className="kpi-card c-blue">
           <div className="kpi-card-header">
-            <span className="kpi-label">Générations cette semaine</span>
+            <span className="kpi-label">Taux d'Engagement</span>
             <div className="kpi-icon ki-blue">
-              <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 0 2-2h2a2 2 0 0 0 2 2"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785 0.225.225 0 0 0 .192.358 5.976 5.976 0 0 0 3.07-1.127c.231-.15.525-.157.77-.042A8.97 8.97 0 0 0 12 20.25Z"/></svg>
             </div>
           </div>
-          <div className="kpi-donut-row">
-            <div className="kpi-val">
-              {todayCount}
-              <small>/{planLimit === 'unlimited' ? '∞' : planLimit}</small>
-            </div>
-            {planLimit !== 'unlimited' && (
-              <div className="kpi-donut">
-                <svg width="48" height="48" viewBox="0 0 48 48">
-                  <circle cx="24" cy="24" r="19" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="4.5"/>
-                  <circle cx="24" cy="24" r="19" fill="none" stroke="url(#gradKpi1)" strokeWidth="4.5"
-                    strokeDasharray="119.4"
-                    strokeDashoffset={119.4 - (119.4 * Math.min(todayCount / (planLimit as number), 1))}
-                    style={{ transition: 'stroke-dashoffset 0.9s cubic-bezier(.4,0,.2,1) 0.3s' }}
-                    transform="rotate(-90 24 24)"
-                  />
-                  <defs>
-                    <linearGradient id="gradKpi1" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#7B5CF5"/>
-                      <stop offset="100%" stopColor="#A855F7"/>
-                    </linearGradient>
-                  </defs>
-                </svg>
-                <div className="kpi-donut-center">
-                  {Math.round((todayCount / (planLimit as number)) * 100)}%
-                </div>
-              </div>
-            )}
-          </div>
+          <div className="kpi-val">{engagementRate}%</div>
           <div className="kpi-bottom">
-            <span className="kpi-score-label">{generatedCount} posts au total · {weeks[3]} cette semaine</span>
+            <span className="kpi-score-label">Engagement / Impressions</span>
           </div>
         </div>
 
@@ -201,14 +191,14 @@ export default async function DashboardPage() {
 
         <div className="kpi-card c-green">
           <div className="kpi-card-header">
-            <span className="kpi-label">Régularité</span>
+            <span className="kpi-label">Série (Streak)</span>
             <div className="kpi-icon ki-green">
-              <svg viewBox="0 0 24 24"><path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z"/></svg>
             </div>
           </div>
-          <div className="kpi-val">{avgPerWeek} <small>/sem</small></div>
+          <div className="kpi-val">{streak} <small>jours</small></div>
           <div className="kpi-bottom">
-            <span className="kpi-score-label">Objectif : 3 posts / semaine</span>
+            <span className="kpi-score-label">{streak > 0 ? '🔥 Continuez comme ça !' : '❄️ Commencez votre série'}</span>
           </div>
         </div>
 
