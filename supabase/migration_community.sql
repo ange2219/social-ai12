@@ -62,8 +62,8 @@ CREATE POLICY "community_comments_insert" ON public.community_comments
 CREATE POLICY "community_comments_delete" ON public.community_comments
   FOR DELETE USING (auth.uid() = user_id);
 
--- 4. Vue dénormalisée pour récupérer les posts avec les infos utilisateur
---    + compteurs de likes et commentaires
+-- 4. Vue dénormalisée — utilise public.users (accessible en REST) au lieu de auth.users
+--    ⚠️  Si vous aviez déjà créé cette vue, SUPPRIMEZ-LA d'abord : DROP VIEW IF EXISTS public.vw_community_posts;
 CREATE OR REPLACE VIEW public.vw_community_posts AS
 SELECT
   p.id,
@@ -71,13 +71,13 @@ SELECT
   p.content,
   p.created_at,
   p.updated_at,
-  u.raw_user_meta_data->>'full_name'  AS full_name,
-  u.raw_user_meta_data->>'avatar_url' AS avatar_url,
-  (SELECT plan FROM public.users WHERE id = p.user_id LIMIT 1) AS plan,
-  (SELECT COUNT(*) FROM public.community_likes l WHERE l.post_id = p.id)    AS likes_count,
-  (SELECT COUNT(*) FROM public.community_comments c WHERE c.post_id = p.id) AS comments_count
+  u.full_name,
+  u.avatar_url,
+  u.plan,
+  (SELECT COUNT(*) FROM public.community_likes l WHERE l.post_id = p.id)::int    AS likes_count,
+  (SELECT COUNT(*) FROM public.community_comments c WHERE c.post_id = p.id)::int AS comments_count
 FROM public.community_posts p
-JOIN auth.users u ON u.id = p.user_id;
+JOIN public.users u ON u.id = p.user_id;
 
 -- 5. Index pour les performances
 CREATE INDEX IF NOT EXISTS idx_community_posts_created_at ON public.community_posts (created_at DESC);

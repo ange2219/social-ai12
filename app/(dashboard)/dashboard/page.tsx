@@ -81,16 +81,14 @@ export default async function DashboardPage() {
 
   // Fetch community posts safely — table may not exist yet
   let topCommunityPosts: any[] = []
-  try {
-    const communityRes = await admin
-      .from('vw_community_posts')
-      .select('*')
-      .order('likes_count', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(3)
+  const communityRes = await admin
+    .from('vw_community_posts')
+    .select('*')
+    .order('likes_count', { ascending: false })
+    .order('created_at', { ascending: false })
+    .limit(3)
+  if (!communityRes.error) {
     topCommunityPosts = communityRes.data || []
-  } catch {
-    // La migration communauté n'a pas encore été exécutée, on ignore
   }
 
   const postIds = allPosts.map((p: any) => p.id)
