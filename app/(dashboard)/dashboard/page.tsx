@@ -4,7 +4,7 @@ import { LiveClock } from '@/components/dashboard/LiveClock'
 import { WelcomeBanner } from '@/components/dashboard/WelcomeBanner'
 import { ProgressionWidget } from '@/components/dashboard/ProgressionWidget'
 import { PostsTableCard } from '@/components/dashboard/PostsTableCard'
-import { ActivityChart } from '@/components/dashboard/ActivityChart'
+import { CommunityPreview } from '@/components/dashboard/CommunityPreview'
 import { TypingGreeting } from '@/components/dashboard/TypingGreeting'
 import { AutoRefresh } from '@/components/dashboard/AutoRefresh'
 import { type Plan, PLAN_LIMITS } from '@/types'
@@ -78,6 +78,16 @@ export default async function DashboardPage() {
   const userData       = userRes.data
   const scheduledPosts = scheduledRes.data || []
   const baselines      = (baselinesRes as any).data || []
+
+  // Fetch community posts safely in case the user hasn't run the SQL script yet
+  const communityRes = await admin
+    .from('vw_community_posts')
+    .select('*')
+    .order('likes_count', { ascending: false })
+    .order('created_at', { ascending: false })
+    .limit(3)
+    
+  const topCommunityPosts = communityRes.data || []
 
   const postIds = allPosts.map((p: any) => p.id)
   const analyticsRes = postIds.length > 0
@@ -222,7 +232,7 @@ export default async function DashboardPage() {
         {/* Right column */}
         <div className="right-col">
 
-          <ActivityChart hasPosts={publishedCount > 0} posts={allPosts} analytics={analytics} />
+          <CommunityPreview topPosts={topCommunityPosts} />
 
           {/* Suggestions IA */}
           <div className="sugg-card">
